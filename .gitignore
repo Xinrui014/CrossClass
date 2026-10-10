@@ -8,3 +8,5 @@ __pycache__/
 *.pyc
 linkdata/
 results/linking/eval/
+kicad_boards/
+ckpt/

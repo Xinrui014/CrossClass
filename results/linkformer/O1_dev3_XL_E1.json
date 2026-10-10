@@ -1,0 +1,90 @@
+{
+ "args": {
+  "train": "dev3",
+  "eval": "dev3",
+  "size": "XL",
+  "tokens": "E1",
+  "steps": 1500,
+  "lr": 0.0003,
+  "device": "cuda",
+  "threads": 1,
+  "tag": "O1_dev3_XL_E1",
+  "eval_every": 250,
+  "seed": 0
+ },
+ "params": 38754305,
+ "log": [
+  {
+   "step": 250,
+   "loss": 0.4347,
+   "dev3": {
+    "acc": 0.9797,
+    "prec": 0.9812,
+    "f1": 0.9804,
+    "linkable": 691,
+    "right": 677,
+    "links": 690
+   }
+  },
+  {
+   "step": 500,
+   "loss": 0.0625,
+   "dev3": {
+    "acc": 0.9812,
+    "prec": 0.9812,
+    "f1": 0.9812,
+    "linkable": 691,
+    "right": 678,
+    "links": 691
+   }
+  },
+  {
+   "step": 750,
+   "loss": 0.0377,
+   "dev3": {
+    "acc": 0.9812,
+    "prec": 0.9812,
+    "f1": 0.9812,
+    "linkable": 691,
+    "right": 678,
+    "links": 691
+   }
+  },
+  {
+   "step": 1000,
+   "loss": 0.0485,
+   "dev3": {
+    "acc": 0.9797,
+    "prec": 0.9812,
+    "f1": 0.9804,
+    "linkable": 691,
+    "right": 677,
+    "links": 690
+   }
+  },
+  {
+   "step": 1250,
+   "loss": 0.051,
+   "dev3": {
+    "acc": 0.9797,
+    "prec": 0.9797,
+    "f1": 0.9797,
+    "linkable": 691,
+    "right": 677,
+    "links": 691
+   }
+  },
+  {
+   "step": 1500,
+   "loss": 0.0427,
+   "dev3": {
+    "acc": 0.9812,
+    "prec": 0.984,
+    "f1": 0.9826,
+    "linkable": 691,
+    "right": 678,
+    "links": 689
+   }
+  }
+ ]
+}

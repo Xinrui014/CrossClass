@@ -130,3 +130,14 @@ B8 here is 0.568 vs 0.570 in CrossClass.md: same method, retrained after the 202
   `tools/linkdata.py` → `linkdata/{wacv,kicad199}.json` (git-ignored). Sizes L = 384 × 8 (14.7 M), XL = 512 × 12 (38.8 M).
   Overfit runs O1 (3 dev boards) and O2 (fold-0 training boards, 30 images) × {L, XL} × {E1, E2} on L40 CPU (all GPUs busy),
   logs `logs/linkformer/`, results `results/linkformer/`.
+- **Overfit test done (cluster job 196808):** both L and XL fit the training boards to the one-to-one ceiling (3 boards 98.0–98.6 % vs
+  98.7 %; 30 boards up to 98.4 % = ceiling). Held-out fold-0 test: E2 69.5 % (L) / 68.2 % (XL), E1 38–42 %, vs B7 91.4 % / B8 93.3 % on the
+  same boards → memorises 30 boards, does not generalise; strings +27–31 points; XL ≯ L. `results/linkformer/README.md`.
+- **KiCad link set built (2026-10-10, CPU data prep):** `tools/kicad_select.py` (pcbprior env; 2,745 WACV-like candidates from
+  boards.parquet → 1,498 with ≥ 70 % visible top references and ≥ 60 % SMD pads → `kicad_boards/`, 1.8 GB, git-ignored) and
+  `tools/kicad_links.py` (system python3 + pcbnew 9.0.7; part box = pads + Fab shapes; classless footprints such as TP / H / FID are not
+  parts; labels ≥ 50 % inside a footprint body dropped as hidden; bottom sides mirrored; side kept with ≥ 10 links; OLIMEX/*, Duet3D/*,
+  BehrensG/ARTY_Z7 excluded for possible overlap with WACV OlimexRed / DuetWIFI / Arty) → `linkdata/kicad_all.json`:
+  1,412 projects, 1,842 sides (1,351 top, 491 bottom), 126,611 parts, 116,628 texts, **110,335 links** (median 45 per side; WACV 81 per
+  image). Earlier estimate of ~250k links was too high: the visible-label check halves the boards and KiCad sides are smaller.
+  Example drawing `results/linking/kicad_side_example.jpg`.
