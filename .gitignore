@@ -1,0 +1,8 @@
+# derived from the WACV photos (third-party dataset) — not redistributed; rebuilt from gdino_fewshot symlinks / scripts
+data/
+crops/
+crops_both/
+page/img/
+logs/
+__pycache__/
+*.pyc

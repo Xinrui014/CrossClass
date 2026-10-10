@@ -1,0 +1,5169 @@
+{
+ "n_parts": 5585,
+ "methods": [
+  "det",
+  "qwen",
+  "ocr"
+ ],
+ "counts": {
+  "Resistor": {
+   "det": {
+    "right": 1042,
+    "wrong": 104,
+    "missed": 656
+   },
+   "qwen": {
+    "right": 1073,
+    "wrong": 73,
+    "missed": 656
+   },
+   "ocr": {
+    "right": 1050,
+    "wrong": 96,
+    "missed": 656
+   }
+  },
+  "Capacitor": {
+   "det": {
+    "right": 1840,
+    "missed": 494,
+    "wrong": 52
+   },
+   "qwen": {
+    "right": 1214,
+    "wrong": 678,
+    "missed": 494
+   },
+   "ocr": {
+    "right": 1845,
+    "missed": 494,
+    "wrong": 47
+   }
+  },
+  "Inductor": {
+   "det": {
+    "wrong": 51,
+    "right": 25,
+    "missed": 2
+   },
+   "qwen": {
+    "right": 56,
+    "wrong": 20,
+    "missed": 2
+   },
+   "ocr": {
+    "right": 30,
+    "wrong": 46,
+    "missed": 2
+   }
+  },
+  "Connector": {
+   "det": {
+    "missed": 288,
+    "right": 246,
+    "wrong": 25
+   },
+   "qwen": {
+    "missed": 288,
+    "right": 182,
+    "wrong": 89
+   },
+   "ocr": {
+    "missed": 288,
+    "right": 251,
+    "wrong": 20
+   }
+  },
+  "Diode": {
+   "det": {
+    "right": 129,
+    "wrong": 69,
+    "missed": 35
+   },
+   "qwen": {
+    "wrong": 114,
+    "missed": 35,
+    "right": 84
+   },
+   "ocr": {
+    "right": 138,
+    "wrong": 60,
+    "missed": 35
+   }
+  },
+  "Switch": {
+   "det": {
+    "right": 85,
+    "missed": 13,
+    "wrong": 27
+   },
+   "qwen": {
+    "right": 102,
+    "wrong": 10,
+    "missed": 13
+   },
+   "ocr": {
+    "right": 93,
+    "missed": 13,
+    "wrong": 19
+   }
+  },
+  "Transistor": {
+   "det": {
+    "wrong": 40,
+    "missed": 15,
+    "right": 6
+   },
+   "qwen": {
+    "right": 31,
+    "wrong": 15,
+    "missed": 15
+   },
+   "ocr": {
+    "right": 11,
+    "wrong": 35,
+    "missed": 15
+   }
+  },
+  "IC": {
+   "det": {
+    "right": 256,
+    "wrong": 38,
+    "missed": 14
+   },
+   "qwen": {
+    "right": 257,
+    "wrong": 37,
+    "missed": 14
+   },
+   "ocr": {
+    "right": 260,
+    "wrong": 34,
+    "missed": 14
+   }
+  },
+  "Oscillator": {
+   "det": {
+    "right": 16,
+    "wrong": 14,
+    "missed": 3
+   },
+   "qwen": {
+    "wrong": 9,
+    "right": 21,
+    "missed": 3
+   },
+   "ocr": {
+    "right": 16,
+    "wrong": 14,
+    "missed": 3
+   }
+  }
+ },
+ "pairs": {
+  "det": [
+   [
+    [
+     "Resistor",
+     "missed"
+    ],
+    656
+   ],
+   [
+    [
+     "Capacitor",
+     "missed"
+    ],
+    494
+   ],
+   [
+    [
+     "Connector",
+     "missed"
+    ],
+    288
+   ],
+   [
+    [
+     "Resistor",
+     "Capacitor"
+    ],
+    89
+   ],
+   [
+    [
+     "Diode",
+     "Capacitor"
+    ],
+    36
+   ],
+   [
+    [
+     "Diode",
+     "missed"
+    ],
+    35
+   ],
+   [
+    [
+     "Transistor",
+     "IC"
+    ],
+    31
+   ],
+   [
+    [
+     "Inductor",
+     "Capacitor"
+    ],
+    29
+   ],
+   [
+    [
+     "Switch",
+     "Connector"
+    ],
+    25
+   ],
+   [
+    [
+     "Capacitor",
+     "Diode"
+    ],
+    23
+   ],
+   [
+    [
+     "Capacitor",
+     "Resistor"
+    ],
+    21
+   ],
+   [
+    [
+     "Diode",
+     "IC"
+    ],
+    19
+   ],
+   [
+    [
+     "Inductor",
+     "Resistor"
+    ],
+    17
+   ],
+   [
+    [
+     "Transistor",
+     "missed"
+    ],
+    15
+   ],
+   [
+    [
+     "IC",
+     "Transistor"
+    ],
+    15
+   ],
+   [
+    [
+     "IC",
+     "missed"
+    ],
+    14
+   ],
+   [
+    [
+     "Switch",
+     "missed"
+    ],
+    13
+   ],
+   [
+    [
+     "Connector",
+     "Resistor"
+    ],
+    13
+   ],
+   [
+    [
+     "Resistor",
+     "IC"
+    ],
+    9
+   ],
+   [
+    [
+     "IC",
+     "Connector"
+    ],
+    8
+   ],
+   [
+    [
+     "Diode",
+     "Resistor"
+    ],
+    7
+   ],
+   [
+    [
+     "Diode",
+     "Connector"
+    ],
+    6
+   ],
+   [
+    [
+     "IC",
+     "Inductor"
+    ],
+    6
+   ],
+   [
+    [
+     "Connector",
+     "IC"
+    ],
+    5
+   ],
+   [
+    [
+     "Oscillator",
+     "IC"
+    ],
+    5
+   ],
+   [
+    [
+     "IC",
+     "Oscillator"
+    ],
+    4
+   ],
+   [
+    [
+     "Resistor",
+     "Connector"
+    ],
+    4
+   ],
+   [
+    [
+     "Oscillator",
+     "Inductor"
+    ],
+    4
+   ],
+   [
+    [
+     "Transistor",
+     "Connector"
+    ],
+    4
+   ],
+   [
+    [
+     "Oscillator",
+     "Capacitor"
+    ],
+    3
+   ],
+   [
+    [
+     "Inductor",
+     "IC"
+    ],
+    3
+   ],
+   [
+    [
+     "Oscillator",
+     "missed"
+    ],
+    3
+   ],
+   [
+    [
+     "Connector",
+     "Capacitor"
+    ],
+    3
+   ],
+   [
+    [
+     "Capacitor",
+     "IC"
+    ],
+    3
+   ],
+   [
+    [
+     "IC",
+     "Diode"
+    ],
+    2
+   ],
+   [
+    [
+     "IC",
+     "Resistor"
+    ],
+    2
+   ],
+   [
+    [
+     "Inductor",
+     "missed"
+    ],
+    2
+   ],
+   [
+    [
+     "Resistor",
+     "Inductor"
+    ],
+    2
+   ],
+   [
+    [
+     "Transistor",
+     "Inductor"
+    ],
+    2
+   ],
+   [
+    [
+     "Inductor",
+     "Connector"
+    ],
+    2
+   ],
+   [
+    [
+     "Switch",
+     "Diode"
+    ],
+    2
+   ],
+   [
+    [
+     "Capacitor",
+     "Connector"
+    ],
+    2
+   ],
+   [
+    [
+     "Capacitor",
+     "Switch"
+    ],
+    2
+   ],
+   [
+    [
+     "Diode",
+     "Switch"
+    ],
+    1
+   ],
+   [
+    [
+     "Transistor",
+     "Resistor"
+    ],
+    1
+   ],
+   [
+    [
+     "Connector",
+     "Switch"
+    ],
+    1
+   ],
+   [
+    [
+     "Oscillator",
+     "Transistor"
+    ],
+    1
+   ],
+   [
+    [
+     "IC",
+     "Capacitor"
+    ],
+    1
+   ],
+   [
+    [
+     "Capacitor",
+     "Inductor"
+    ],
+    1
+   ],
+   [
+    [
+     "Oscillator",
+     "Connector"
+    ],
+    1
+   ],
+   [
+    [
+     "Connector",
+     "Transistor"
+    ],
+    1
+   ],
+   [
+    [
+     "Transistor",
+     "Oscillator"
+    ],
+    1
+   ],
+   [
+    [
+     "Transistor",
+     "Diode"
+    ],
+    1
+   ],
+   [
+    [
+     "Connector",
+     "Diode"
+    ],
+    1
+   ],
+   [
+    [
+     "Connector",
+     "Inductor"
+    ],
+    1
+   ]
+  ],
+  "qwen": [
+   [
+    [
+     "Resistor",
+     "missed"
+    ],
+    656
+   ],
+   [
+    [
+     "Capacitor",
+     "missed"
+    ],
+    494
+   ],
+   [
+    [
+     "Capacitor",
+     "Resistor"
+    ],
+    463
+   ],
+   [
+    [
+     "Connector",
+     "missed"
+    ],
+    288
+   ],
+   [
+    [
+     "Capacitor",
+     "Inductor"
+    ],
+    205
+   ],
+   [
+    [
+     "Diode",
+     "Resistor"
+    ],
+    55
+   ],
+   [
+    [
+     "Diode",
+     "missed"
+    ],
+    35
+   ],
+   [
+    [
+     "Connector",
+     "Switch"
+    ],
+    35
+   ],
+   [
+    [
+     "Diode",
+     "Inductor"
+    ],
+    32
+   ],
+   [
+    [
+     "Resistor",
+     "Inductor"
+    ],
+    24
+   ],
+   [
+    [
+     "Resistor",
+     "Capacitor"
+    ],
+    22
+   ],
+   [
+    [
+     "Connector",
+     "Inductor"
+    ],
+    16
+   ],
+   [
+    [
+     "Resistor",
+     "IC"
+    ],
+    15
+   ],
+   [
+    [
+     "Transistor",
+     "missed"
+    ],
+    15
+   ],
+   [
+    [
+     "IC",
+     "Resistor"
+    ],
+    14
+   ],
+   [
+    [
+     "IC",
+     "missed"
+    ],
+    14
+   ],
+   [
+    [
+     "Inductor",
+     "Resistor"
+    ],
+    14
+   ],
+   [
+    [
+     "Switch",
+     "missed"
+    ],
+    13
+   ],
+   [
+    [
+     "IC",
+     "Inductor"
+    ],
+    12
+   ],
+   [
+    [
+     "Diode",
+     "Capacitor"
+    ],
+    10
+   ],
+   [
+    [
+     "Connector",
+     "Diode"
+    ],
+    10
+   ],
+   [
+    [
+     "Connector",
+     "Oscillator"
+    ],
+    8
+   ],
+   [
+    [
+     "IC",
+     "Transistor"
+    ],
+    7
+   ],
+   [
+    [
+     "Resistor",
+     "Diode"
+    ],
+    7
+   ],
+   [
+    [
+     "Diode",
+     "Transistor"
+    ],
+    7
+   ],
+   [
+    [
+     "Connector",
+     "Resistor"
+    ],
+    7
+   ],
+   [
+    [
+     "Oscillator",
+     "Inductor"
+    ],
+    6
+   ],
+   [
+    [
+     "Transistor",
+     "IC"
+    ],
+    6
+   ],
+   [
+    [
+     "Switch",
+     "Connector"
+    ],
+    6
+   ],
+   [
+    [
+     "Connector",
+     "Transistor"
+    ],
+    6
+   ],
+   [
+    [
+     "Connector",
+     "IC"
+    ],
+    5
+   ],
+   [
+    [
+     "Diode",
+     "IC"
+    ],
+    5
+   ],
+   [
+    [
+     "Transistor",
+     "Resistor"
+    ],
+    5
+   ],
+   [
+    [
+     "Capacitor",
+     "Transistor"
+    ],
+    4
+   ],
+   [
+    [
+     "Transistor",
+     "Inductor"
+    ],
+    3
+   ],
+   [
+    [
+     "Resistor",
+     "Connector"
+    ],
+    3
+   ],
+   [
+    [
+     "Oscillator",
+     "missed"
+    ],
+    3
+   ],
+   [
+    [
+     "Capacitor",
+     "IC"
+    ],
+    3
+   ],
+   [
+    [
+     "Inductor",
+     "Capacitor"
+    ],
+    3
+   ],
+   [
+    [
+     "Diode",
+     "Switch"
+    ],
+    2
+   ],
+   [
+    [
+     "Resistor",
+     "Switch"
+    ],
+    2
+   ],
+   [
+    [
+     "Inductor",
+     "missed"
+    ],
+    2
+   ],
+   [
+    [
+     "Connector",
+     "Capacitor"
+    ],
+    2
+   ],
+   [
+    [
+     "IC",
+     "Switch"
+    ],
+    2
+   ],
+   [
+    [
+     "Diode",
+     "Oscillator"
+    ],
+    2
+   ],
+   [
+    [
+     "Switch",
+     "IC"
+    ],
+    2
+   ],
+   [
+    [
+     "Capacitor",
+     "Oscillator"
+    ],
+    2
+   ],
+   [
+    [
+     "Oscillator",
+     "IC"
+    ],
+    2
+   ],
+   [
+    [
+     "Switch",
+     "Oscillator"
+    ],
+    1
+   ],
+   [
+    [
+     "Inductor",
+     "IC"
+    ],
+    1
+   ],
+   [
+    [
+     "IC",
+     "Diode"
+    ],
+    1
+   ],
+   [
+    [
+     "Inductor",
+     "Connector"
+    ],
+    1
+   ],
+   [
+    [
+     "Capacitor",
+     "Diode"
+    ],
+    1
+   ],
+   [
+    [
+     "Inductor",
+     "Oscillator"
+    ],
+    1
+   ],
+   [
+    [
+     "IC",
+     "Capacitor"
+    ],
+    1
+   ],
+   [
+    [
+     "Diode",
+     "Connector"
+    ],
+    1
+   ],
+   [
+    [
+     "Oscillator",
+     "Connector"
+    ],
+    1
+   ],
+   [
+    [
+     "Switch",
+     "Inductor"
+    ],
+    1
+   ],
+   [
+    [
+     "Transistor",
+     "Capacitor"
+    ],
+    1
+   ]
+  ],
+  "ocr": [
+   [
+    [
+     "Resistor",
+     "missed"
+    ],
+    656
+   ],
+   [
+    [
+     "Capacitor",
+     "missed"
+    ],
+    494
+   ],
+   [
+    [
+     "Connector",
+     "missed"
+    ],
+    288
+   ],
+   [
+    [
+     "Resistor",
+     "Capacitor"
+    ],
+    80
+   ],
+   [
+    [
+     "Diode",
+     "missed"
+    ],
+    35
+   ],
+   [
+    [
+     "Diode",
+     "Capacitor"
+    ],
+    28
+   ],
+   [
+    [
+     "Inductor",
+     "Capacitor"
+    ],
+    27
+   ],
+   [
+    [
+     "Transistor",
+     "IC"
+    ],
+    26
+   ],
+   [
+    [
+     "Capacitor",
+     "Diode"
+    ],
+    19
+   ],
+   [
+    [
+     "Capacitor",
+     "Resistor"
+    ],
+    18
+   ],
+   [
+    [
+     "Switch",
+     "Connector"
+    ],
+    17
+   ],
+   [
+    [
+     "Transistor",
+     "missed"
+    ],
+    15
+   ],
+   [
+    [
+     "Diode",
+     "IC"
+    ],
+    15
+   ],
+   [
+    [
+     "Inductor",
+     "Resistor"
+    ],
+    14
+   ],
+   [
+    [
+     "IC",
+     "missed"
+    ],
+    14
+   ],
+   [
+    [
+     "Switch",
+     "missed"
+    ],
+    13
+   ],
+   [
+    [
+     "IC",
+     "Transistor"
+    ],
+    13
+   ],
+   [
+    [
+     "Connector",
+     "Resistor"
+    ],
+    10
+   ],
+   [
+    [
+     "Resistor",
+     "IC"
+    ],
+    9
+   ],
+   [
+    [
+     "IC",
+     "Connector"
+    ],
+    8
+   ],
+   [
+    [
+     "IC",
+     "Inductor"
+    ],
+    7
+   ],
+   [
+    [
+     "Diode",
+     "Resistor"
+    ],
+    6
+   ],
+   [
+    [
+     "Oscillator",
+     "IC"
+    ],
+    5
+   ],
+   [
+    [
+     "Diode",
+     "Inductor"
+    ],
+    5
+   ],
+   [
+    [
+     "Diode",
+     "Connector"
+    ],
+    5
+   ],
+   [
+    [
+     "Capacitor",
+     "IC"
+    ],
+    4
+   ],
+   [
+    [
+     "Oscillator",
+     "Inductor"
+    ],
+    4
+   ],
+   [
+    [
+     "Transistor",
+     "Connector"
+    ],
+    4
+   ],
+   [
+    [
+     "Connector",
+     "IC"
+    ],
+    3
+   ],
+   [
+    [
+     "Oscillator",
+     "Capacitor"
+    ],
+    3
+   ],
+   [
+    [
+     "IC",
+     "Oscillator"
+    ],
+    3
+   ],
+   [
+    [
+     "Inductor",
+     "IC"
+    ],
+    3
+   ],
+   [
+    [
+     "Resistor",
+     "Connector"
+    ],
+    3
+   ],
+   [
+    [
+     "Capacitor",
+     "Switch"
+    ],
+    3
+   ],
+   [
+    [
+     "Oscillator",
+     "missed"
+    ],
+    3
+   ],
+   [
+    [
+     "Inductor",
+     "missed"
+    ],
+    2
+   ],
+   [
+    [
+     "Resistor",
+     "Inductor"
+    ],
+    2
+   ],
+   [
+    [
+     "Connector",
+     "Inductor"
+    ],
+    2
+   ],
+   [
+    [
+     "Transistor",
+     "Inductor"
+    ],
+    2
+   ],
+   [
+    [
+     "Inductor",
+     "Connector"
+    ],
+    2
+   ],
+   [
+    [
+     "Switch",
+     "Diode"
+    ],
+    2
+   ],
+   [
+    [
+     "Connector",
+     "Capacitor"
+    ],
+    2
+   ],
+   [
+    [
+     "Connector",
+     "Diode"
+    ],
+    2
+   ],
+   [
+    [
+     "Capacitor",
+     "Connector"
+    ],
+    2
+   ],
+   [
+    [
+     "Diode",
+     "Switch"
+    ],
+    1
+   ],
+   [
+    [
+     "IC",
+     "Diode"
+    ],
+    1
+   ],
+   [
+    [
+     "Resistor",
+     "Diode"
+    ],
+    1
+   ],
+   [
+    [
+     "Transistor",
+     "Resistor"
+    ],
+    1
+   ],
+   [
+    [
+     "IC",
+     "Resistor"
+    ],
+    1
+   ],
+   [
+    [
+     "Connector",
+     "Switch"
+    ],
+    1
+   ],
+   [
+    [
+     "Resistor",
+     "Switch"
+    ],
+    1
+   ],
+   [
+    [
+     "Oscillator",
+     "Transistor"
+    ],
+    1
+   ],
+   [
+    [
+     "IC",
+     "Capacitor"
+    ],
+    1
+   ],
+   [
+    [
+     "Capacitor",
+     "Inductor"
+    ],
+    1
+   ],
+   [
+    [
+     "Oscillator",
+     "Connector"
+    ],
+    1
+   ],
+   [
+    [
+     "Transistor",
+     "Oscillator"
+    ],
+    1
+   ],
+   [
+    [
+     "Transistor",
+     "Diode"
+    ],
+    1
+   ]
+  ]
+ },
+ "samples": {
+  "Resistor": [
+   {
+    "st": "ML365_Top",
+    "i": 74,
+    "box": [
+     1544.0,
+     533.0,
+     1574.0,
+     551.0
+    ],
+    "gt": 0,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 313,
+    "img": "ML365_Top__74.jpg",
+    "why": "det: Resistor \u2192 missed"
+   },
+   {
+    "st": "ML365_Top",
+    "i": 162,
+    "box": [
+     501.0,
+     1024.0,
+     517.0,
+     1057.0
+    ],
+    "gt": 0,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "img": "ML365_Top__162.jpg",
+    "why": "det: Resistor \u2192 missed"
+   },
+   {
+    "st": "SystemAce_Top",
+    "i": 172,
+    "box": [
+     1274.0,
+     2133.0,
+     1380.0,
+     2210.0
+    ],
+    "gt": 0,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 208,
+    "img": "SystemAce_Top__172.jpg",
+    "why": "det: Resistor \u2192 missed"
+   },
+   {
+    "st": "ML365_Bottom",
+    "i": 242,
+    "box": [
+     3899.0,
+     1113.0,
+     3931.0,
+     1127.0
+    ],
+    "gt": 0,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "img": "ML365_Bottom__242.jpg",
+    "why": "det: Resistor \u2192 missed"
+   },
+   {
+    "st": "ML450_Top2",
+    "i": 132,
+    "box": [
+     2056.0,
+     1108.0,
+     2087.0,
+     1122.0
+    ],
+    "gt": 0,
+    "det": 1,
+    "det_conf": 0.5610914826393127,
+    "qwen": 0,
+    "qwen_conf": 0.5610914826393127,
+    "ocr": 1,
+    "ocr_conf": 0.5610914826393127,
+    "read": [
+     "C82",
+     "medium"
+    ],
+    "qc": [
+     "Resistor",
+     "high"
+    ],
+    "det_k": 123,
+    "img": "ML450_Top2__132.jpg",
+    "why": "det: Resistor \u2192 Capacitor"
+   },
+   {
+    "st": "ML450_Top2",
+    "i": 166,
+    "box": [
+     3289.0,
+     1905.0,
+     3322.0,
+     1960.0
+    ],
+    "gt": 0,
+    "det": 1,
+    "det_conf": 0.3948921263217926,
+    "qwen": 0,
+    "qwen_conf": 0.3948921263217926,
+    "ocr": 1,
+    "ocr_conf": 0.3948921263217926,
+    "read": null,
+    "qc": null,
+    "det_k": 255,
+    "img": "ML450_Top2__166.jpg",
+    "why": "det: Resistor \u2192 Capacitor"
+   },
+   {
+    "st": "XLVDSproSupply_Top1",
+    "i": 123,
+    "box": [
+     3219.0,
+     953.0,
+     3254.0,
+     1006.0
+    ],
+    "gt": 0,
+    "det": 1,
+    "det_conf": 0.25256186723709106,
+    "qwen": 0,
+    "qwen_conf": 0.25256186723709106,
+    "ocr": 0,
+    "ocr_conf": 0.25256186723709106,
+    "read": [
+     "R41",
+     "medium"
+    ],
+    "qc": [
+     "Resistor",
+     "high"
+    ],
+    "det_k": 398,
+    "img": "XLVDSproSupply_Top1__123.jpg",
+    "why": "det: Resistor \u2192 Capacitor"
+   },
+   {
+    "st": "ML450_Top2",
+    "i": 157,
+    "box": [
+     576.0,
+     1768.0,
+     609.0,
+     1829.0
+    ],
+    "gt": 0,
+    "det": 1,
+    "det_conf": 0.5856419205665588,
+    "qwen": 0,
+    "qwen_conf": 0.5856419205665588,
+    "ocr": 1,
+    "ocr_conf": 0.5856419205665588,
+    "read": [
+     "FB1",
+     "low"
+    ],
+    "qc": [
+     "Inductor",
+     "medium"
+    ],
+    "det_k": 117,
+    "img": "ML450_Top2__157.jpg",
+    "why": "det: Resistor \u2192 Capacitor"
+   },
+   {
+    "st": "ML450_Bottom1",
+    "i": 97,
+    "box": [
+     3880.0,
+     1937.0,
+     3934.0,
+     1999.0
+    ],
+    "gt": 0,
+    "det": 7,
+    "det_conf": 0.4058971405029297,
+    "qwen": 0,
+    "qwen_conf": 0.4058971405029297,
+    "ocr": 7,
+    "ocr_conf": 0.4058971405029297,
+    "read": [
+     "NONE",
+     "medium"
+    ],
+    "qc": [
+     "IC",
+     "high"
+    ],
+    "det_k": 75,
+    "img": "ML450_Bottom1__97.jpg",
+    "why": "det: Resistor \u2192 IC"
+   },
+   {
+    "st": "XCM-307A_Top",
+    "i": 48,
+    "box": [
+     1952.0,
+     549.0,
+     2069.0,
+     652.0
+    ],
+    "gt": 0,
+    "det": 7,
+    "det_conf": 0.2642415463924408,
+    "qwen": 0,
+    "qwen_conf": 0.525606632232666,
+    "ocr": 7,
+    "ocr_conf": 0.2642415463924408,
+    "read": [
+     "NONE",
+     "medium"
+    ],
+    "qc": [
+     "IC",
+     "high"
+    ],
+    "det_k": 62,
+    "img": "XCM-307A_Top__48.jpg",
+    "why": "det: Resistor \u2192 IC"
+   },
+   {
+    "st": "ML450_Bottom2",
+    "i": 67,
+    "box": [
+     3863.0,
+     571.0,
+     3916.0,
+     634.0
+    ],
+    "gt": 0,
+    "det": 7,
+    "det_conf": 0.2522050440311432,
+    "qwen": 0,
+    "qwen_conf": 0.2522050440311432,
+    "ocr": 7,
+    "ocr_conf": 0.2522050440311432,
+    "read": [
+     "NONE",
+     "medium"
+    ],
+    "qc": [
+     "IC",
+     "high"
+    ],
+    "det_k": 68,
+    "img": "ML450_Bottom2__67.jpg",
+    "why": "det: Resistor \u2192 IC"
+   },
+   {
+    "st": "ML450_Bottom1",
+    "i": 95,
+    "box": [
+     3883.0,
+     1706.0,
+     3934.0,
+     1769.0
+    ],
+    "gt": 0,
+    "det": 7,
+    "det_conf": 0.2979377210140228,
+    "qwen": 0,
+    "qwen_conf": 0.2979377210140228,
+    "ocr": 7,
+    "ocr_conf": 0.2979377210140228,
+    "read": [
+     "NONE",
+     "high"
+    ],
+    "qc": [
+     "IC",
+     "high"
+    ],
+    "det_k": 91,
+    "img": "ML450_Bottom1__95.jpg",
+    "why": "det: Resistor \u2192 IC"
+   },
+   {
+    "st": "ML450_Bottom2",
+    "i": 64,
+    "box": [
+     2582.0,
+     389.0,
+     2611.0,
+     402.0
+    ],
+    "gt": 0,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 90,
+    "img": "ML450_Bottom2__64.jpg",
+    "why": "qwen: Resistor \u2192 missed"
+   },
+   {
+    "st": "ML365_Bottom",
+    "i": 247,
+    "box": [
+     3899.0,
+     1224.0,
+     3932.0,
+     1238.0
+    ],
+    "gt": 0,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "img": "ML365_Bottom__247.jpg",
+    "why": "qwen: Resistor \u2192 missed"
+   },
+   {
+    "st": "ML365_Top",
+    "i": 173,
+    "box": [
+     638.0,
+     1158.0,
+     671.0,
+     1172.0
+    ],
+    "gt": 0,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 446,
+    "img": "ML365_Top__173.jpg",
+    "why": "qwen: Resistor \u2192 missed"
+   },
+   {
+    "st": "ML365_Bottom",
+    "i": 104,
+    "box": [
+     2835.0,
+     623.0,
+     2850.0,
+     660.0
+    ],
+    "gt": 0,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 1085,
+    "img": "ML365_Bottom__104.jpg",
+    "why": "qwen: Resistor \u2192 missed"
+   }
+  ],
+  "Capacitor": [
+   {
+    "st": "ML365_Bottom",
+    "i": 343,
+    "box": [
+     2878.0,
+     1093.0,
+     2915.0,
+     1111.0
+    ],
+    "gt": 1,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "img": "ML365_Bottom__343.jpg",
+    "why": "det: Capacitor \u2192 missed"
+   },
+   {
+    "st": "ML365_Bottom",
+    "i": 142,
+    "box": [
+     3320.0,
+     401.0,
+     3372.0,
+     423.0
+    ],
+    "gt": 1,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 303,
+    "img": "ML365_Bottom__142.jpg",
+    "why": "det: Capacitor \u2192 missed"
+   },
+   {
+    "st": "ML365_Bottom",
+    "i": 348,
+    "box": [
+     2902.0,
+     748.0,
+     2917.0,
+     784.0
+    ],
+    "gt": 1,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 272,
+    "img": "ML365_Bottom__348.jpg",
+    "why": "det: Capacitor \u2192 missed"
+   },
+   {
+    "st": "Zedboard",
+    "i": 244,
+    "box": [
+     3837.0,
+     2360.0,
+     3892.0,
+     2413.0
+    ],
+    "gt": 1,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 363,
+    "img": "Zedboard__244.jpg",
+    "why": "det: Capacitor \u2192 missed"
+   },
+   {
+    "st": "MicroZed_Bottom",
+    "i": 196,
+    "box": [
+     2224.0,
+     1012.0,
+     2271.0,
+     1033.0
+    ],
+    "gt": 1,
+    "det": 4,
+    "det_conf": 0.6212313175201416,
+    "qwen": 1,
+    "qwen_conf": 0.6212313175201416,
+    "ocr": 4,
+    "ocr_conf": 0.6212313175201416,
+    "read": [
+     "C206",
+     "medium"
+    ],
+    "qc": [
+     "Capacitor",
+     "high"
+    ],
+    "det_k": 138,
+    "img": "MicroZed_Bottom__196.jpg",
+    "why": "det: Capacitor \u2192 Diode"
+   },
+   {
+    "st": "Zedboard",
+    "i": 81,
+    "box": [
+     3609.0,
+     1215.0,
+     3646.0,
+     1280.0
+    ],
+    "gt": 1,
+    "det": 4,
+    "det_conf": 0.6029162406921387,
+    "qwen": 1,
+    "qwen_conf": 0.6029162406921387,
+    "ocr": 1,
+    "ocr_conf": 0.6029162406921387,
+    "read": [
+     "C70",
+     "high"
+    ],
+    "qc": [
+     "Capacitor",
+     "high"
+    ],
+    "det_k": 102,
+    "img": "Zedboard__81.jpg",
+    "why": "det: Capacitor \u2192 Diode"
+   },
+   {
+    "st": "Zedboard",
+    "i": 174,
+    "box": [
+     3414.0,
+     1499.0,
+     3474.0,
+     1532.0
+    ],
+    "gt": 1,
+    "det": 4,
+    "det_conf": 0.5937192440032959,
+    "qwen": 1,
+    "qwen_conf": 0.5937192440032959,
+    "ocr": 4,
+    "ocr_conf": 0.5937192440032959,
+    "read": [
+     "NONE",
+     "medium"
+    ],
+    "qc": [
+     "Resistor",
+     "high"
+    ],
+    "det_k": 107,
+    "img": "Zedboard__174.jpg",
+    "why": "det: Capacitor \u2192 Diode"
+   },
+   {
+    "st": "Arty_Bottom",
+    "i": 183,
+    "box": [
+     1429.0,
+     1130.0,
+     1450.0,
+     1170.0
+    ],
+    "gt": 1,
+    "det": 4,
+    "det_conf": 0.47488683462142944,
+    "qwen": 1,
+    "qwen_conf": 0.47488683462142944,
+    "ocr": 4,
+    "ocr_conf": 0.47488683462142944,
+    "read": [
+     "NONE",
+     "medium"
+    ],
+    "qc": [
+     "Capacitor",
+     "high"
+    ],
+    "det_k": 301,
+    "img": "Arty_Bottom__183.jpg",
+    "why": "det: Capacitor \u2192 Diode"
+   },
+   {
+    "st": "Arty_Bottom",
+    "i": 325,
+    "box": [
+     1005.0,
+     1806.0,
+     1025.0,
+     1846.0
+    ],
+    "gt": 1,
+    "det": 0,
+    "det_conf": 0.46598947048187256,
+    "qwen": 1,
+    "qwen_conf": 0.46598947048187256,
+    "ocr": 0,
+    "ocr_conf": 0.46598947048187256,
+    "read": [
+     "77",
+     "high"
+    ],
+    "qc": [
+     "Resistor",
+     "high"
+    ],
+    "det_k": 303,
+    "img": "Arty_Bottom__325.jpg",
+    "why": "det: Capacitor \u2192 Resistor"
+   },
+   {
+    "st": "STK644",
+    "i": 48,
+    "box": [
+     2364.0,
+     724.0,
+     2411.0,
+     822.0
+    ],
+    "gt": 1,
+    "det": 0,
+    "det_conf": 0.5064996480941772,
+    "qwen": 0,
+    "qwen_conf": 0.5064996480941772,
+    "ocr": 0,
+    "ocr_conf": 0.5064996480941772,
+    "read": [
+     "NONE",
+     "high"
+    ],
+    "qc": [
+     "Resistor",
+     "medium"
+    ],
+    "det_k": 48,
+    "img": "STK644__48.jpg",
+    "why": "det: Capacitor \u2192 Resistor"
+   },
+   {
+    "st": "Zedboard",
+    "i": 128,
+    "box": [
+     2212.0,
+     1800.0,
+     2274.0,
+     1835.0
+    ],
+    "gt": 1,
+    "det": 0,
+    "det_conf": 0.5215111374855042,
+    "qwen": 1,
+    "qwen_conf": 0.5215111374855042,
+    "ocr": 1,
+    "ocr_conf": 0.5215111374855042,
+    "read": [
+     "C82",
+     "high"
+    ],
+    "qc": [
+     "Resistor",
+     "high"
+    ],
+    "det_k": 132,
+    "img": "Zedboard__128.jpg",
+    "why": "det: Capacitor \u2192 Resistor"
+   },
+   {
+    "st": "MicroZed_Bottom",
+    "i": 150,
+    "box": [
+     1606.0,
+     887.0,
+     1631.0,
+     905.0
+    ],
+    "gt": 1,
+    "det": 0,
+    "det_conf": 0.3215126395225525,
+    "qwen": 1,
+    "qwen_conf": 0.3215126395225525,
+    "ocr": 0,
+    "ocr_conf": 0.3215126395225525,
+    "read": [
+     "C173",
+     "high"
+    ],
+    "qc": [
+     "Capacitor",
+     "high"
+    ],
+    "det_k": 183,
+    "img": "MicroZed_Bottom__150.jpg",
+    "why": "det: Capacitor \u2192 Resistor"
+   },
+   {
+    "st": "ML450_Bottom1",
+    "i": 171,
+    "box": [
+     2171.0,
+     2373.0,
+     2182.0,
+     2401.0
+    ],
+    "gt": 1,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "img": "ML450_Bottom1__171.jpg",
+    "why": "qwen: Capacitor \u2192 missed"
+   },
+   {
+    "st": "Arty_Bottom",
+    "i": 167,
+    "box": [
+     1037.0,
+     1055.0,
+     1063.0,
+     1081.0
+    ],
+    "gt": 1,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 375,
+    "img": "Arty_Bottom__167.jpg",
+    "why": "qwen: Capacitor \u2192 missed"
+   },
+   {
+    "st": "ML450_Bottom1",
+    "i": 127,
+    "box": [
+     1969.0,
+     2259.0,
+     2001.0,
+     2275.0
+    ],
+    "gt": 1,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 144,
+    "img": "ML450_Bottom1__127.jpg",
+    "why": "qwen: Capacitor \u2192 missed"
+   },
+   {
+    "st": "Zedboard",
+    "i": 222,
+    "box": [
+     3000.0,
+     1543.0,
+     3051.0,
+     1593.0
+    ],
+    "gt": 1,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "img": "Zedboard__222.jpg",
+    "why": "qwen: Capacitor \u2192 missed"
+   }
+  ],
+  "Inductor": [
+   {
+    "st": "ZTurn",
+    "i": 150,
+    "box": [
+     2899.0,
+     1272.0,
+     2956.0,
+     1396.0
+    ],
+    "gt": 2,
+    "det": 1,
+    "det_conf": 0.765208899974823,
+    "qwen": 1,
+    "qwen_conf": 0.765208899974823,
+    "ocr": 1,
+    "ocr_conf": 0.765208899974823,
+    "read": [
+     "NONE",
+     "medium"
+    ],
+    "qc": [
+     "Capacitor",
+     "high"
+    ],
+    "det_k": 69,
+    "img": "ZTurn__150.jpg",
+    "why": "det: Inductor \u2192 Capacitor"
+   },
+   {
+    "st": "ML450_Top2",
+    "i": 226,
+    "box": [
+     3225.0,
+     1759.0,
+     3279.0,
+     1846.0
+    ],
+    "gt": 2,
+    "det": 1,
+    "det_conf": 0.5673577785491943,
+    "qwen": 2,
+    "qwen_conf": 0.5673577785491943,
+    "ocr": 1,
+    "ocr_conf": 0.5673577785491943,
+    "read": [
+     "L4",
+     "high"
+    ],
+    "qc": [
+     "Inductor",
+     "high"
+    ],
+    "det_k": 120,
+    "img": "ML450_Top2__226.jpg",
+    "why": "det: Inductor \u2192 Capacitor"
+   },
+   {
+    "st": "MicroZed_Top",
+    "i": 140,
+    "box": [
+     1349.0,
+     1052.0,
+     1386.0,
+     1143.0
+    ],
+    "gt": 2,
+    "det": 1,
+    "det_conf": 0.6359491348266602,
+    "qwen": 2,
+    "qwen_conf": 0.6359491348266602,
+    "ocr": 1,
+    "ocr_conf": 0.6359491348266602,
+    "read": [
+     "C25",
+     "medium"
+    ],
+    "qc": [
+     "Capacitor",
+     "high"
+    ],
+    "det_k": 131,
+    "img": "MicroZed_Top__140.jpg",
+    "why": "det: Inductor \u2192 Capacitor"
+   },
+   {
+    "st": "MicroZed_Top",
+    "i": 143,
+    "box": [
+     1393.0,
+     988.0,
+     1428.0,
+     1077.0
+    ],
+    "gt": 2,
+    "det": 1,
+    "det_conf": 0.783290445804596,
+    "qwen": 2,
+    "qwen_conf": 0.783290445804596,
+    "ocr": 1,
+    "ocr_conf": 0.783290445804596,
+    "read": [
+     "L3",
+     "high"
+    ],
+    "qc": [
+     "Inductor",
+     "high"
+    ],
+    "det_k": 79,
+    "img": "MicroZed_Top__143.jpg",
+    "why": "det: Inductor \u2192 Capacitor"
+   },
+   {
+    "st": "UTL-016",
+    "i": 26,
+    "box": [
+     160.0,
+     370.0,
+     211.0,
+     402.0
+    ],
+    "gt": 2,
+    "det": 0,
+    "det_conf": 0.8562078475952148,
+    "qwen": 2,
+    "qwen_conf": 0.8562078475952148,
+    "ocr": 0,
+    "ocr_conf": 0.8562078475952148,
+    "read": [
+     "L1",
+     "high"
+    ],
+    "qc": [
+     "Inductor",
+     "high"
+    ],
+    "det_k": 14,
+    "img": "UTL-016__26.jpg",
+    "why": "det: Inductor \u2192 Resistor"
+   },
+   {
+    "st": "Virtex6",
+    "i": 56,
+    "box": [
+     883.0,
+     2650.0,
+     944.0,
+     2683.0
+    ],
+    "gt": 2,
+    "det": 0,
+    "det_conf": 0.5330207347869873,
+    "qwen": 0,
+    "qwen_conf": 0.5330207347869873,
+    "ocr": 0,
+    "ocr_conf": 0.5330207347869873,
+    "read": [
+     "F18",
+     "high"
+    ],
+    "qc": [
+     "Resistor",
+     "high"
+    ],
+    "det_k": 175,
+    "img": "Virtex6__56.jpg",
+    "why": "det: Inductor \u2192 Resistor"
+   },
+   {
+    "st": "XCM-307A_Bottom",
+    "i": 6,
+    "box": [
+     219.0,
+     274.0,
+     234.0,
+     306.0
+    ],
+    "gt": 2,
+    "det": 0,
+    "det_conf": 0.7560338973999023,
+    "qwen": 0,
+    "qwen_conf": 0.7560338973999023,
+    "ocr": 0,
+    "ocr_conf": 0.7560338973999023,
+    "read": [
+     "R24",
+     "low"
+    ],
+    "qc": [
+     "Resistor",
+     "high"
+    ],
+    "det_k": 43,
+    "img": "XCM-307A_Bottom__6.jpg",
+    "why": "det: Inductor \u2192 Resistor"
+   },
+   {
+    "st": "Arty_Top",
+    "i": 98,
+    "box": [
+     800.0,
+     1363.0,
+     849.0,
+     1458.0
+    ],
+    "gt": 2,
+    "det": 0,
+    "det_conf": 0.5935225486755371,
+    "qwen": 2,
+    "qwen_conf": 0.5935225486755371,
+    "ocr": 0,
+    "ocr_conf": 0.5935225486755371,
+    "read": [
+     "C32",
+     "medium"
+    ],
+    "qc": [
+     "Capacitor",
+     "high"
+    ],
+    "det_k": 102,
+    "img": "Arty_Top__98.jpg",
+    "why": "det: Inductor \u2192 Resistor"
+   },
+   {
+    "st": "Spartan6Redux_Top",
+    "i": 50,
+    "box": [
+     526.0,
+     192.0,
+     546.0,
+     214.0
+    ],
+    "gt": 2,
+    "det": 7,
+    "det_conf": 0.8014102578163147,
+    "qwen": 0,
+    "qwen_conf": 0.8014102578163147,
+    "ocr": 7,
+    "ocr_conf": 0.8014102578163147,
+    "read": [
+     "Q1",
+     "high"
+    ],
+    "qc": [
+     "Transistor",
+     "high"
+    ],
+    "det_k": 40,
+    "img": "Spartan6Redux_Top__50.jpg",
+    "why": "det: Inductor \u2192 IC"
+   },
+   {
+    "st": "XLVDSproSupply_Top1",
+    "i": 141,
+    "box": [
+     3536.0,
+     1602.0,
+     3590.0,
+     1686.0
+    ],
+    "gt": 2,
+    "det": 7,
+    "det_conf": 0.7327489256858826,
+    "qwen": 2,
+    "qwen_conf": 0.7327489256858826,
+    "ocr": 7,
+    "ocr_conf": 0.7327489256858826,
+    "read": [
+     "L4",
+     "high"
+    ],
+    "qc": [
+     "Inductor",
+     "high"
+    ],
+    "det_k": 194,
+    "img": "XLVDSproSupply_Top1__141.jpg",
+    "why": "det: Inductor \u2192 IC"
+   },
+   {
+    "st": "DigitalDiscovery",
+    "i": 28,
+    "box": [
+     694.0,
+     221.0,
+     731.0,
+     245.0
+    ],
+    "gt": 2,
+    "det": 7,
+    "det_conf": 0.30227363109588623,
+    "qwen": 2,
+    "qwen_conf": 0.30227363109588623,
+    "ocr": 7,
+    "ocr_conf": 0.30227363109588623,
+    "read": [
+     "L1",
+     "high"
+    ],
+    "qc": [
+     "Inductor",
+     "high"
+    ],
+    "det_k": 180,
+    "img": "DigitalDiscovery__28.jpg",
+    "why": "det: Inductor \u2192 IC"
+   },
+   {
+    "st": "Arty_Top",
+    "i": 111,
+    "box": [
+     1585.0,
+     2205.0,
+     1640.0,
+     2299.0
+    ],
+    "gt": 2,
+    "det": 0,
+    "det_conf": 0.6246862411499023,
+    "qwen": 0,
+    "qwen_conf": 0.6246862411499023,
+    "ocr": 0,
+    "ocr_conf": 0.6246862411499023,
+    "read": null,
+    "qc": null,
+    "det_k": 293,
+    "img": "Arty_Top__111.jpg",
+    "why": "qwen: Inductor \u2192 Resistor"
+   },
+   {
+    "st": "ZTurn",
+    "i": 145,
+    "box": [
+     2788.0,
+     1091.0,
+     2835.0,
+     1213.0
+    ],
+    "gt": 2,
+    "det": 1,
+    "det_conf": 0.7178354859352112,
+    "qwen": 0,
+    "qwen_conf": 0.7178354859352112,
+    "ocr": 1,
+    "ocr_conf": 0.7178354859352112,
+    "read": [
+     "FB4",
+     "high"
+    ],
+    "qc": [
+     "Capacitor",
+     "high"
+    ],
+    "det_k": 99,
+    "img": "ZTurn__145.jpg",
+    "why": "qwen: Inductor \u2192 Resistor"
+   },
+   {
+    "st": "XCM-307A_Bottom",
+    "i": 8,
+    "box": [
+     310.0,
+     270.0,
+     325.0,
+     304.0
+    ],
+    "gt": 2,
+    "det": 0,
+    "det_conf": 0.7753904461860657,
+    "qwen": 0,
+    "qwen_conf": 0.7753904461860657,
+    "ocr": 0,
+    "ocr_conf": 0.7753904461860657,
+    "read": [
+     "F2",
+     "high"
+    ],
+    "qc": [
+     "Resistor",
+     "high"
+    ],
+    "det_k": 41,
+    "img": "XCM-307A_Bottom__8.jpg",
+    "why": "qwen: Inductor \u2192 Resistor"
+   },
+   {
+    "st": "Arty_Top",
+    "i": 97,
+    "box": [
+     833.0,
+     933.0,
+     887.0,
+     1020.0
+    ],
+    "gt": 2,
+    "det": 0,
+    "det_conf": 0.4887046813964844,
+    "qwen": 0,
+    "qwen_conf": 0.4887046813964844,
+    "ocr": 0,
+    "ocr_conf": 0.4887046813964844,
+    "read": [
+     "FB3",
+     "high"
+    ],
+    "qc": [
+     "Inductor",
+     "high"
+    ],
+    "det_k": 119,
+    "img": "Arty_Top__97.jpg",
+    "why": "qwen: Inductor \u2192 Resistor"
+   },
+   {
+    "st": "ZTurn",
+    "i": 148,
+    "box": [
+     2757.0,
+     1270.0,
+     2807.0,
+     1387.0
+    ],
+    "gt": 2,
+    "det": 1,
+    "det_conf": 0.766325056552887,
+    "qwen": 1,
+    "qwen_conf": 0.766325056552887,
+    "ocr": 1,
+    "ocr_conf": 0.766325056552887,
+    "read": [
+     "C38",
+     "medium"
+    ],
+    "qc": [
+     "Capacitor",
+     "high"
+    ],
+    "det_k": 67,
+    "img": "ZTurn__148.jpg",
+    "why": "qwen: Inductor \u2192 Capacitor"
+   },
+   {
+    "st": "ZTurn",
+    "i": 151,
+    "box": [
+     3050.0,
+     1272.0,
+     3110.0,
+     1402.0
+    ],
+    "gt": 2,
+    "det": 1,
+    "det_conf": 0.7652658224105835,
+    "qwen": 1,
+    "qwen_conf": 0.7652658224105835,
+    "ocr": 1,
+    "ocr_conf": 0.7652658224105835,
+    "read": [
+     "C50",
+     "high"
+    ],
+    "qc": [
+     "Capacitor",
+     "high"
+    ],
+    "det_k": 68,
+    "img": "ZTurn__151.jpg",
+    "why": "qwen: Inductor \u2192 Capacitor"
+   }
+  ],
+  "Connector": [
+   {
+    "st": "Ztex",
+    "i": 37,
+    "box": [
+     25.0,
+     584.0,
+     1200.0,
+     670.0
+    ],
+    "gt": 3,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "img": "Ztex__37.jpg",
+    "why": "det: Connector \u2192 missed"
+   },
+   {
+    "st": "Arty_Top",
+    "i": 86,
+    "box": [
+     710.0,
+     2422.0,
+     832.0,
+     2650.0
+    ],
+    "gt": 3,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 228,
+    "img": "Arty_Top__86.jpg",
+    "why": "det: Connector \u2192 missed"
+   },
+   {
+    "st": "Ztex",
+    "i": 36,
+    "box": [
+     19.0,
+     4.0,
+     1197.0,
+     81.0
+    ],
+    "gt": 3,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 591,
+    "img": "Ztex__36.jpg",
+    "why": "det: Connector \u2192 missed"
+   },
+   {
+    "st": "DuetWIFI_Bottom",
+    "i": 13,
+    "box": [
+     1483.0,
+     1233.0,
+     1728.0,
+     1302.0
+    ],
+    "gt": 3,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "img": "DuetWIFI_Bottom__13.jpg",
+    "why": "det: Connector \u2192 missed"
+   },
+   {
+    "st": "Zedboard",
+    "i": 71,
+    "box": [
+     4559.0,
+     1113.0,
+     4633.0,
+     1256.0
+    ],
+    "gt": 3,
+    "det": 0,
+    "det_conf": 0.5611429810523987,
+    "qwen": 5,
+    "qwen_conf": 0.5611429810523987,
+    "ocr": 3,
+    "ocr_conf": 0.5611429810523987,
+    "read": [
+     "JP9",
+     "medium"
+    ],
+    "qc": [
+     "Capacitor",
+     "high"
+    ],
+    "det_k": 122,
+    "img": "Zedboard__71.jpg",
+    "why": "det: Connector \u2192 Resistor"
+   },
+   {
+    "st": "Spartan3",
+    "i": 22,
+    "box": [
+     1474.0,
+     3022.0,
+     1597.0,
+     3199.0
+    ],
+    "gt": 3,
+    "det": 0,
+    "det_conf": 0.7692446112632751,
+    "qwen": 2,
+    "qwen_conf": 0.7692446112632751,
+    "ocr": 0,
+    "ocr_conf": 0.7692446112632751,
+    "read": [
+     "J1",
+     "high"
+    ],
+    "qc": [
+     "Inductor",
+     "high"
+    ],
+    "det_k": 31,
+    "img": "Spartan3__22.jpg",
+    "why": "det: Connector \u2192 Resistor"
+   },
+   {
+    "st": "Zedboard",
+    "i": 34,
+    "box": [
+     1446.0,
+     2293.0,
+     1607.0,
+     2370.0
+    ],
+    "gt": 3,
+    "det": 0,
+    "det_conf": 0.5104069113731384,
+    "qwen": 2,
+    "qwen_conf": 0.5104069113731384,
+    "ocr": 0,
+    "ocr_conf": 0.5104069113731384,
+    "read": [
+     "JP5",
+     "low"
+    ],
+    "qc": [
+     "Inductor",
+     "high"
+    ],
+    "det_k": 136,
+    "img": "Zedboard__34.jpg",
+    "why": "det: Connector \u2192 Resistor"
+   },
+   {
+    "st": "Zedboard",
+    "i": 38,
+    "box": [
+     1356.0,
+     1332.0,
+     1512.0,
+     1420.0
+    ],
+    "gt": 3,
+    "det": 0,
+    "det_conf": 0.3712991178035736,
+    "qwen": 2,
+    "qwen_conf": 0.3712991178035736,
+    "ocr": 0,
+    "ocr_conf": 0.3712991178035736,
+    "read": [
+     "JP3",
+     "medium"
+    ],
+    "qc": [
+     "Inductor",
+     "high"
+    ],
+    "det_k": 191,
+    "img": "Zedboard__38.jpg",
+    "why": "det: Connector \u2192 Resistor"
+   },
+   {
+    "st": "Spartan3",
+    "i": 37,
+    "box": [
+     2736.0,
+     1170.0,
+     2821.0,
+     1362.0
+    ],
+    "gt": 3,
+    "det": 7,
+    "det_conf": 0.39566537737846375,
+    "qwen": 5,
+    "qwen_conf": 0.39566537737846375,
+    "ocr": 4,
+    "ocr_conf": 0.39566537737846375,
+    "read": null,
+    "qc": null,
+    "det_k": 91,
+    "img": "Spartan3__37.jpg",
+    "why": "det: Connector \u2192 IC"
+   },
+   {
+    "st": "Arty_Top",
+    "i": 2,
+    "box": [
+     1846.0,
+     299.0,
+     2500.0,
+     884.0
+    ],
+    "gt": 3,
+    "det": 7,
+    "det_conf": 0.29711589217185974,
+    "qwen": 3,
+    "qwen_conf": 0.29711589217185974,
+    "ocr": 7,
+    "ocr_conf": 0.29711589217185974,
+    "read": null,
+    "qc": null,
+    "det_k": 136,
+    "img": "Arty_Top__2.jpg",
+    "why": "det: Connector \u2192 IC"
+   },
+   {
+    "st": "ThingMagicM6e",
+    "i": 81,
+    "box": [
+     1423.0,
+     1511.0,
+     1519.0,
+     1642.0
+    ],
+    "gt": 3,
+    "det": 7,
+    "det_conf": 0.3780730962753296,
+    "qwen": 6,
+    "qwen_conf": 0.3780730962753296,
+    "ocr": 7,
+    "ocr_conf": 0.3780730962753296,
+    "read": [
+     "J17",
+     "high"
+    ],
+    "qc": [
+     "Transistor",
+     "high"
+    ],
+    "det_k": 66,
+    "img": "ThingMagicM6e__81.jpg",
+    "why": "det: Connector \u2192 IC"
+   },
+   {
+    "st": "ATTIOT_Bottom",
+    "i": 23,
+    "box": [
+     2164.0,
+     758.0,
+     2370.0,
+     1068.0
+    ],
+    "gt": 3,
+    "det": 7,
+    "det_conf": 0.7709077596664429,
+    "qwen": 7,
+    "qwen_conf": 0.7709077596664429,
+    "ocr": 7,
+    "ocr_conf": 0.7709077596664429,
+    "read": [
+     "U15",
+     "high"
+    ],
+    "qc": [
+     "Oscillator",
+     "high"
+    ],
+    "det_k": 52,
+    "img": "ATTIOT_Bottom__23.jpg",
+    "why": "det: Connector \u2192 IC"
+   },
+   {
+    "st": "SystemAce_Bottom",
+    "i": 1,
+    "box": [
+     667.0,
+     440.0,
+     998.0,
+     540.0
+    ],
+    "gt": 3,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "img": "SystemAce_Bottom__1.jpg",
+    "why": "qwen: Connector \u2192 missed"
+   },
+   {
+    "st": "XLVDSproSupply_Top1",
+    "i": 295,
+    "box": [
+     175.0,
+     2045.0,
+     458.0,
+     2326.0
+    ],
+    "gt": 3,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 857,
+    "img": "XLVDSproSupply_Top1__295.jpg",
+    "why": "qwen: Connector \u2192 missed"
+   },
+   {
+    "st": "ATTIOT_Bottom",
+    "i": 41,
+    "box": [
+     1363.0,
+     682.0,
+     1509.0,
+     759.0
+    ],
+    "gt": 3,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "img": "ATTIOT_Bottom__41.jpg",
+    "why": "qwen: Connector \u2192 missed"
+   },
+   {
+    "st": "EDA-008_Top",
+    "i": 81,
+    "box": [
+     89.0,
+     450.0,
+     869.0,
+     503.0
+    ],
+    "gt": 3,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "img": "EDA-008_Top__81.jpg",
+    "why": "qwen: Connector \u2192 missed"
+   }
+  ],
+  "Diode": [
+   {
+    "st": "Spartan3",
+    "i": 79,
+    "box": [
+     1809.0,
+     1686.0,
+     1865.0,
+     1804.0
+    ],
+    "gt": 4,
+    "det": 1,
+    "det_conf": 0.680908203125,
+    "qwen": 0,
+    "qwen_conf": 0.680908203125,
+    "ocr": 1,
+    "ocr_conf": 0.680908203125,
+    "read": [
+     "NONE",
+     "medium"
+    ],
+    "qc": [
+     "Inductor",
+     "high"
+    ],
+    "det_k": 50,
+    "img": "Spartan3__79.jpg",
+    "why": "det: Diode \u2192 Capacitor"
+   },
+   {
+    "st": "Zybo",
+    "i": 23,
+    "box": [
+     1228.0,
+     1956.0,
+     1275.0,
+     2051.0
+    ],
+    "gt": 4,
+    "det": 1,
+    "det_conf": 0.26690831780433655,
+    "qwen": 2,
+    "qwen_conf": 0.41062217950820923,
+    "ocr": 1,
+    "ocr_conf": 0.26690831780433655,
+    "read": [
+     "LD4",
+     "high"
+    ],
+    "qc": [
+     "Inductor",
+     "high"
+    ],
+    "det_k": 168,
+    "img": "Zybo__23.jpg",
+    "why": "det: Diode \u2192 Capacitor"
+   },
+   {
+    "st": "Virtex6",
+    "i": 105,
+    "box": [
+     4370.0,
+     2946.0,
+     4406.0,
+     3021.0
+    ],
+    "gt": 4,
+    "det": 1,
+    "det_conf": 0.3389905095100403,
+    "qwen": 0,
+    "qwen_conf": 0.3389905095100403,
+    "ocr": 1,
+    "ocr_conf": 0.3389905095100403,
+    "read": [
+     "DS18",
+     "medium"
+    ],
+    "qc": [
+     "Resistor",
+     "high"
+    ],
+    "det_k": 280,
+    "img": "Virtex6__105.jpg",
+    "why": "det: Diode \u2192 Capacitor"
+   },
+   {
+    "st": "OlimexRed",
+    "i": 0,
+    "box": [
+     209.0,
+     844.0,
+     373.0,
+     932.0
+    ],
+    "gt": 4,
+    "det": 1,
+    "det_conf": 0.6167329549789429,
+    "qwen": 0,
+    "qwen_conf": 0.6167329549789429,
+    "ocr": 1,
+    "ocr_conf": 0.6167329549789429,
+    "read": [
+     "NONE",
+     "medium"
+    ],
+    "qc": [
+     "Resistor",
+     "high"
+    ],
+    "det_k": 46,
+    "img": "OlimexRed__0.jpg",
+    "why": "det: Diode \u2192 Capacitor"
+   },
+   {
+    "st": "ATTIOT_Bottom",
+    "i": 74,
+    "box": [
+     787.0,
+     885.0,
+     846.0,
+     985.0
+    ],
+    "gt": 4,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 163,
+    "img": "ATTIOT_Bottom__74.jpg",
+    "why": "det: Diode \u2192 missed"
+   },
+   {
+    "st": "Virtex6",
+    "i": 6,
+    "box": [
+     583.0,
+     887.0,
+     665.0,
+     933.0
+    ],
+    "gt": 4,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "img": "Virtex6__6.jpg",
+    "why": "det: Diode \u2192 missed"
+   },
+   {
+    "st": "Arty_Top",
+    "i": 81,
+    "box": [
+     579.0,
+     1507.0,
+     674.0,
+     1550.0
+    ],
+    "gt": 4,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 149,
+    "img": "Arty_Top__81.jpg",
+    "why": "det: Diode \u2192 missed"
+   },
+   {
+    "st": "Zedboard",
+    "i": 170,
+    "box": [
+     3657.0,
+     3126.0,
+     3690.0,
+     3186.0
+    ],
+    "gt": 4,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 351,
+    "img": "Zedboard__170.jpg",
+    "why": "det: Diode \u2192 missed"
+   },
+   {
+    "st": "MicroZed_Bottom",
+    "i": 161,
+    "box": [
+     350.0,
+     1167.0,
+     428.0,
+     1257.0
+    ],
+    "gt": 4,
+    "det": 7,
+    "det_conf": 0.799102783203125,
+    "qwen": 4,
+    "qwen_conf": 0.799102783203125,
+    "ocr": 7,
+    "ocr_conf": 0.799102783203125,
+    "read": [
+     "D11",
+     "medium"
+    ],
+    "qc": [
+     "Diode",
+     "high"
+    ],
+    "det_k": 27,
+    "img": "MicroZed_Bottom__161.jpg",
+    "why": "det: Diode \u2192 IC"
+   },
+   {
+    "st": "Spartan6Redux_Top",
+    "i": 19,
+    "box": [
+     21.0,
+     359.0,
+     60.0,
+     400.0
+    ],
+    "gt": 4,
+    "det": 7,
+    "det_conf": 0.4709048271179199,
+    "qwen": 4,
+    "qwen_conf": 0.4709048271179199,
+    "ocr": 7,
+    "ocr_conf": 0.4709048271179199,
+    "read": [
+     "D1",
+     "high"
+    ],
+    "qc": [
+     "Transistor",
+     "high"
+    ],
+    "det_k": 65,
+    "img": "Spartan6Redux_Top__19.jpg",
+    "why": "det: Diode \u2192 IC"
+   },
+   {
+    "st": "XLVDSproSupply_Top1",
+    "i": 333,
+    "box": [
+     767.0,
+     1847.0,
+     829.0,
+     1907.0
+    ],
+    "gt": 4,
+    "det": 7,
+    "det_conf": 0.2849520444869995,
+    "qwen": 0,
+    "qwen_conf": 0.2849520444869995,
+    "ocr": 7,
+    "ocr_conf": 0.2849520444869995,
+    "read": [
+     "R119",
+     "medium"
+    ],
+    "qc": [
+     "Transistor",
+     "high"
+    ],
+    "det_k": 381,
+    "img": "XLVDSproSupply_Top1__333.jpg",
+    "why": "det: Diode \u2192 IC"
+   },
+   {
+    "st": "EDA-008_Bottom",
+    "i": 105,
+    "box": [
+     436.0,
+     319.0,
+     452.0,
+     333.0
+    ],
+    "gt": 4,
+    "det": 7,
+    "det_conf": 0.5936265587806702,
+    "qwen": 4,
+    "qwen_conf": 0.5936265587806702,
+    "ocr": 7,
+    "ocr_conf": 0.5936265587806702,
+    "read": [
+     "DA3",
+     "high"
+    ],
+    "qc": [
+     "Transistor",
+     "high"
+    ],
+    "det_k": 101,
+    "img": "EDA-008_Bottom__105.jpg",
+    "why": "det: Diode \u2192 IC"
+   },
+   {
+    "st": "ThingMagicM6e",
+    "i": 26,
+    "box": [
+     351.0,
+     590.0,
+     408.0,
+     625.0
+    ],
+    "gt": 4,
+    "det": 4,
+    "det_conf": 0.7436625957489014,
+    "qwen": 0,
+    "qwen_conf": 0.7436625957489014,
+    "ocr": 4,
+    "ocr_conf": 0.7436625957489014,
+    "read": [
+     "R21",
+     "high"
+    ],
+    "qc": [
+     "Resistor",
+     "high"
+    ],
+    "det_k": 36,
+    "img": "ThingMagicM6e__26.jpg",
+    "why": "qwen: Diode \u2192 Resistor"
+   },
+   {
+    "st": "OlimexRed",
+    "i": 2,
+    "box": [
+     210.0,
+     1035.0,
+     378.0,
+     1123.0
+    ],
+    "gt": 4,
+    "det": 4,
+    "det_conf": 0.7644413113594055,
+    "qwen": 0,
+    "qwen_conf": 0.7644413113594055,
+    "ocr": 4,
+    "ocr_conf": 0.7644413113594055,
+    "read": [
+     "NONE",
+     "medium"
+    ],
+    "qc": [
+     "Resistor",
+     "high"
+    ],
+    "det_k": 33,
+    "img": "OlimexRed__2.jpg",
+    "why": "qwen: Diode \u2192 Resistor"
+   },
+   {
+    "st": "ThingMagicM6e",
+    "i": 25,
+    "box": [
+     353.0,
+     378.0,
+     413.0,
+     412.0
+    ],
+    "gt": 4,
+    "det": 4,
+    "det_conf": 0.7682280540466309,
+    "qwen": 0,
+    "qwen_conf": 0.7682280540466309,
+    "ocr": 4,
+    "ocr_conf": 0.7682280540466309,
+    "read": [
+     "R16",
+     "high"
+    ],
+    "qc": [
+     "Resistor",
+     "high"
+    ],
+    "det_k": 24,
+    "img": "ThingMagicM6e__25.jpg",
+    "why": "qwen: Diode \u2192 Resistor"
+   },
+   {
+    "st": "Spartan6Redux_Top",
+    "i": 31,
+    "box": [
+     252.0,
+     387.0,
+     263.0,
+     415.0
+    ],
+    "gt": 4,
+    "det": 4,
+    "det_conf": 0.7400720119476318,
+    "qwen": 0,
+    "qwen_conf": 0.7400720119476318,
+    "ocr": 4,
+    "ocr_conf": 0.7400720119476318,
+    "read": [
+     "L2",
+     "high"
+    ],
+    "qc": [
+     "Resistor",
+     "high"
+    ],
+    "det_k": 53,
+    "img": "Spartan6Redux_Top__31.jpg",
+    "why": "qwen: Diode \u2192 Resistor"
+   }
+  ],
+  "Switch": [
+   {
+    "st": "Zybo",
+    "i": 27,
+    "box": [
+     2038.0,
+     2598.0,
+     2282.0,
+     3088.0
+    ],
+    "gt": 5,
+    "det": 3,
+    "det_conf": 0.5409745573997498,
+    "qwen": 5,
+    "qwen_conf": 0.5409745573997498,
+    "ocr": 3,
+    "ocr_conf": 0.5409745573997498,
+    "read": [
+     "SW0",
+     "high"
+    ],
+    "qc": [
+     "Switch",
+     "high"
+    ],
+    "det_k": 140,
+    "img": "Zybo__27.jpg",
+    "why": "det: Switch \u2192 Connector"
+   },
+   {
+    "st": "ML365_Top",
+    "i": 328,
+    "box": [
+     1.0,
+     2036.0,
+     351.0,
+     2243.0
+    ],
+    "gt": 5,
+    "det": 3,
+    "det_conf": 0.614531397819519,
+    "qwen": 3,
+    "qwen_conf": 0.614531397819519,
+    "ocr": 5,
+    "ocr_conf": 0.614531397819519,
+    "read": [
+     "J5",
+     "high"
+    ],
+    "qc": [
+     "Connector",
+     "high"
+    ],
+    "det_k": 72,
+    "img": "ML365_Top__328.jpg",
+    "why": "det: Switch \u2192 Connector"
+   },
+   {
+    "st": "Virtex6",
+    "i": 178,
+    "box": [
+     4490.0,
+     504.0,
+     4777.0,
+     988.0
+    ],
+    "gt": 5,
+    "det": 3,
+    "det_conf": 0.5493863821029663,
+    "qwen": 5,
+    "qwen_conf": 0.5493863821029663,
+    "ocr": 5,
+    "ocr_conf": 0.5493863821029663,
+    "read": [
+     "SW2",
+     "high"
+    ],
+    "qc": [
+     "Switch",
+     "high"
+    ],
+    "det_k": 169,
+    "img": "Virtex6__178.jpg",
+    "why": "det: Switch \u2192 Connector"
+   },
+   {
+    "st": "ML450_Top2",
+    "i": 7,
+    "box": [
+     2948.0,
+     623.0,
+     3090.0,
+     764.0
+    ],
+    "gt": 5,
+    "det": 3,
+    "det_conf": 0.34014925360679626,
+    "qwen": 5,
+    "qwen_conf": 0.34014925360679626,
+    "ocr": 5,
+    "ocr_conf": 0.34014925360679626,
+    "read": [
+     "SW7",
+     "high"
+    ],
+    "qc": [
+     "Switch",
+     "high"
+    ],
+    "det_k": 195,
+    "img": "ML450_Top2__7.jpg",
+    "why": "det: Switch \u2192 Connector"
+   },
+   {
+    "st": "Spartan3",
+    "i": 12,
+    "box": [
+     4287.0,
+     3293.0,
+     4516.0,
+     3734.0
+    ],
+    "gt": 5,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 262,
+    "img": "Spartan3__12.jpg",
+    "why": "det: Switch \u2192 missed"
+   },
+   {
+    "st": "ML365_Top",
+    "i": 0,
+    "box": [
+     49.0,
+     359.0,
+     197.0,
+     506.0
+    ],
+    "gt": 5,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 139,
+    "img": "ML365_Top__0.jpg",
+    "why": "det: Switch \u2192 missed"
+   },
+   {
+    "st": "Spartan3",
+    "i": 10,
+    "box": [
+     3752.0,
+     3293.0,
+     3977.0,
+     3734.0
+    ],
+    "gt": 5,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 94,
+    "img": "Spartan3__10.jpg",
+    "why": "det: Switch \u2192 missed"
+   },
+   {
+    "st": "XLVDSproSupply_Top1",
+    "i": 1,
+    "box": [
+     309.0,
+     377.0,
+     505.0,
+     644.0
+    ],
+    "gt": 5,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 404,
+    "img": "XLVDSproSupply_Top1__1.jpg",
+    "why": "det: Switch \u2192 missed"
+   },
+   {
+    "st": "Spartan3",
+    "i": 11,
+    "box": [
+     4023.0,
+     3296.0,
+     4239.0,
+     3731.0
+    ],
+    "gt": 5,
+    "det": 4,
+    "det_conf": 0.2881489098072052,
+    "qwen": 5,
+    "qwen_conf": 0.2881489098072052,
+    "ocr": 4,
+    "ocr_conf": 0.2881489098072052,
+    "read": null,
+    "qc": null,
+    "det_k": 110,
+    "img": "Spartan3__11.jpg",
+    "why": "det: Switch \u2192 Diode"
+   },
+   {
+    "st": "Spartan3",
+    "i": 9,
+    "box": [
+     3487.0,
+     3296.0,
+     3703.0,
+     3734.0
+    ],
+    "gt": 5,
+    "det": 4,
+    "det_conf": 0.4066997170448303,
+    "qwen": 5,
+    "qwen_conf": 0.4066997170448303,
+    "ocr": 4,
+    "ocr_conf": 0.4066997170448303,
+    "read": null,
+    "qc": null,
+    "det_k": 128,
+    "img": "Spartan3__9.jpg",
+    "why": "det: Switch \u2192 Diode"
+   },
+   {
+    "st": "Arty_Top",
+    "i": 19,
+    "box": [
+     1961.0,
+     3153.0,
+     2202.0,
+     3645.0
+    ],
+    "gt": 5,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 156,
+    "img": "Arty_Top__19.jpg",
+    "why": "qwen: Switch \u2192 missed"
+   },
+   {
+    "st": "Arty_Top",
+    "i": 16,
+    "box": [
+     2895.0,
+     3155.0,
+     3139.0,
+     3645.0
+    ],
+    "gt": 5,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 138,
+    "img": "Arty_Top__16.jpg",
+    "why": "qwen: Switch \u2192 missed"
+   },
+   {
+    "st": "Spartan3",
+    "i": 8,
+    "box": [
+     3206.0,
+     3296.0,
+     3439.0,
+     3734.0
+    ],
+    "gt": 5,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 82,
+    "img": "Spartan3__8.jpg",
+    "why": "qwen: Switch \u2192 missed"
+   },
+   {
+    "st": "Spartan3",
+    "i": 14,
+    "box": [
+     4832.0,
+     3283.0,
+     5058.0,
+     3734.0
+    ],
+    "gt": 5,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 88,
+    "img": "Spartan3__14.jpg",
+    "why": "qwen: Switch \u2192 missed"
+   },
+   {
+    "st": "ML450_Top2",
+    "i": 204,
+    "box": [
+     70.0,
+     1863.0,
+     243.0,
+     2002.0
+    ],
+    "gt": 5,
+    "det": 5,
+    "det_conf": 0.837636411190033,
+    "qwen": 3,
+    "qwen_conf": 0.837636411190033,
+    "ocr": 5,
+    "ocr_conf": 0.837636411190033,
+    "read": [
+     "DIP2",
+     "high"
+    ],
+    "qc": [
+     "Switch",
+     "high"
+    ],
+    "det_k": 15,
+    "img": "ML450_Top2__204.jpg",
+    "why": "qwen: Switch \u2192 Connector"
+   },
+   {
+    "st": "EDA-008_Top",
+    "i": 62,
+    "box": [
+     424.0,
+     272.0,
+     460.0,
+     353.0
+    ],
+    "gt": 5,
+    "det": 5,
+    "det_conf": 0.8482953906059265,
+    "qwen": 3,
+    "qwen_conf": 0.8482953906059265,
+    "ocr": 5,
+    "ocr_conf": 0.8482953906059265,
+    "read": [
+     "SH1",
+     "medium"
+    ],
+    "qc": [
+     "Connector",
+     "high"
+    ],
+    "det_k": 19,
+    "img": "EDA-008_Top__62.jpg",
+    "why": "qwen: Switch \u2192 Connector"
+   },
+   {
+    "st": "SystemAce_Top",
+    "i": 58,
+    "box": [
+     2604.0,
+     988.0,
+     3023.0,
+     1173.0
+    ],
+    "gt": 5,
+    "det": 5,
+    "det_conf": 0.8509679436683655,
+    "qwen": 3,
+    "qwen_conf": 0.8509679436683655,
+    "ocr": 5,
+    "ocr_conf": 0.8509679436683655,
+    "read": [
+     "SW1",
+     "high"
+    ],
+    "qc": [
+     "Connector",
+     "high"
+    ],
+    "det_k": 5,
+    "img": "SystemAce_Top__58.jpg",
+    "why": "qwen: Switch \u2192 Connector"
+   },
+   {
+    "st": "SystemAce_Top",
+    "i": 168,
+    "box": [
+     2607.0,
+     2433.0,
+     3027.0,
+     2619.0
+    ],
+    "gt": 5,
+    "det": 5,
+    "det_conf": 0.8409051299095154,
+    "qwen": 3,
+    "qwen_conf": 0.8409051299095154,
+    "ocr": 5,
+    "ocr_conf": 0.8409051299095154,
+    "read": [
+     "SW2",
+     "medium"
+    ],
+    "qc": [
+     "Connector",
+     "high"
+    ],
+    "det_k": 6,
+    "img": "SystemAce_Top__168.jpg",
+    "why": "qwen: Switch \u2192 Connector"
+   }
+  ],
+  "Transistor": [
+   {
+    "st": "MicroZed_Bottom",
+    "i": 6,
+    "box": [
+     585.0,
+     190.0,
+     661.0,
+     279.0
+    ],
+    "gt": 6,
+    "det": 7,
+    "det_conf": 0.6449804306030273,
+    "qwen": 6,
+    "qwen_conf": 0.6449804306030273,
+    "ocr": 7,
+    "ocr_conf": 0.6449804306030273,
+    "read": [
+     "R9",
+     "medium"
+    ],
+    "qc": [
+     "Transistor",
+     "high"
+    ],
+    "det_k": 134,
+    "img": "MicroZed_Bottom__6.jpg",
+    "why": "det: Transistor \u2192 IC"
+   },
+   {
+    "st": "Spartan6Redux_Top",
+    "i": 52,
+    "box": [
+     520.0,
+     229.0,
+     552.0,
+     260.0
+    ],
+    "gt": 6,
+    "det": 7,
+    "det_conf": 0.5232464671134949,
+    "qwen": 0,
+    "qwen_conf": 0.5232464671134949,
+    "ocr": 7,
+    "ocr_conf": 0.5232464671134949,
+    "read": [
+     "Q1",
+     "high"
+    ],
+    "qc": [
+     "Transistor",
+     "high"
+    ],
+    "det_k": 62,
+    "img": "Spartan6Redux_Top__52.jpg",
+    "why": "det: Transistor \u2192 IC"
+   },
+   {
+    "st": "Arty_Bottom",
+    "i": 344,
+    "box": [
+     1980.0,
+     2015.0,
+     2049.0,
+     2074.0
+    ],
+    "gt": 6,
+    "det": 7,
+    "det_conf": 0.7230681777000427,
+    "qwen": 6,
+    "qwen_conf": 0.7230681777000427,
+    "ocr": 6,
+    "ocr_conf": 0.7230681777000427,
+    "read": [
+     "Q2",
+     "low"
+    ],
+    "qc": [
+     "IC",
+     "high"
+    ],
+    "det_k": 169,
+    "img": "Arty_Bottom__344.jpg",
+    "why": "det: Transistor \u2192 IC"
+   },
+   {
+    "st": "RPI3B_Bottom",
+    "i": 62,
+    "box": [
+     1389.0,
+     645.0,
+     1416.0,
+     679.0
+    ],
+    "gt": 6,
+    "det": 7,
+    "det_conf": 0.7154309749603271,
+    "qwen": 6,
+    "qwen_conf": 0.7154309749603271,
+    "ocr": 7,
+    "ocr_conf": 0.7154309749603271,
+    "read": [
+     "D6",
+     "medium"
+    ],
+    "qc": [
+     "Diode",
+     "high"
+    ],
+    "det_k": 91,
+    "img": "RPI3B_Bottom__62.jpg",
+    "why": "det: Transistor \u2192 IC"
+   },
+   {
+    "st": "XLVDSproSupply_Top1",
+    "i": 325,
+    "box": [
+     1686.0,
+     2697.0,
+     1750.0,
+     2758.0
+    ],
+    "gt": 6,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "img": "XLVDSproSupply_Top1__325.jpg",
+    "why": "det: Transistor \u2192 missed"
+   },
+   {
+    "st": "XLVDSproSupply_Top1",
+    "i": 180,
+    "box": [
+     1034.0,
+     1157.0,
+     1093.0,
+     1226.0
+    ],
+    "gt": 6,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 641,
+    "img": "XLVDSproSupply_Top1__180.jpg",
+    "why": "det: Transistor \u2192 missed"
+   },
+   {
+    "st": "XLVDSproSupply_Top1",
+    "i": 174,
+    "box": [
+     1034.0,
+     992.0,
+     1096.0,
+     1060.0
+    ],
+    "gt": 6,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 434,
+    "img": "XLVDSproSupply_Top1__174.jpg",
+    "why": "det: Transistor \u2192 missed"
+   },
+   {
+    "st": "XLVDSproSupply_Top1",
+    "i": 323,
+    "box": [
+     1688.0,
+     2541.0,
+     1752.0,
+     2602.0
+    ],
+    "gt": 6,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 1555,
+    "img": "XLVDSproSupply_Top1__323.jpg",
+    "why": "det: Transistor \u2192 missed"
+   },
+   {
+    "st": "XLVDSproSupply_Top1",
+    "i": 321,
+    "box": [
+     1688.0,
+     2385.0,
+     1752.0,
+     2445.0
+    ],
+    "gt": 6,
+    "det": 3,
+    "det_conf": 0.2836695611476898,
+    "qwen": 0,
+    "qwen_conf": 0.2836695611476898,
+    "ocr": 3,
+    "ocr_conf": 0.2836695611476898,
+    "read": [
+     "NONE",
+     "high"
+    ],
+    "qc": [
+     "Resistor",
+     "medium"
+    ],
+    "det_k": 382,
+    "img": "XLVDSproSupply_Top1__321.jpg",
+    "why": "det: Transistor \u2192 Connector"
+   },
+   {
+    "st": "XLVDSproSupply_Top1",
+    "i": 118,
+    "box": [
+     3147.0,
+     949.0,
+     3207.0,
+     1010.0
+    ],
+    "gt": 6,
+    "det": 3,
+    "det_conf": 0.2854843735694885,
+    "qwen": 1,
+    "qwen_conf": 0.2854843735694885,
+    "ocr": 3,
+    "ocr_conf": 0.2854843735694885,
+    "read": [
+     "L7",
+     "high"
+    ],
+    "qc": [
+     "Inductor",
+     "medium"
+    ],
+    "det_k": 380,
+    "img": "XLVDSproSupply_Top1__118.jpg",
+    "why": "det: Transistor \u2192 Connector"
+   },
+   {
+    "st": "XLVDSproSupply_Top1",
+    "i": 324,
+    "box": [
+     1687.0,
+     2619.0,
+     1752.0,
+     2680.0
+    ],
+    "gt": 6,
+    "det": 3,
+    "det_conf": 0.4859953820705414,
+    "qwen": 0,
+    "qwen_conf": 0.4859953820705414,
+    "ocr": 3,
+    "ocr_conf": 0.4859953820705414,
+    "read": [
+     "R12",
+     "medium"
+    ],
+    "qc": [
+     "Resistor",
+     "high"
+    ],
+    "det_k": 309,
+    "img": "XLVDSproSupply_Top1__324.jpg",
+    "why": "det: Transistor \u2192 Connector"
+   },
+   {
+    "st": "XLVDSproSupply_Top1",
+    "i": 322,
+    "box": [
+     1687.0,
+     2463.0,
+     1752.0,
+     2524.0
+    ],
+    "gt": 6,
+    "det": 3,
+    "det_conf": 0.4360222816467285,
+    "qwen": 2,
+    "qwen_conf": 0.4360222816467285,
+    "ocr": 3,
+    "ocr_conf": 0.4360222816467285,
+    "read": [
+     "NONE",
+     "high"
+    ],
+    "qc": [
+     "Resistor",
+     "medium"
+    ],
+    "det_k": 330,
+    "img": "XLVDSproSupply_Top1__322.jpg",
+    "why": "det: Transistor \u2192 Connector"
+   },
+   {
+    "st": "ML365_Top",
+    "i": 79,
+    "box": [
+     2141.0,
+     428.0,
+     2204.0,
+     491.0
+    ],
+    "gt": 6,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 140,
+    "img": "ML365_Top__79.jpg",
+    "why": "qwen: Transistor \u2192 missed"
+   },
+   {
+    "st": "XLVDSproSupply_Top1",
+    "i": 326,
+    "box": [
+     1687.0,
+     2776.0,
+     1750.0,
+     2837.0
+    ],
+    "gt": 6,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 416,
+    "img": "XLVDSproSupply_Top1__326.jpg",
+    "why": "qwen: Transistor \u2192 missed"
+   },
+   {
+    "st": "Virtex6",
+    "i": 28,
+    "box": [
+     1238.0,
+     1213.0,
+     1300.0,
+     1280.0
+    ],
+    "gt": 6,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 345,
+    "img": "Virtex6__28.jpg",
+    "why": "qwen: Transistor \u2192 missed"
+   },
+   {
+    "st": "DigitalDiscovery",
+    "i": 29,
+    "box": [
+     918.0,
+     146.0,
+     933.0,
+     176.0
+    ],
+    "gt": 6,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 209,
+    "img": "DigitalDiscovery__29.jpg",
+    "why": "qwen: Transistor \u2192 missed"
+   }
+  ],
+  "IC": [
+   {
+    "st": "Virtex6",
+    "i": 251,
+    "box": [
+     5005.0,
+     2516.0,
+     5114.0,
+     2645.0
+    ],
+    "gt": 7,
+    "det": 6,
+    "det_conf": 0.5732459425926208,
+    "qwen": 7,
+    "qwen_conf": 0.5732459425926208,
+    "ocr": 6,
+    "ocr_conf": 0.5732459425926208,
+    "read": [
+     "NONE",
+     "medium"
+    ],
+    "qc": [
+     "IC",
+     "high"
+    ],
+    "det_k": 163,
+    "img": "Virtex6__251.jpg",
+    "why": "det: IC \u2192 Transistor"
+   },
+   {
+    "st": "DigitalDiscovery",
+    "i": 42,
+    "box": [
+     620.0,
+     682.0,
+     884.0,
+     944.0
+    ],
+    "gt": 7,
+    "det": 6,
+    "det_conf": 0.3689653277397156,
+    "qwen": 7,
+    "qwen_conf": 0.3689653277397156,
+    "ocr": 6,
+    "ocr_conf": 0.3689653277397156,
+    "read": [
+     "IC6",
+     "high"
+    ],
+    "qc": [
+     "IC",
+     "high"
+    ],
+    "det_k": 173,
+    "img": "DigitalDiscovery__42.jpg",
+    "why": "det: IC \u2192 Transistor"
+   },
+   {
+    "st": "Virtex6",
+    "i": 249,
+    "box": [
+     5004.0,
+     2323.0,
+     5108.0,
+     2447.0
+    ],
+    "gt": 7,
+    "det": 6,
+    "det_conf": 0.7174721956253052,
+    "qwen": 7,
+    "qwen_conf": 0.7174721956253052,
+    "ocr": 6,
+    "ocr_conf": 0.7174721956253052,
+    "read": [
+     "NONE",
+     "medium"
+    ],
+    "qc": [
+     "IC",
+     "high"
+    ],
+    "det_k": 102,
+    "img": "Virtex6__249.jpg",
+    "why": "det: IC \u2192 Transistor"
+   },
+   {
+    "st": "Virtex6",
+    "i": 252,
+    "box": [
+     4942.0,
+     2734.0,
+     5019.0,
+     2814.0
+    ],
+    "gt": 7,
+    "det": 6,
+    "det_conf": 0.6303265690803528,
+    "qwen": 7,
+    "qwen_conf": 0.6303265690803528,
+    "ocr": 6,
+    "ocr_conf": 0.6303265690803528,
+    "read": [
+     "NONE",
+     "medium"
+    ],
+    "qc": [
+     "Inductor",
+     "medium"
+    ],
+    "det_k": 143,
+    "img": "Virtex6__252.jpg",
+    "why": "det: IC \u2192 Transistor"
+   },
+   {
+    "st": "Zedboard",
+    "i": 106,
+    "box": [
+     2497.0,
+     1035.0,
+     2543.0,
+     1085.0
+    ],
+    "gt": 7,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "img": "Zedboard__106.jpg",
+    "why": "det: IC \u2192 missed"
+   },
+   {
+    "st": "MicroZed_Top",
+    "i": 79,
+    "box": [
+     673.0,
+     786.0,
+     1023.0,
+     1014.0
+    ],
+    "gt": 7,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 169,
+    "img": "MicroZed_Top__79.jpg",
+    "why": "det: IC \u2192 missed"
+   },
+   {
+    "st": "ML365_Top",
+    "i": 248,
+    "box": [
+     1701.0,
+     1071.0,
+     2008.0,
+     1346.0
+    ],
+    "gt": 7,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "img": "ML365_Top__248.jpg",
+    "why": "det: IC \u2192 missed"
+   },
+   {
+    "st": "Arty_Top",
+    "i": 148,
+    "box": [
+     2687.0,
+     1700.0,
+     3550.0,
+     2536.0
+    ],
+    "gt": 7,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "img": "Arty_Top__148.jpg",
+    "why": "det: IC \u2192 missed"
+   },
+   {
+    "st": "UTL-103",
+    "i": 16,
+    "box": [
+     224.0,
+     3.0,
+     392.0,
+     129.0
+    ],
+    "gt": 7,
+    "det": 3,
+    "det_conf": 0.347998708486557,
+    "qwen": 2,
+    "qwen_conf": 0.347998708486557,
+    "ocr": 3,
+    "ocr_conf": 0.347998708486557,
+    "read": [
+     "U8",
+     "high"
+    ],
+    "qc": [
+     "IC",
+     "high"
+    ],
+    "det_k": 139,
+    "img": "UTL-103__16.jpg",
+    "why": "det: IC \u2192 Connector"
+   },
+   {
+    "st": "Virtex5",
+    "i": 16,
+    "box": [
+     818.0,
+     853.0,
+     1458.0,
+     1269.0
+    ],
+    "gt": 7,
+    "det": 3,
+    "det_conf": 0.3065410554409027,
+    "qwen": 7,
+    "qwen_conf": 0.3065410554409027,
+    "ocr": 3,
+    "ocr_conf": 0.3065410554409027,
+    "read": [
+     "U4",
+     "high"
+    ],
+    "qc": [
+     "IC",
+     "high"
+    ],
+    "det_k": 51,
+    "img": "Virtex5__16.jpg",
+    "why": "det: IC \u2192 Connector"
+   },
+   {
+    "st": "Virtex6",
+    "i": 59,
+    "box": [
+     850.0,
+     2430.0,
+     928.0,
+     2491.0
+    ],
+    "gt": 7,
+    "det": 3,
+    "det_conf": 0.30954405665397644,
+    "qwen": 7,
+    "qwen_conf": 0.30954405665397644,
+    "ocr": 3,
+    "ocr_conf": 0.30954405665397644,
+    "read": [
+     "U15",
+     "high"
+    ],
+    "qc": [
+     "IC",
+     "high"
+    ],
+    "det_k": 298,
+    "img": "Virtex6__59.jpg",
+    "why": "det: IC \u2192 Connector"
+   },
+   {
+    "st": "Virtex5",
+    "i": 34,
+    "box": [
+     2552.0,
+     1709.0,
+     2833.0,
+     2177.0
+    ],
+    "gt": 7,
+    "det": 3,
+    "det_conf": 0.26332274079322815,
+    "qwen": 7,
+    "qwen_conf": 0.45871976017951965,
+    "ocr": 3,
+    "ocr_conf": 0.26332274079322815,
+    "read": [
+     "U5",
+     "high"
+    ],
+    "qc": [
+     "IC",
+     "high"
+    ],
+    "det_k": 58,
+    "img": "Virtex5__34.jpg",
+    "why": "det: IC \u2192 Connector"
+   },
+   {
+    "st": "Spartan6_Bottom",
+    "i": 1,
+    "box": [
+     390.0,
+     186.0,
+     469.0,
+     280.0
+    ],
+    "gt": 7,
+    "det": 2,
+    "det_conf": 0.8621513247489929,
+    "qwen": 0,
+    "qwen_conf": 0.8621513247489929,
+    "ocr": 2,
+    "ocr_conf": 0.8621513247489929,
+    "read": [
+     "U3",
+     "high"
+    ],
+    "qc": [
+     "Resistor",
+     "high"
+    ],
+    "det_k": 3,
+    "img": "Spartan6_Bottom__1.jpg",
+    "why": "qwen: IC \u2192 Resistor"
+   },
+   {
+    "st": "EDA-008_Top",
+    "i": 27,
+    "box": [
+     772.0,
+     70.0,
+     796.0,
+     98.0
+    ],
+    "gt": 7,
+    "det": 7,
+    "det_conf": 0.7250586748123169,
+    "qwen": 0,
+    "qwen_conf": 0.7250586748123169,
+    "ocr": 7,
+    "ocr_conf": 0.7250586748123169,
+    "read": [
+     "U19",
+     "high"
+    ],
+    "qc": [
+     "IC",
+     "high"
+    ],
+    "det_k": 61,
+    "img": "EDA-008_Top__27.jpg",
+    "why": "qwen: IC \u2192 Resistor"
+   },
+   {
+    "st": "Zedboard",
+    "i": 119,
+    "box": [
+     1670.0,
+     1101.0,
+     1704.0,
+     1156.0
+    ],
+    "gt": 7,
+    "det": 7,
+    "det_conf": 0.6481856107711792,
+    "qwen": 0,
+    "qwen_conf": 0.6481856107711792,
+    "ocr": 7,
+    "ocr_conf": 0.6481856107711792,
+    "read": [
+     "IC3",
+     "high"
+    ],
+    "qc": [
+     "IC",
+     "high"
+    ],
+    "det_k": 86,
+    "img": "Zedboard__119.jpg",
+    "why": "qwen: IC \u2192 Resistor"
+   },
+   {
+    "st": "EDA-008_Top",
+    "i": 23,
+    "box": [
+     631.0,
+     71.0,
+     654.0,
+     98.0
+    ],
+    "gt": 7,
+    "det": 7,
+    "det_conf": 0.731652557849884,
+    "qwen": 0,
+    "qwen_conf": 0.731652557849884,
+    "ocr": 7,
+    "ocr_conf": 0.731652557849884,
+    "read": [
+     "U3",
+     "low"
+    ],
+    "qc": [
+     "IC",
+     "high"
+    ],
+    "det_k": 58,
+    "img": "EDA-008_Top__23.jpg",
+    "why": "qwen: IC \u2192 Resistor"
+   }
+  ],
+  "Oscillator": [
+   {
+    "st": "XLVDSproSupply_Top1",
+    "i": 219,
+    "box": [
+     2809.0,
+     1732.0,
+     3119.0,
+     1976.0
+    ],
+    "gt": 8,
+    "det": 7,
+    "det_conf": 0.7493730187416077,
+    "qwen": 2,
+    "qwen_conf": 0.7493730187416077,
+    "ocr": 7,
+    "ocr_conf": 0.7493730187416077,
+    "read": [
+     "NONE",
+     "medium"
+    ],
+    "qc": [
+     "Inductor",
+     "high"
+    ],
+    "det_k": 171,
+    "img": "XLVDSproSupply_Top1__219.jpg",
+    "why": "det: Oscillator \u2192 IC"
+   },
+   {
+    "st": "XLVDSproSupply_Top1",
+    "i": 356,
+    "box": [
+     520.0,
+     1936.0,
+     637.0,
+     2061.0
+    ],
+    "gt": 8,
+    "det": 7,
+    "det_conf": 0.7796529531478882,
+    "qwen": 8,
+    "qwen_conf": 0.7796529531478882,
+    "ocr": 7,
+    "ocr_conf": 0.7796529531478882,
+    "read": [
+     "FB1",
+     "low"
+    ],
+    "qc": [
+     "Inductor",
+     "high"
+    ],
+    "det_k": 113,
+    "img": "XLVDSproSupply_Top1__356.jpg",
+    "why": "det: Oscillator \u2192 IC"
+   },
+   {
+    "st": "XLVDSproSupply_Top1",
+    "i": 299,
+    "box": [
+     520.0,
+     2172.0,
+     637.0,
+     2305.0
+    ],
+    "gt": 8,
+    "det": 7,
+    "det_conf": 0.7783797383308411,
+    "qwen": 8,
+    "qwen_conf": 0.7783797383308411,
+    "ocr": 7,
+    "ocr_conf": 0.7783797383308411,
+    "read": [
+     "R123",
+     "medium"
+    ],
+    "qc": [
+     "Oscillator",
+     "high"
+    ],
+    "det_k": 118,
+    "img": "XLVDSproSupply_Top1__299.jpg",
+    "why": "det: Oscillator \u2192 IC"
+   },
+   {
+    "st": "ML365_Top",
+    "i": 286,
+    "box": [
+     1250.0,
+     1854.0,
+     1346.0,
+     1995.0
+    ],
+    "gt": 8,
+    "det": 7,
+    "det_conf": 0.5181942582130432,
+    "qwen": 8,
+    "qwen_conf": 0.5181942582130432,
+    "ocr": 7,
+    "ocr_conf": 0.5181942582130432,
+    "read": null,
+    "qc": null,
+    "det_k": 133,
+    "img": "ML365_Top__286.jpg",
+    "why": "det: Oscillator \u2192 IC"
+   },
+   {
+    "st": "Spartan6Redux_Top",
+    "i": 8,
+    "box": [
+     297.0,
+     63.0,
+     371.0,
+     129.0
+    ],
+    "gt": 8,
+    "det": 2,
+    "det_conf": 0.4794634282588959,
+    "qwen": 8,
+    "qwen_conf": 0.4794634282588959,
+    "ocr": 2,
+    "ocr_conf": 0.4794634282588959,
+    "read": [
+     "U22",
+     "high"
+    ],
+    "qc": [
+     "Oscillator",
+     "high"
+    ],
+    "det_k": 64,
+    "img": "Spartan6Redux_Top__8.jpg",
+    "why": "det: Oscillator \u2192 Inductor"
+   },
+   {
+    "st": "Virtex5",
+    "i": 18,
+    "box": [
+     456.0,
+     1442.0,
+     791.0,
+     1815.0
+    ],
+    "gt": 8,
+    "det": 2,
+    "det_conf": 0.8645727634429932,
+    "qwen": 8,
+    "qwen_conf": 0.8645727634429932,
+    "ocr": 2,
+    "ocr_conf": 0.8645727634429932,
+    "read": [
+     "Y2",
+     "high"
+    ],
+    "qc": [
+     "Oscillator",
+     "high"
+    ],
+    "det_k": 2,
+    "img": "Virtex5__18.jpg",
+    "why": "det: Oscillator \u2192 Inductor"
+   },
+   {
+    "st": "Ztex",
+    "i": 0,
+    "box": [
+     55.0,
+     92.0,
+     216.0,
+     161.0
+    ],
+    "gt": 8,
+    "det": 2,
+    "det_conf": 0.32188159227371216,
+    "qwen": 8,
+    "qwen_conf": 0.32188159227371216,
+    "ocr": 2,
+    "ocr_conf": 0.32188159227371216,
+    "read": null,
+    "qc": null,
+    "det_k": 42,
+    "img": "Ztex__0.jpg",
+    "why": "det: Oscillator \u2192 Inductor"
+   },
+   {
+    "st": "ML450_Top2",
+    "i": 198,
+    "box": [
+     268.0,
+     1459.0,
+     469.0,
+     1790.0
+    ],
+    "gt": 8,
+    "det": 2,
+    "det_conf": 0.43421268463134766,
+    "qwen": 8,
+    "qwen_conf": 0.43421268463134766,
+    "ocr": 2,
+    "ocr_conf": 0.43421268463134766,
+    "read": [
+     "XT1",
+     "high"
+    ],
+    "qc": [
+     "Oscillator",
+     "high"
+    ],
+    "det_k": 159,
+    "img": "ML450_Top2__198.jpg",
+    "why": "det: Oscillator \u2192 Inductor"
+   },
+   {
+    "st": "ArduinoMega_Top",
+    "i": 53,
+    "box": [
+     1855.0,
+     1631.0,
+     1892.0,
+     1723.0
+    ],
+    "gt": 8,
+    "det": 1,
+    "det_conf": 0.701824426651001,
+    "qwen": 2,
+    "qwen_conf": 0.701824426651001,
+    "ocr": 1,
+    "ocr_conf": 0.701824426651001,
+    "read": [
+     "NONE",
+     "high"
+    ],
+    "qc": [
+     "Resistor",
+     "medium"
+    ],
+    "det_k": 35,
+    "img": "ArduinoMega_Top__53.jpg",
+    "why": "det: Oscillator \u2192 Capacitor"
+   },
+   {
+    "st": "ATTIOT_Bottom",
+    "i": 104,
+    "box": [
+     943.0,
+     269.0,
+     986.0,
+     364.0
+    ],
+    "gt": 8,
+    "det": 1,
+    "det_conf": 0.4243006408214569,
+    "qwen": 8,
+    "qwen_conf": 0.4243006408214569,
+    "ocr": 1,
+    "ocr_conf": 0.4243006408214569,
+    "read": [
+     "Y1",
+     "high"
+    ],
+    "qc": [
+     "Resistor",
+     "high"
+    ],
+    "det_k": 132,
+    "img": "ATTIOT_Bottom__104.jpg",
+    "why": "det: Oscillator \u2192 Capacitor"
+   },
+   {
+    "st": "Virtex5",
+    "i": 8,
+    "box": [
+     2514.0,
+     602.0,
+     2765.0,
+     1367.0
+    ],
+    "gt": 8,
+    "det": 1,
+    "det_conf": 0.25871261954307556,
+    "qwen": 8,
+    "qwen_conf": 0.35242030024528503,
+    "ocr": 1,
+    "ocr_conf": 0.25871261954307556,
+    "read": [
+     "Y1",
+     "high"
+    ],
+    "qc": [
+     "Oscillator",
+     "high"
+    ],
+    "det_k": 62,
+    "img": "Virtex5__8.jpg",
+    "why": "det: Oscillator \u2192 Capacitor"
+   },
+   {
+    "st": "ATTIOT_Bottom",
+    "i": 77,
+    "box": [
+     846.0,
+     662.0,
+     927.0,
+     772.0
+    ],
+    "gt": 8,
+    "det": 8,
+    "det_conf": 0.7804555892944336,
+    "qwen": 2,
+    "qwen_conf": 0.7804555892944336,
+    "ocr": 8,
+    "ocr_conf": 0.7804555892944336,
+    "read": [
+     "Y2",
+     "high"
+    ],
+    "qc": [
+     "Inductor",
+     "high"
+    ],
+    "det_k": 48,
+    "img": "ATTIOT_Bottom__77.jpg",
+    "why": "qwen: Oscillator \u2192 Inductor"
+   },
+   {
+    "st": "ACM-109_Top",
+    "i": 4,
+    "box": [
+     206.0,
+     148.0,
+     255.0,
+     187.0
+    ],
+    "gt": 8,
+    "det": 8,
+    "det_conf": 0.7675488591194153,
+    "qwen": 2,
+    "qwen_conf": 0.7675488591194153,
+    "ocr": 8,
+    "ocr_conf": 0.7675488591194153,
+    "read": [
+     "U4",
+     "high"
+    ],
+    "qc": [
+     "IC",
+     "high"
+    ],
+    "det_k": 51,
+    "img": "ACM-109_Top__4.jpg",
+    "why": "qwen: Oscillator \u2192 Inductor"
+   },
+   {
+    "st": "ATTIOT_Bottom",
+    "i": 50,
+    "box": [
+     1399.0,
+     1058.0,
+     1498.0,
+     1158.0
+    ],
+    "gt": 8,
+    "det": 7,
+    "det_conf": 0.30839481949806213,
+    "qwen": 2,
+    "qwen_conf": 0.30839481949806213,
+    "ocr": 8,
+    "ocr_conf": 0.30839481949806213,
+    "read": [
+     "C37",
+     "medium"
+    ],
+    "qc": [
+     "Capacitor",
+     "high"
+    ],
+    "det_k": 139,
+    "img": "ATTIOT_Bottom__50.jpg",
+    "why": "qwen: Oscillator \u2192 Inductor"
+   },
+   {
+    "st": "ZTurn",
+    "i": 81,
+    "box": [
+     3757.0,
+     2015.0,
+     3871.0,
+     2158.0
+    ],
+    "gt": 8,
+    "det": 8,
+    "det_conf": 0.5767146944999695,
+    "qwen": 2,
+    "qwen_conf": 0.5767146944999695,
+    "ocr": 8,
+    "ocr_conf": 0.5767146944999695,
+    "read": [
+     "R116",
+     "medium"
+    ],
+    "qc": [
+     "Oscillator",
+     "high"
+    ],
+    "det_k": 153,
+    "img": "ZTurn__81.jpg",
+    "why": "qwen: Oscillator \u2192 Inductor"
+   },
+   {
+    "st": "Virtex6",
+    "i": 85,
+    "box": [
+     2145.0,
+     1093.0,
+     2398.0,
+     1345.0
+    ],
+    "gt": 8,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 1265,
+    "img": "Virtex6__85.jpg",
+    "why": "qwen: Oscillator \u2192 missed"
+   },
+   {
+    "st": "ML450_Top2",
+    "i": 224,
+    "box": [
+     1855.0,
+     1765.0,
+     1998.0,
+     1863.0
+    ],
+    "gt": 8,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 278,
+    "img": "ML450_Top2__224.jpg",
+    "why": "qwen: Oscillator \u2192 missed"
+   },
+   {
+    "st": "STK644",
+    "i": 45,
+    "box": [
+     3166.0,
+     2049.0,
+     3291.0,
+     2355.0
+    ],
+    "gt": 8,
+    "det": "missed",
+    "det_conf": null,
+    "qwen": "missed",
+    "qwen_conf": null,
+    "ocr": "missed",
+    "ocr_conf": null,
+    "read": null,
+    "qc": null,
+    "det_k": 180,
+    "img": "STK644__45.jpg",
+    "why": "qwen: Oscillator \u2192 missed"
+   }
+  ]
+ },
+ "names": [
+  "Resistor",
+  "Capacitor",
+  "Inductor",
+  "Connector",
+  "Diode",
+  "Switch",
+  "Transistor",
+  "IC",
+  "Oscillator"
+ ]
+}

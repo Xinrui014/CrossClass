@@ -1,0 +1,6 @@
+[
+ {"name": "① 检测器 baseline（PCB-Dense v22）", "precision": 0.814, "recall": 0.661, "f1": 0.729, "macro_f1": 0.604, "map50": 0.541, "map50_95": 0.359},
+ {"name": "② 检测器定位 + VLM 判类别（Qwen3.8-27B，双格图：近景 + 周围环境）", "precision": 0.683, "recall": 0.541, "f1": 0.604, "macro_f1": 0.563, "map50": 0.450, "map50_95": 0.305},
+ {"name": "（② 旧版：只给 3 倍近景、160 px 原图的小裁图）", "precision": 0.649, "recall": 0.514, "f1": 0.574, "macro_f1": 0.512, "map50": 0.400, "map50_95": 0.274, "ref": true},
+ {"name": "③ 检测器定位 + OCR 关联（PP-OCRv6 + 学出的关联）", "precision": 0.825, "recall": 0.669, "f1": 0.739, "macro_f1": 0.634, "map50": 0.570, "map50_95": 0.380}
+]
