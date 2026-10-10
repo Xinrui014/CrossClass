@@ -1,0 +1,98 @@
+{
+ "B1 nearest text (centre)": {
+  "acc": 0.6721847092136789,
+  "prefix_acc": 0.8089740797211936,
+  "prec": 0.6064059736686972,
+  "f1": 0.6376033057851239,
+  "linkable": 4591,
+  "links": 5089,
+  "link_on_unlinkable": 655,
+  "right": 3086,
+  "prefix_right": 3714,
+  "none_on_linkable": 157
+ },
+ "B2 nearest text (edge gap)": {
+  "acc": 0.6475713352210847,
+  "prefix_acc": 0.7856676105423654,
+  "prec": 0.624317513649727,
+  "f1": 0.635731850743077,
+  "linkable": 4591,
+  "links": 4762,
+  "link_on_unlinkable": 514,
+  "right": 2973,
+  "prefix_right": 3607,
+  "none_on_linkable": 343
+ },
+ "B3 text picks its nearest part": {
+  "acc": 0.611849270311479,
+  "prefix_acc": 0.6771945109997822,
+  "prec": 0.7520749665327978,
+  "f1": 0.6747537833293298,
+  "linkable": 4591,
+  "links": 3735,
+  "link_on_unlinkable": 259,
+  "right": 2809,
+  "prefix_right": 3109,
+  "none_on_linkable": 1115
+ },
+ "B4 one-to-one, centre distance": {
+  "acc": 0.7906774123284688,
+  "prefix_acc": 0.8464386843824875,
+  "prec": 0.7372055239642566,
+  "f1": 0.7630057803468208,
+  "linkable": 4591,
+  "links": 4924,
+  "link_on_unlinkable": 524,
+  "right": 3630,
+  "prefix_right": 3886,
+  "none_on_linkable": 191
+ },
+ "B5 one-to-one, edge gap": {
+  "acc": 0.7218470921367893,
+  "prefix_acc": 0.7784796340666521,
+  "prec": 0.7694450893893662,
+  "f1": 0.74488649134637,
+  "linkable": 4591,
+  "links": 4307,
+  "link_on_unlinkable": 330,
+  "right": 3314,
+  "prefix_right": 3574,
+  "none_on_linkable": 614
+ },
+ "B6 one-to-one, gap + orientation + prefix/detector-class (P&ID STA-style)": {
+  "acc": 0.8096275321280767,
+  "prefix_acc": 0.8706164234371596,
+  "prec": 0.782361608082509,
+  "f1": 0.7957610789980732,
+  "linkable": 4591,
+  "links": 4751,
+  "link_on_unlinkable": 443,
+  "right": 3717,
+  "prefix_right": 3997,
+  "none_on_linkable": 283
+ },
+ "B7 learned pair scorer, geometry only + one-to-one": {
+  "acc": 0.8253103898932694,
+  "prefix_acc": 0.8815072968852102,
+  "prec": 0.7895394873932069,
+  "f1": 0.8070287539936102,
+  "linkable": 4591,
+  "links": 4799,
+  "link_on_unlinkable": 436,
+  "right": 3789,
+  "prefix_right": 4047,
+  "none_on_linkable": 228
+ },
+ "B8 learned pair scorer + detector class + one-to-one (current \u2462 linker)": {
+  "acc": 0.857111740361577,
+  "prefix_acc": 0.917447179263777,
+  "prec": 0.8270281630937368,
+  "f1": 0.8418012621670767,
+  "linkable": 4591,
+  "links": 4758,
+  "link_on_unlinkable": 374,
+  "right": 3935,
+  "prefix_right": 4212,
+  "none_on_linkable": 207
+ }
+}

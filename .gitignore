@@ -6,3 +6,5 @@ page/img/
 logs/
 __pycache__/
 *.pyc
+linkdata/
+results/linking/eval/

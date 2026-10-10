@@ -3,6 +3,7 @@
 Read `CrossClass.md` first (task, setting, the three results, findings, next steps). Then `STATUS.md`.
 
 ## Locations (owner rule: one folder per project, same name on both machines)
+- GitHub: https://github.com/Xinrui014/CrossClass (private; first push 2026-10-10 from the L40; `origin`). Ask the owner before every commit/push.
 - L40 (this folder, the real one): `~/projects/crossclass/`. Desktop: `~/claude-backend/crossclass/` = sshfs mount of it:
   `sshfs l40:projects/crossclass ~/claude-backend/crossclass -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 -o cache=yes,kernel_cache,compression=no,follow_symlinks`
 - `data/` symlinks only (WACV images, gt9_*.json, the detector boxes `preds_wacv_1280.json`, the OCR-link result) → sources in
