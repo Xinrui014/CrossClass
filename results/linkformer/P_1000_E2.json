@@ -1,0 +1,861 @@
+{
+ "args": {
+  "train": "kicad1000",
+  "eval": "kicadval",
+  "size": "L",
+  "tokens": "E2",
+  "steps": 20000,
+  "lr": 0.0003,
+  "warmup": 500,
+  "cosine": true,
+  "accum": 4,
+  "dropout": 0.1,
+  "wd": 0.01,
+  "aug": true,
+  "save": "ckpt/P_1000_E2.pt",
+  "init": "",
+  "final_eval": "kicadval,all45",
+  "device": "cuda",
+  "threads": 1,
+  "tag": "P_1000_E2",
+  "eval_every": 2000,
+  "seed": 0,
+  "wandb": "crossclass",
+  "wandb_group": "linkformer_full_197413"
+ },
+ "params": 14794753,
+ "log": [
+  {
+   "step": 2000,
+   "loss": 0.3406,
+   "kicadval": {
+    "acc": 0.9107,
+    "prec": 0.9534,
+    "f1": 0.9315,
+    "linkable": 5888,
+    "right": 5362,
+    "links": 5624
+   }
+  },
+  {
+   "step": 4000,
+   "loss": 0.2663,
+   "kicadval": {
+    "acc": 0.9153,
+    "prec": 0.9618,
+    "f1": 0.938,
+    "linkable": 5888,
+    "right": 5389,
+    "links": 5603
+   }
+  },
+  {
+   "step": 6000,
+   "loss": 0.2339,
+   "kicadval": {
+    "acc": 0.9445,
+    "prec": 0.9628,
+    "f1": 0.9535,
+    "linkable": 5888,
+    "right": 5561,
+    "links": 5776
+   }
+  },
+  {
+   "step": 8000,
+   "loss": 0.2166,
+   "kicadval": {
+    "acc": 0.9428,
+    "prec": 0.9664,
+    "f1": 0.9544,
+    "linkable": 5888,
+    "right": 5551,
+    "links": 5744
+   }
+  },
+  {
+   "step": 10000,
+   "loss": 0.1738,
+   "kicadval": {
+    "acc": 0.945,
+    "prec": 0.9678,
+    "f1": 0.9563,
+    "linkable": 5888,
+    "right": 5564,
+    "links": 5749
+   }
+  },
+  {
+   "step": 12000,
+   "loss": 0.1291,
+   "kicadval": {
+    "acc": 0.9467,
+    "prec": 0.967,
+    "f1": 0.9567,
+    "linkable": 5888,
+    "right": 5574,
+    "links": 5764
+   }
+  },
+  {
+   "step": 14000,
+   "loss": 0.1243,
+   "kicadval": {
+    "acc": 0.9484,
+    "prec": 0.9674,
+    "f1": 0.9578,
+    "linkable": 5888,
+    "right": 5584,
+    "links": 5772
+   }
+  },
+  {
+   "step": 16000,
+   "loss": 0.1238,
+   "kicadval": {
+    "acc": 0.953,
+    "prec": 0.9688,
+    "f1": 0.9608,
+    "linkable": 5888,
+    "right": 5611,
+    "links": 5792
+   }
+  },
+  {
+   "step": 18000,
+   "loss": 0.1029,
+   "kicadval": {
+    "acc": 0.9516,
+    "prec": 0.9679,
+    "f1": 0.9597,
+    "linkable": 5888,
+    "right": 5603,
+    "links": 5789
+   }
+  },
+  {
+   "step": 20000,
+   "loss": 0.0922,
+   "kicadval": {
+    "acc": 0.9533,
+    "prec": 0.9703,
+    "f1": 0.9617,
+    "linkable": 5888,
+    "right": 5613,
+    "links": 5785
+   }
+  }
+ ],
+ "final": {
+  "kicadval": {
+   "summary": {
+    "acc": 0.9533,
+    "prec": 0.9703,
+    "f1": 0.9617,
+    "linkable": 5888,
+    "right": 5613,
+    "links": 5785
+   },
+   "per_image": {
+    "train-00010_r38_top": {
+     "linkable": 23,
+     "right": 23,
+     "links": 23
+    },
+    "train-00011_r22_top": {
+     "linkable": 22,
+     "right": 22,
+     "links": 22
+    },
+    "train-00020_r41_top": {
+     "linkable": 36,
+     "right": 32,
+     "links": 35
+    },
+    "train-00021_r34_top": {
+     "linkable": 24,
+     "right": 24,
+     "links": 24
+    },
+    "train-00023_r38_top": {
+     "linkable": 61,
+     "right": 60,
+     "links": 60
+    },
+    "train-00030_r20_top": {
+     "linkable": 27,
+     "right": 23,
+     "links": 26
+    },
+    "train-00056_r22_top": {
+     "linkable": 62,
+     "right": 57,
+     "links": 59
+    },
+    "train-00064_r44_top": {
+     "linkable": 89,
+     "right": 84,
+     "links": 89
+    },
+    "train-00065_r4_top": {
+     "linkable": 30,
+     "right": 30,
+     "links": 30
+    },
+    "train-00067_r34_top": {
+     "linkable": 54,
+     "right": 50,
+     "links": 51
+    },
+    "train-00070_r3_top": {
+     "linkable": 56,
+     "right": 56,
+     "links": 56
+    },
+    "train-00076_r43_bottom": {
+     "linkable": 15,
+     "right": 15,
+     "links": 15
+    },
+    "train-00076_r43_top": {
+     "linkable": 34,
+     "right": 33,
+     "links": 33
+    },
+    "train-00099_r16_top": {
+     "linkable": 58,
+     "right": 44,
+     "links": 52
+    },
+    "train-00120_r40_top": {
+     "linkable": 11,
+     "right": 11,
+     "links": 11
+    },
+    "train-00121_r45_top": {
+     "linkable": 107,
+     "right": 107,
+     "links": 107
+    },
+    "train-00127_r26_bottom": {
+     "linkable": 13,
+     "right": 13,
+     "links": 13
+    },
+    "train-00127_r26_top": {
+     "linkable": 42,
+     "right": 41,
+     "links": 42
+    },
+    "train-00154_r9_bottom": {
+     "linkable": 28,
+     "right": 28,
+     "links": 28
+    },
+    "train-00154_r9_top": {
+     "linkable": 35,
+     "right": 35,
+     "links": 35
+    },
+    "train-00210_r40_bottom": {
+     "linkable": 77,
+     "right": 72,
+     "links": 77
+    },
+    "train-00210_r40_top": {
+     "linkable": 106,
+     "right": 92,
+     "links": 102
+    },
+    "train-00220_r20_bottom": {
+     "linkable": 60,
+     "right": 58,
+     "links": 60
+    },
+    "train-00220_r20_top": {
+     "linkable": 71,
+     "right": 66,
+     "links": 71
+    },
+    "train-00293_r16_top": {
+     "linkable": 103,
+     "right": 103,
+     "links": 103
+    },
+    "train-00299_r4_bottom": {
+     "linkable": 17,
+     "right": 17,
+     "links": 17
+    },
+    "train-00299_r4_top": {
+     "linkable": 31,
+     "right": 31,
+     "links": 31
+    },
+    "train-00372_r3_bottom": {
+     "linkable": 18,
+     "right": 18,
+     "links": 18
+    },
+    "train-00372_r3_top": {
+     "linkable": 300,
+     "right": 275,
+     "links": 291
+    },
+    "train-00384_r1_top": {
+     "linkable": 40,
+     "right": 31,
+     "links": 37
+    },
+    "train-00629_r34_top": {
+     "linkable": 98,
+     "right": 98,
+     "links": 98
+    },
+    "train-00634_r66_top": {
+     "linkable": 48,
+     "right": 48,
+     "links": 48
+    },
+    "train-00672_r68_bottom": {
+     "linkable": 13,
+     "right": 13,
+     "links": 13
+    },
+    "train-00672_r68_top": {
+     "linkable": 104,
+     "right": 103,
+     "links": 103
+    },
+    "train-00694_r163_bottom": {
+     "linkable": 28,
+     "right": 28,
+     "links": 28
+    },
+    "train-00694_r163_top": {
+     "linkable": 82,
+     "right": 80,
+     "links": 80
+    },
+    "train-00697_r24_top": {
+     "linkable": 46,
+     "right": 43,
+     "links": 45
+    },
+    "train-00709_r54_bottom": {
+     "linkable": 81,
+     "right": 79,
+     "links": 80
+    },
+    "train-00709_r54_top": {
+     "linkable": 69,
+     "right": 69,
+     "links": 69
+    },
+    "train-00710_r131_top": {
+     "linkable": 216,
+     "right": 212,
+     "links": 215
+    },
+    "train-00711_r100_top": {
+     "linkable": 42,
+     "right": 38,
+     "links": 41
+    },
+    "train-00712_r12_top": {
+     "linkable": 97,
+     "right": 86,
+     "links": 93
+    },
+    "train-00717_r30_top": {
+     "linkable": 234,
+     "right": 223,
+     "links": 227
+    },
+    "train-00722_r174_top": {
+     "linkable": 37,
+     "right": 37,
+     "links": 37
+    },
+    "train-00725_r155_bottom": {
+     "linkable": 14,
+     "right": 14,
+     "links": 14
+    },
+    "train-00725_r155_top": {
+     "linkable": 21,
+     "right": 20,
+     "links": 21
+    },
+    "train-00727_r103_bottom": {
+     "linkable": 66,
+     "right": 58,
+     "links": 61
+    },
+    "train-00731_r186_bottom": {
+     "linkable": 15,
+     "right": 15,
+     "links": 15
+    },
+    "train-00731_r186_top": {
+     "linkable": 119,
+     "right": 118,
+     "links": 118
+    },
+    "train-00735_r122_bottom": {
+     "linkable": 36,
+     "right": 35,
+     "links": 35
+    },
+    "train-00735_r122_top": {
+     "linkable": 75,
+     "right": 69,
+     "links": 72
+    },
+    "train-00737_r132_top": {
+     "linkable": 93,
+     "right": 93,
+     "links": 93
+    },
+    "train-00740_r23_top": {
+     "linkable": 138,
+     "right": 95,
+     "links": 122
+    },
+    "train-00743_r133_top": {
+     "linkable": 52,
+     "right": 51,
+     "links": 52
+    },
+    "train-00744_r145_top": {
+     "linkable": 52,
+     "right": 51,
+     "links": 51
+    },
+    "train-00745_r94_bottom": {
+     "linkable": 35,
+     "right": 35,
+     "links": 35
+    },
+    "train-00745_r94_top": {
+     "linkable": 106,
+     "right": 106,
+     "links": 106
+    },
+    "train-00756_r103_top": {
+     "linkable": 82,
+     "right": 82,
+     "links": 82
+    },
+    "train-00758_r56_top": {
+     "linkable": 54,
+     "right": 46,
+     "links": 51
+    },
+    "train-00758_r61_bottom": {
+     "linkable": 46,
+     "right": 46,
+     "links": 46
+    },
+    "train-00758_r61_top": {
+     "linkable": 49,
+     "right": 48,
+     "links": 49
+    },
+    "train-00764_r67_bottom": {
+     "linkable": 23,
+     "right": 23,
+     "links": 23
+    },
+    "train-00764_r67_top": {
+     "linkable": 76,
+     "right": 75,
+     "links": 75
+    },
+    "train-00766_r107_top": {
+     "linkable": 90,
+     "right": 90,
+     "links": 90
+    },
+    "train-00767_r100_top": {
+     "linkable": 39,
+     "right": 39,
+     "links": 39
+    },
+    "train-00776_r192_top": {
+     "linkable": 65,
+     "right": 65,
+     "links": 65
+    },
+    "train-00777_r146_bottom": {
+     "linkable": 181,
+     "right": 179,
+     "links": 179
+    },
+    "train-00777_r146_top": {
+     "linkable": 100,
+     "right": 100,
+     "links": 100
+    },
+    "train-00777_r75_top": {
+     "linkable": 82,
+     "right": 74,
+     "links": 80
+    },
+    "train-00783_r31_top": {
+     "linkable": 34,
+     "right": 32,
+     "links": 34
+    },
+    "train-00787_r186_bottom": {
+     "linkable": 36,
+     "right": 36,
+     "links": 36
+    },
+    "train-00787_r186_top": {
+     "linkable": 10,
+     "right": 10,
+     "links": 10
+    },
+    "train-00787_r78_top": {
+     "linkable": 51,
+     "right": 47,
+     "links": 50
+    },
+    "train-00787_r80_top": {
+     "linkable": 16,
+     "right": 16,
+     "links": 16
+    },
+    "train-00788_r97_top": {
+     "linkable": 38,
+     "right": 36,
+     "links": 38
+    },
+    "train-00794_r62_top": {
+     "linkable": 73,
+     "right": 62,
+     "links": 68
+    },
+    "train-00815_r48_bottom": {
+     "linkable": 10,
+     "right": 10,
+     "links": 10
+    },
+    "train-00820_r54_bottom": {
+     "linkable": 45,
+     "right": 45,
+     "links": 45
+    },
+    "train-00820_r54_top": {
+     "linkable": 12,
+     "right": 12,
+     "links": 12
+    },
+    "train-00823_r31_bottom": {
+     "linkable": 48,
+     "right": 48,
+     "links": 48
+    },
+    "train-00823_r31_top": {
+     "linkable": 30,
+     "right": 30,
+     "links": 30
+    },
+    "train-00832_r125_top": {
+     "linkable": 76,
+     "right": 71,
+     "links": 75
+    },
+    "train-00841_r122_top": {
+     "linkable": 65,
+     "right": 65,
+     "links": 65
+    },
+    "train-00861_r173_top": {
+     "linkable": 19,
+     "right": 17,
+     "links": 19
+    },
+    "train-00871_r181_bottom": {
+     "linkable": 98,
+     "right": 96,
+     "links": 98
+    },
+    "train-00871_r181_top": {
+     "linkable": 20,
+     "right": 20,
+     "links": 20
+    },
+    "train-00873_r164_top": {
+     "linkable": 73,
+     "right": 71,
+     "links": 73
+    },
+    "train-00883_r66_top": {
+     "linkable": 149,
+     "right": 146,
+     "links": 147
+    },
+    "train-00922_r101_bottom": {
+     "linkable": 52,
+     "right": 52,
+     "links": 52
+    },
+    "train-00922_r101_top": {
+     "linkable": 117,
+     "right": 109,
+     "links": 114
+    },
+    "train-00929_r183_bottom": {
+     "linkable": 70,
+     "right": 69,
+     "links": 69
+    },
+    "train-00929_r183_top": {
+     "linkable": 89,
+     "right": 89,
+     "links": 89
+    },
+    "train-00930_r101_top": {
+     "linkable": 103,
+     "right": 89,
+     "links": 98
+    }
+   }
+  },
+  "all45": {
+   "summary": {
+    "acc": 0.7859,
+    "prec": 0.8416,
+    "f1": 0.8128,
+    "linkable": 5282,
+    "right": 4151,
+    "links": 4932
+   },
+   "per_image": {
+    "ACM-109_Bottom": {
+     "linkable": 19,
+     "right": 18,
+     "links": 20
+    },
+    "ACM-109_Top": {
+     "linkable": 49,
+     "right": 44,
+     "links": 45
+    },
+    "ATTIOT_Bottom": {
+     "linkable": 138,
+     "right": 107,
+     "links": 138
+    },
+    "ArduinoMega_Top": {
+     "linkable": 0,
+     "right": 0,
+     "links": 0
+    },
+    "Arty_Bottom": {
+     "linkable": 370,
+     "right": 303,
+     "links": 350
+    },
+    "Arty_Top": {
+     "linkable": 141,
+     "right": 89,
+     "links": 120
+    },
+    "DigitalDiscovery": {
+     "linkable": 191,
+     "right": 118,
+     "links": 174
+    },
+    "DuetWIFI_Bottom": {
+     "linkable": 0,
+     "right": 0,
+     "links": 7
+    },
+    "DuetWIFI_Top": {
+     "linkable": 230,
+     "right": 192,
+     "links": 218
+    },
+    "EDA-008_Bottom": {
+     "linkable": 74,
+     "right": 66,
+     "links": 70
+    },
+    "EDA-008_Top": {
+     "linkable": 81,
+     "right": 56,
+     "links": 67
+    },
+    "ML365_Bottom": {
+     "linkable": 412,
+     "right": 305,
+     "links": 476
+    },
+    "ML365_Top": {
+     "linkable": 301,
+     "right": 235,
+     "links": 295
+    },
+    "ML450_Bottom1": {
+     "linkable": 119,
+     "right": 94,
+     "links": 124
+    },
+    "ML450_Bottom2": {
+     "linkable": 69,
+     "right": 42,
+     "links": 57
+    },
+    "ML450_Top1": {
+     "linkable": 335,
+     "right": 267,
+     "links": 296
+    },
+    "ML450_Top2": {
+     "linkable": 227,
+     "right": 198,
+     "links": 217
+    },
+    "MicroZed_Bottom": {
+     "linkable": 199,
+     "right": 188,
+     "links": 198
+    },
+    "MicroZed_Top": {
+     "linkable": 144,
+     "right": 118,
+     "links": 131
+    },
+    "OlimexRed": {
+     "linkable": 42,
+     "right": 24,
+     "links": 39
+    },
+    "RPI3B_Bottom": {
+     "linkable": 84,
+     "right": 83,
+     "links": 86
+    },
+    "RPI3B_Top": {
+     "linkable": 126,
+     "right": 115,
+     "links": 126
+    },
+    "STK644": {
+     "linkable": 22,
+     "right": 7,
+     "links": 13
+    },
+    "Spartan3": {
+     "linkable": 71,
+     "right": 51,
+     "links": 62
+    },
+    "Spartan6Redux_Bottom": {
+     "linkable": 27,
+     "right": 21,
+     "links": 24
+    },
+    "Spartan6Redux_Top": {
+     "linkable": 70,
+     "right": 47,
+     "links": 59
+    },
+    "Spartan6_Bottom": {
+     "linkable": 18,
+     "right": 15,
+     "links": 15
+    },
+    "Spartan6_Top": {
+     "linkable": 11,
+     "right": 9,
+     "links": 9
+    },
+    "SystemAce_Bottom": {
+     "linkable": 0,
+     "right": 0,
+     "links": 1
+    },
+    "SystemAce_Top": {
+     "linkable": 149,
+     "right": 130,
+     "links": 139
+    },
+    "ThingMagicM6e": {
+     "linkable": 84,
+     "right": 61,
+     "links": 72
+    },
+    "UTL-016": {
+     "linkable": 58,
+     "right": 44,
+     "links": 45
+    },
+    "UTL-103": {
+     "linkable": 125,
+     "right": 99,
+     "links": 106
+    },
+    "Virtex5": {
+     "linkable": 35,
+     "right": 34,
+     "links": 37
+    },
+    "Virtex6": {
+     "linkable": 202,
+     "right": 129,
+     "links": 158
+    },
+    "XCM-307A_Bottom": {
+     "linkable": 20,
+     "right": 16,
+     "links": 20
+    },
+    "XCM-307A_Top": {
+     "linkable": 58,
+     "right": 46,
+     "links": 47
+    },
+    "XLVDSproSupply_Bottom1": {
+     "linkable": 1,
+     "right": 0,
+     "links": 0
+    },
+    "XLVDSproSupply_Bottom2": {
+     "linkable": 0,
+     "right": 0,
+     "links": 0
+    },
+    "XLVDSproSupply_Top1": {
+     "linkable": 313,
+     "right": 271,
+     "links": 292
+    },
+    "ZTurn": {
+     "linkable": 186,
+     "right": 140,
+     "links": 167
+    },
+    "Zedboard": {
+     "linkable": 295,
+     "right": 231,
+     "links": 256
+    },
+    "Ztex": {
+     "linkable": 36,
+     "right": 32,
+     "links": 32
+    },
+    "Zybo": {
+     "linkable": 150,
+     "right": 106,
+     "links": 124
+    }
+   }
+  }
+ },
+ "seconds": 6552
+}

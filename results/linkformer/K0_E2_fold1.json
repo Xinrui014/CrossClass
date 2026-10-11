@@ -1,0 +1,220 @@
+{
+ "args": {
+  "train": "fold1train",
+  "eval": "fold1train",
+  "size": "L",
+  "tokens": "E2",
+  "steps": 4000,
+  "lr": 0.0003,
+  "warmup": 200,
+  "cosine": true,
+  "accum": 4,
+  "dropout": 0.1,
+  "wd": 0.01,
+  "aug": true,
+  "save": "",
+  "init": "",
+  "final_eval": "fold1test",
+  "device": "cuda",
+  "threads": 1,
+  "tag": "K0_E2_fold1",
+  "eval_every": 500,
+  "seed": 0,
+  "wandb": "crossclass",
+  "wandb_group": "linkformer_full_197413"
+ },
+ "params": 14794753,
+ "log": [
+  {
+   "step": 500,
+   "loss": 0.4084,
+   "fold1train": {
+    "acc": 0.9104,
+    "prec": 0.9258,
+    "f1": 0.918,
+    "linkable": 3414,
+    "right": 3108,
+    "links": 3357
+   }
+  },
+  {
+   "step": 1000,
+   "loss": 0.1413,
+   "fold1train": {
+    "acc": 0.9619,
+    "prec": 0.9783,
+    "f1": 0.97,
+    "linkable": 3414,
+    "right": 3284,
+    "links": 3357
+   }
+  },
+  {
+   "step": 1500,
+   "loss": 0.0706,
+   "fold1train": {
+    "acc": 0.9798,
+    "prec": 0.997,
+    "f1": 0.9883,
+    "linkable": 3414,
+    "right": 3345,
+    "links": 3355
+   }
+  },
+  {
+   "step": 2000,
+   "loss": 0.0471,
+   "fold1train": {
+    "acc": 0.9763,
+    "prec": 0.9976,
+    "f1": 0.9868,
+    "linkable": 3414,
+    "right": 3333,
+    "links": 3341
+   }
+  },
+  {
+   "step": 2500,
+   "loss": 0.0238,
+   "fold1train": {
+    "acc": 0.981,
+    "prec": 0.9994,
+    "f1": 0.9901,
+    "linkable": 3414,
+    "right": 3349,
+    "links": 3351
+   }
+  },
+  {
+   "step": 3000,
+   "loss": 0.0165,
+   "fold1train": {
+    "acc": 0.9818,
+    "prec": 0.9991,
+    "f1": 0.9904,
+    "linkable": 3414,
+    "right": 3352,
+    "links": 3355
+   }
+  },
+  {
+   "step": 3500,
+   "loss": 0.0111,
+   "fold1train": {
+    "acc": 0.9818,
+    "prec": 0.9988,
+    "f1": 0.9903,
+    "linkable": 3414,
+    "right": 3352,
+    "links": 3356
+   }
+  },
+  {
+   "step": 4000,
+   "loss": 0.0093,
+   "fold1train": {
+    "acc": 0.9818,
+    "prec": 0.9994,
+    "f1": 0.9905,
+    "linkable": 3414,
+    "right": 3352,
+    "links": 3354
+   }
+  }
+ ],
+ "final": {
+  "fold1test": {
+   "summary": {
+    "acc": 0.5905,
+    "prec": 0.8381,
+    "f1": 0.6928,
+    "linkable": 1868,
+    "right": 1103,
+    "links": 1316
+   },
+   "per_image": {
+    "ACM-109_Bottom": {
+     "linkable": 19,
+     "right": 17,
+     "links": 19
+    },
+    "ACM-109_Top": {
+     "linkable": 49,
+     "right": 39,
+     "links": 42
+    },
+    "DigitalDiscovery": {
+     "linkable": 191,
+     "right": 74,
+     "links": 108
+    },
+    "ML450_Bottom1": {
+     "linkable": 119,
+     "right": 74,
+     "links": 90
+    },
+    "ML450_Bottom2": {
+     "linkable": 69,
+     "right": 30,
+     "links": 39
+    },
+    "ML450_Top1": {
+     "linkable": 335,
+     "right": 164,
+     "links": 202
+    },
+    "ML450_Top2": {
+     "linkable": 227,
+     "right": 137,
+     "links": 160
+    },
+    "MicroZed_Bottom": {
+     "linkable": 199,
+     "right": 151,
+     "links": 161
+    },
+    "MicroZed_Top": {
+     "linkable": 144,
+     "right": 95,
+     "links": 110
+    },
+    "OlimexRed": {
+     "linkable": 42,
+     "right": 21,
+     "links": 27
+    },
+    "RPI3B_Bottom": {
+     "linkable": 84,
+     "right": 58,
+     "links": 63
+    },
+    "RPI3B_Top": {
+     "linkable": 126,
+     "right": 83,
+     "links": 95
+    },
+    "XCM-307A_Bottom": {
+     "linkable": 20,
+     "right": 16,
+     "links": 17
+    },
+    "XCM-307A_Top": {
+     "linkable": 58,
+     "right": 50,
+     "links": 51
+    },
+    "Ztex": {
+     "linkable": 36,
+     "right": 31,
+     "links": 32
+    },
+    "Zybo": {
+     "linkable": 150,
+     "right": 63,
+     "links": 100
+    }
+   }
+  }
+ },
+ "seconds": 3432
+}

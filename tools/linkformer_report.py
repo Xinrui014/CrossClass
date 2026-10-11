@@ -4,7 +4,8 @@ results/linkformer/<tag>.json, next to B7 / B8 (results/linking/oracle.json). Wr
   P_<data>_<tok>         pre-trained on KiCad only, evaluated once on all 45 WACV images (zero-shot) and on KiCad validation
   K0_<tok>_fold<k>       trained on WACV fold k only (no KiCad)
   FT_full_<tok>_fold<k>  P_full_<tok> fine-tuned on WACV fold k
-Usage: linkformer_report.py"""
+Usage: linkformer_report.py                       (the job-197413 table)
+       linkformer_report.py --run dv1_E1_XL_150k --out dv1_report.md   (zero-shot run + its _ft_f<k> / _mix_f<k> fine-tunes)"""
 import json, os
 from pathlib import Path
 ROOT = Path(os.environ.get("CROSSCLASS", Path.home()/"projects/crossclass")); R = ROOT/"results/linkformer"
@@ -16,10 +17,10 @@ def summ(per):
     acc = c["right"]/max(c["linkable"], 1); prec = c["right"]/max(c["links"], 1)
     return dict(n_img=len(per), acc=acc, prec=prec, f1=2*acc*prec/max(acc+prec, 1e-9), **c)
 def load(tag): p = R/f"{tag}.json"; return json.load(open(p)) if p.exists() else None
-def folds(prefix):
+def folds(prefix, sep="_fold"):
     per = {}
     for k in range(3):
-        r = load(f"{prefix}_fold{k}")
+        r = load(f"{prefix}{sep}{k}")
         if not r: return None
         per.update(r["final"][f"fold{k}test"]["per_image"])
     return per
@@ -40,3 +41,19 @@ md = ["# Transformer linker, full runs: 42 WACV test images, oracle track, exact
       "| method | training data | right label | link precision | link F1 | KiCad val right label |", "|---|---|---|---|---|---|"]
 for n, d, a, p, f, kv in rows: md.append(f"| {n} | {d} | {100*a:.1f} % | {100*p:.1f} % | {f:.3f} | {'' if kv is None else f'{100*kv:.1f} %'} |")
 open(R/"full_report.md", "w").write("\n".join(md)+"\n"); print("\n".join(md))
+
+import sys
+if "--run" in sys.argv:
+    run = sys.argv[sys.argv.index("--run")+1]; outn = sys.argv[sys.argv.index("--out")+1] if "--out" in sys.argv else f"{run}_report.md"
+    rows = [r for r in rows if r[0].startswith("B")]
+    z = load(run)
+    if z:
+        s = summ(z["final"]["all45"]["per_image"]); d = {k: v for k, v in z["final"]["all45"]["per_image"].items() if k in DEV}
+        dv = sum(v["right"] for v in d.values())/max(sum(v["linkable"] for v in d.values()), 1)
+        rows.append((f"{run}, KiCad only (zero-shot)", "CrossClass_data_v1 train", s["acc"], s["prec"], s["f1"], z["final"]["kval"]["summary"]["acc"] if "kval" in z["final"] else None))
+    for suf, label in (("_ft_f", "+ WACV fine-tune"), ("_mix_f", "+ WACV/KiCad 1:1 fine-tune")):
+        per = folds(run+suf, sep="")
+        if per: s = summ(per); rows.append((f"{run} {label}", "data_v1 + WACV folds", s["acc"], s["prec"], s["f1"], None))
+    md = [f"# {run}: 42 WACV test images, oracle track, exact pairs", "", "| method | training data | right label | link precision | link F1 | KiCad val right label |", "|---|---|---|---|---|---|"]
+    for n, d_, a_, p, f, kv in rows: md.append(f"| {n} | {d_} | {100*a_:.1f} % | {100*p:.1f} % | {f:.3f} | {'' if kv is None else f'{100*kv:.1f} %'} |")
+    open(R/outn, "w").write("\n".join(md)+"\n"); print("\n".join(md))

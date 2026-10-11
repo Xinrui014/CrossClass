@@ -141,3 +141,19 @@ B8 here is 0.568 vs 0.570 in CrossClass.md: same method, retrained after the 202
   1,412 projects, 1,842 sides (1,351 top, 491 bottom), 126,611 parts, 116,628 texts, **110,335 links** (median 45 per side; WACV 81 per
   image). Earlier estimate of ~250k links was too high: the visible-label check halves the boards and KiCad sides are smaller.
   Example drawing `results/linking/kicad_side_example.jpg`.
+- **Full runs done (job 197413, `results/linkformer/README.md`):** transformer E1 trained on KiCad layouts only = **86.9 %** exact right
+  label on the 42 test images (precision 85.0 %, F1 0.860) vs B8 85.7 % / B7 82.5 %; dev3 ranks configs the same way. KiCad + WACV
+  fine-tune E1 85.2 %; E2 (strings) 80.3 % zero-shot / 83.1 % fine-tuned; WACV-only 61.2 %. Data curve still rising. Below 90 % target.
+- **Full open-schematics scan (2026-10-11, owner: use much more data):** `tools/kicad_scan.py` parsed every .kicad_pcb of every row
+  (394,104 board files, 60,298 projects) → 40,900 unique layouts (place_hash), 25,753 with ≥ 10 visible silkscreen designators on a side
+  (13,484 projects, 12,756 repo names), ~1.6 M visible designators. Density median 0.9 parts/cm² (WACV ~5.9); 5,200 layouts in WACV's
+  2.1–11.2 range. Earlier 1,412-project set came from render-oriented filters (density, R+C, IC, SMD, 3D models) and one board per project.
+  Stage 2 rerun on all 25,755 saved layouts with crash-safe workers and per-side metadata (group = repo name, density, SMD share,
+  version); EXCLUDE list widened to 15 project groups that might recreate WACV boards → `linkdata/kicad_full.json`.
+- **Full KiCad link set built (`linkdata/kicad_full.json`, 187 MB, git-ignored):** 25,755 layouts in → 21,578 ok, 3,609 with no side
+  ≥ 10 links, 456 unreadable by KiCad 9, 108 excluded, 4 crashed/hung (skipped). **24,772 sides (19,412 top, 5,360 bottom), 11,239 repo
+  groups, 1,400,683 parts, 1,231,322 texts, 1,142,279 links** (10.4× kicad_all). Links per side median 30 (WACV 81 per image).
+  Density of the part extent: < 1 parts/cm² 13,018 sides (517k links) · 1–2.1: 7,038 (374k) · 2.1–5.9: 4,255 (231k) · 5.9–11.2: 397
+  (18.6k) · > 11.2: 64 (2.5k) → WACV-like 2.1–11.2: 4,652 sides, 249k links. SMD ≥ 60 %: 14,531 sides (783k links). Group-hash split
+  (md5(repo name) % 20 == 0): 577 val groups, 1,369 sides, 63,137 links. Incident: two boards hung KiCad, one worker reached ~200 GB RSS
+  on the shared L40 → killed; workers now capped at 24 GB address space and 5 min per board.

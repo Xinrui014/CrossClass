@@ -1,0 +1,172 @@
+{
+ "args": {
+  "train": "fold1train",
+  "eval": "fold1train",
+  "size": "L",
+  "tokens": "E1",
+  "steps": 1000,
+  "lr": 0.0001,
+  "warmup": 100,
+  "cosine": true,
+  "accum": 4,
+  "dropout": 0.1,
+  "wd": 0.01,
+  "aug": true,
+  "save": "",
+  "init": "ckpt/P_full_E1.pt",
+  "final_eval": "fold1test",
+  "device": "cuda",
+  "threads": 1,
+  "tag": "FT_full_E1_fold1",
+  "eval_every": 250,
+  "seed": 0,
+  "wandb": "crossclass",
+  "wandb_group": "linkformer_full_197413"
+ },
+ "params": 14794753,
+ "log": [
+  {
+   "step": 250,
+   "loss": 0.4474,
+   "fold1train": {
+    "acc": 0.8978,
+    "prec": 0.8931,
+    "f1": 0.8954,
+    "linkable": 3414,
+    "right": 3065,
+    "links": 3432
+   }
+  },
+  {
+   "step": 500,
+   "loss": 0.3683,
+   "fold1train": {
+    "acc": 0.9151,
+    "prec": 0.9218,
+    "f1": 0.9184,
+    "linkable": 3414,
+    "right": 3124,
+    "links": 3389
+   }
+  },
+  {
+   "step": 750,
+   "loss": 0.3202,
+   "fold1train": {
+    "acc": 0.9186,
+    "prec": 0.9229,
+    "f1": 0.9207,
+    "linkable": 3414,
+    "right": 3136,
+    "links": 3398
+   }
+  },
+  {
+   "step": 1000,
+   "loss": 0.3003,
+   "fold1train": {
+    "acc": 0.9268,
+    "prec": 0.9273,
+    "f1": 0.927,
+    "linkable": 3414,
+    "right": 3164,
+    "links": 3412
+   }
+  }
+ ],
+ "final": {
+  "fold1test": {
+   "summary": {
+    "acc": 0.8239,
+    "prec": 0.8974,
+    "f1": 0.8591,
+    "linkable": 1868,
+    "right": 1539,
+    "links": 1715
+   },
+   "per_image": {
+    "ACM-109_Bottom": {
+     "linkable": 19,
+     "right": 19,
+     "links": 19
+    },
+    "ACM-109_Top": {
+     "linkable": 49,
+     "right": 48,
+     "links": 50
+    },
+    "DigitalDiscovery": {
+     "linkable": 191,
+     "right": 123,
+     "links": 182
+    },
+    "ML450_Bottom1": {
+     "linkable": 119,
+     "right": 93,
+     "links": 108
+    },
+    "ML450_Bottom2": {
+     "linkable": 69,
+     "right": 38,
+     "links": 47
+    },
+    "ML450_Top1": {
+     "linkable": 335,
+     "right": 253,
+     "links": 276
+    },
+    "ML450_Top2": {
+     "linkable": 227,
+     "right": 196,
+     "links": 214
+    },
+    "MicroZed_Bottom": {
+     "linkable": 199,
+     "right": 190,
+     "links": 197
+    },
+    "MicroZed_Top": {
+     "linkable": 144,
+     "right": 124,
+     "links": 135
+    },
+    "OlimexRed": {
+     "linkable": 42,
+     "right": 25,
+     "links": 32
+    },
+    "RPI3B_Bottom": {
+     "linkable": 84,
+     "right": 81,
+     "links": 83
+    },
+    "RPI3B_Top": {
+     "linkable": 126,
+     "right": 116,
+     "links": 120
+    },
+    "XCM-307A_Bottom": {
+     "linkable": 20,
+     "right": 18,
+     "links": 19
+    },
+    "XCM-307A_Top": {
+     "linkable": 58,
+     "right": 58,
+     "links": 58
+    },
+    "Ztex": {
+     "linkable": 36,
+     "right": 33,
+     "links": 34
+    },
+    "Zybo": {
+     "linkable": 150,
+     "right": 124,
+     "links": 141
+    }
+   }
+  }
+ },
+ "seconds": 678
+}

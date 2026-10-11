@@ -1,0 +1,210 @@
+{
+ "args": {
+  "train": "fold2train",
+  "eval": "fold2train",
+  "size": "L",
+  "tokens": "E2",
+  "steps": 4000,
+  "lr": 0.0003,
+  "warmup": 200,
+  "cosine": true,
+  "accum": 4,
+  "dropout": 0.1,
+  "wd": 0.01,
+  "aug": true,
+  "save": "",
+  "init": "",
+  "final_eval": "fold2test",
+  "device": "cuda",
+  "threads": 1,
+  "tag": "K0_E2_fold2",
+  "eval_every": 500,
+  "seed": 0,
+  "wandb": "crossclass",
+  "wandb_group": "linkformer_full_197413"
+ },
+ "params": 14794753,
+ "log": [
+  {
+   "step": 500,
+   "loss": 0.4178,
+   "fold2train": {
+    "acc": 0.873,
+    "prec": 0.9378,
+    "f1": 0.9043,
+    "linkable": 3489,
+    "right": 3046,
+    "links": 3248
+   }
+  },
+  {
+   "step": 1000,
+   "loss": 0.1728,
+   "fold2train": {
+    "acc": 0.9685,
+    "prec": 0.9826,
+    "f1": 0.9755,
+    "linkable": 3489,
+    "right": 3379,
+    "links": 3439
+   }
+  },
+  {
+   "step": 1500,
+   "loss": 0.0887,
+   "fold2train": {
+    "acc": 0.9825,
+    "prec": 0.9977,
+    "f1": 0.99,
+    "linkable": 3489,
+    "right": 3428,
+    "links": 3436
+   }
+  },
+  {
+   "step": 2000,
+   "loss": 0.0549,
+   "fold2train": {
+    "acc": 0.9839,
+    "prec": 0.9988,
+    "f1": 0.9913,
+    "linkable": 3489,
+    "right": 3433,
+    "links": 3437
+   }
+  },
+  {
+   "step": 2500,
+   "loss": 0.0293,
+   "fold2train": {
+    "acc": 0.9851,
+    "prec": 0.9988,
+    "f1": 0.9919,
+    "linkable": 3489,
+    "right": 3437,
+    "links": 3441
+   }
+  },
+  {
+   "step": 3000,
+   "loss": 0.0198,
+   "fold2train": {
+    "acc": 0.9851,
+    "prec": 0.9988,
+    "f1": 0.9919,
+    "linkable": 3489,
+    "right": 3437,
+    "links": 3441
+   }
+  },
+  {
+   "step": 3500,
+   "loss": 0.0161,
+   "fold2train": {
+    "acc": 0.9851,
+    "prec": 0.9988,
+    "f1": 0.9919,
+    "linkable": 3489,
+    "right": 3437,
+    "links": 3441
+   }
+  },
+  {
+   "step": 4000,
+   "loss": 0.0142,
+   "fold2train": {
+    "acc": 0.9851,
+    "prec": 0.9991,
+    "f1": 0.9921,
+    "linkable": 3489,
+    "right": 3437,
+    "links": 3440
+   }
+  }
+ ],
+ "final": {
+  "fold2test": {
+   "summary": {
+    "acc": 0.6291,
+    "prec": 0.8393,
+    "f1": 0.7192,
+    "linkable": 1793,
+    "right": 1128,
+    "links": 1344
+   },
+   "per_image": {
+    "ATTIOT_Bottom": {
+     "linkable": 138,
+     "right": 80,
+     "links": 102
+    },
+    "Arty_Bottom": {
+     "linkable": 370,
+     "right": 214,
+     "links": 274
+    },
+    "Arty_Top": {
+     "linkable": 141,
+     "right": 84,
+     "links": 103
+    },
+    "DuetWIFI_Bottom": {
+     "linkable": 0,
+     "right": 0,
+     "links": 3
+    },
+    "DuetWIFI_Top": {
+     "linkable": 230,
+     "right": 190,
+     "links": 209
+    },
+    "STK644": {
+     "linkable": 22,
+     "right": 15,
+     "links": 19
+    },
+    "Spartan3": {
+     "linkable": 71,
+     "right": 57,
+     "links": 59
+    },
+    "ThingMagicM6e": {
+     "linkable": 84,
+     "right": 55,
+     "links": 65
+    },
+    "Virtex5": {
+     "linkable": 35,
+     "right": 29,
+     "links": 31
+    },
+    "Virtex6": {
+     "linkable": 202,
+     "right": 98,
+     "links": 118
+    },
+    "XLVDSproSupply_Bottom1": {
+     "linkable": 1,
+     "right": 1,
+     "links": 1
+    },
+    "XLVDSproSupply_Bottom2": {
+     "linkable": 0,
+     "right": 0,
+     "links": 0
+    },
+    "XLVDSproSupply_Top1": {
+     "linkable": 313,
+     "right": 209,
+     "links": 238
+    },
+    "ZTurn": {
+     "linkable": 186,
+     "right": 96,
+     "links": 122
+    }
+   }
+  }
+ },
+ "seconds": 3249
+}

@@ -8,7 +8,8 @@ Training options: --aug (90-degree rotations + mirror, box jitter, dropped label
 optimizer step), cosine schedule, --save / --init checkpoints (fine-tuning). Results JSON keeps per-image counts so any image subset
 (e.g. the 42 test images) can be scored afterwards (tools/linkformer_report.py). --wandb <project> logs loss, lr, eval and final scores.
 Usage: linkformer.py --train dev3 --eval dev3 --size L --tokens E1 --steps 1000 [--device cuda] [--tag name]
-  board sets: dev3, test42, all45, fold<k>train, fold<k>test, kicad199, kicadtrain, kicadval, kicad300, kicad1000"""
+  board sets: dev3, test42, all45, fold<k>train, fold<k>test, kicad199, kicadtrain, kicadval, kicad300, kicad1000;
+  with --data CrossClass_data_v1: ktrain, kval, kvalsub (~25 % of kval), kdense (train sides with WACV density 2.1-11.2)"""
 import argparse, json, math, os, re, sys, time, hashlib, random
 from pathlib import Path
 import numpy as np, torch, torch.nn as nn, torch.nn.functional as F
@@ -19,7 +20,18 @@ SIZES = {"S": (128, 4), "M": (256, 6), "L": (384, 8), "XL": (512, 12)}
 PFX = re.compile(r"^([A-Z]+)(\d+)([A-Z]?)$")
 FAKE_PFX = ["TP", "R", "C", "U", "J", "D", "Q", "L", "FB", "SW", "Y", "P"]
 
-def load_sets():
+def load_sets(data=""):
+    if data:   # a frozen dataset folder, e.g. linkdata/CrossClass_data_v1 (kicad.json + split.json + wacv.json + folds.json)
+        D = ROOT/"linkdata"/data; wacv = {b["id"]: b for b in json.load(open(D/"wacv.json"))}; folds = json.load(open(D/"folds.json"))
+        kic = json.load(open(D/"kicad.json")); val = set(json.load(open(D/"split.json"))["val_groups"])
+        sets = {"dev3": [wacv[s] for s in DEV], "all45": list(wacv.values()), "test42": [b for s, b in wacv.items() if s not in DEV]}
+        for k, v in folds.items():
+            sets[f"fold{k}test"] = [b for b in wacv.values() if b["board"] in v["test_boards"]]
+            sets[f"fold{k}train"] = [b for b in wacv.values() if b["board"] not in v["test_boards"]]
+        sets["kval"] = [b for b in kic if b["group"] in val]; sets["ktrain"] = [b for b in kic if b["group"] not in val]
+        sets["kvalsub"] = [b for b in sets["kval"] if int(hashlib.md5(b["id"].encode()).hexdigest(), 16) % 4 == 0]   # ~25 % for periodic checks
+        sets["kdense"] = [b for b in sets["ktrain"] if 2.1 <= b["density"] <= 11.2]
+        return sets
     wacv = {b["id"]: b for b in json.load(open(ROOT/"linkdata/wacv.json"))}
     folds = json.load(open(ROOT/"linkdata/folds.json"))   # copy of gdino_fewshot/wacv_in/folds.json (written by linkdata.py)
     sets = {"dev3": [wacv[s] for s in DEV], "all45": list(wacv.values()), "test42": [b for s, b in wacv.items() if s not in DEV]}
@@ -150,9 +162,12 @@ def summarize(per):
 
 def to_dev(e, dev): return {k: (v.to(dev) if torch.is_tensor(v) else v) for k, v in e.items()}
 
+AMP = False
 def evaluate(model, encs, dev):
     model.eval(); per = {}
-    for e in encs: per[e["id"]] = count(e, decode(model(to_dev(e, dev))) if e["n"] and e["m"] else {})
+    for e in encs:
+        with torch.autocast("cuda", dtype=torch.bfloat16, enabled=AMP and dev.type == "cuda"):
+            per[e["id"]] = count(e, decode(model(to_dev(e, dev)).float()) if e["n"] and e["m"] else {})
     model.train(); return summarize(per), per
 
 if __name__ == "__main__":
@@ -167,13 +182,17 @@ if __name__ == "__main__":
     ap.add_argument("--device", default="cpu"); ap.add_argument("--threads", type=int, default=16); ap.add_argument("--tag", default="")
     ap.add_argument("--eval_every", type=int, default=250); ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--wandb", default="", help="wandb project (empty = off)"); ap.add_argument("--wandb_group", default="")
+    ap.add_argument("--data", default="", help="frozen dataset folder under linkdata/, e.g. CrossClass_data_v1")
+    ap.add_argument("--amp", action="store_true", help="bf16 autocast on CUDA"); ap.add_argument("--ckpt_every", type=int, default=0)
+    ap.add_argument("--mix", default="", help="second training set sampled with probability --mix_p (e.g. ktrain)"); ap.add_argument("--mix_p", type=float, default=0.5)
     a = ap.parse_args(); torch.set_num_threads(a.threads); torch.manual_seed(a.seed); np.random.seed(a.seed); rng = random.Random(a.seed)
-    sets = load_sets()
+    sets = load_sets(a.data); AMP = a.amp
     if a.init:
         ck = torch.load(a.init, map_location="cpu"); vocab = Vocab(ck["vocab"])
     else:
-        vocab = Vocab.from_boards(sets["all45"] + sets.get("kicadtrain", []) + sets.get("kicadval", []) + sets.get("kicad199", []))
+        vocab = Vocab.from_boards(sets["all45"] + sets.get("ktrain", []) + sets.get("kval", []) + sets.get("kicadtrain", []) + sets.get("kicadval", []) + sets.get("kicad199", []))
     trb = [b for b in sets[a.train] if b["parts"] and b["texts"]]; tr = None if a.aug else [encode(b, vocab) for b in trb]
+    mixb = [b for b in sets[a.mix] if b["parts"] and b["texts"]] if a.mix else []
     evs = {s: [encode(b, vocab) for b in sets[s] if b["parts"] and b["texts"]] for s in a.eval.split(",") if s}
     d, L = SIZES[a.size]; dev = torch.device(a.device)
     model = LinkFormer(d, L, len(vocab.idx)+2, a.tokens == "E2", a.dropout).to(dev)
@@ -197,12 +216,17 @@ if __name__ == "__main__":
     for step in range(1, a.steps+1):
         opt.zero_grad(); tot = 0.0
         for _ in range(a.accum):
-            e = encode(augment(rng.choice(trb), rng), vocab) if a.aug else tr[rng.randrange(len(tr))]
+            src = mixb if mixb and rng.random() < a.mix_p else None
+            e = encode(augment(rng.choice(src or trb), rng), vocab) if (a.aug or src) else tr[rng.randrange(len(tr))]
             if not (e["n"] and e["m"]): continue
-            loss = loss_fn(model(to_dev(e, dev)), e["tgt"]) / a.accum; loss.backward(); tot += loss.item()
+            with torch.autocast("cuda", dtype=torch.bfloat16, enabled=a.amp and dev.type == "cuda"):
+                logits = model(to_dev(e, dev))
+            loss = loss_fn(logits.float(), e["tgt"]) / a.accum; loss.backward(); tot += loss.item()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0); opt.step(); sched.step()
         run = tot if run is None else 0.98*run + 0.02*tot
         if wb and step % 50 == 0: wb.log(dict(loss=run, lr=sched.get_last_lr()[0]), step=step)
+        if a.ckpt_every and a.save and step % a.ckpt_every == 0 and step < a.steps:
+            Path(a.save).parent.mkdir(parents=True, exist_ok=True); torch.save(dict(model=model.state_dict(), vocab=vocab.prefixes, args=vars(a), step=step), a.save.replace(".pt", f"_step{step}.pt"))
         if evs and (step % a.eval_every == 0 or step == a.steps):
             res = {s: evaluate(model, es, dev)[0] for s, es in evs.items()}
             log.append(dict(step=step, loss=round(run, 4), **res))

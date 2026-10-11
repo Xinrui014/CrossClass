@@ -14,6 +14,11 @@
 - 2026-10-10 transformer-linker design page (token ablation E1–E4, 2D RoPE, KiCad K0–K3): https://claude.ai/artifact/GgsGXi8FHqvZ1CS4LzTeiw
   (source `page/linking.html`, figures `tools/link_figs.py`). Waiting on the owner's four choices at the end of the page.
 
+- 2026-10-10 linking transformer: overfit OK (job 196808); full runs (job 197413, wandb crossclass/linkformer_full_197413): geometry-only
+  transformer trained on 1,749 KiCad layout sides = 86.9 % exact on the 42 test images (B8 85.7 %, B7 82.5 %); details
+  `results/linkformer/README.md`. Data: `linkdata/kicad_all.json` (110k links, `tools/kicad_select.py` + `tools/kicad_links.py`).
+  Cluster clone `~/xrssd/crossclass`, checkpoints `~/xrssd/crossclass/ckpt/`.
+
 ## Next (owner to choose, see CrossClass.md "Not done")
 - V1 (VLM told to ignore printed text) · capacitor-cue test · Qwen3-VL-8B · FPIC transfer · clean gated hybrid on dev only.
 - VLM server is OFF. To rerun ②: `GPUS=<free> tools/serve_qwen38_fp8_1gpu.sh` → `tools/qwen_class.py --tag <new> --view both` →

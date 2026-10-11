@@ -5,36 +5,37 @@
   (test points, holes, fiducials, logos) are not parts; their visible labels stay as texts that name no part, like WACV's test points.
 - Texts: visible Reference fields on the side's silkscreen whose string looks like a designator, minus labels a photo would not show:
   >= 50 % of the label box inside any footprint body (printed under a component).
-- Excluded: OLIMEX/*, Duet3D/*, BehrensG/ARTY_Z7 (possible overlap with WACV OlimexRed / DuetWIFI / Arty).
+- Excluded projects: possible recreations of / close relatives to WACV boards (EXCLUDE below).
 - Bottom sides are mirrored in x, as a photo of the back would be. A side is kept with >= 10 linkable parts. Units: mm.
-Output linkdata/kicad_all.json + linkdata/kicad_all_stats.json.
-Usage: /usr/bin/python3 kicad_links.py [workers]   (system python with KiCad 9 pcbnew)"""
-import json, re, sys, os
+- Metadata per side: group (lower-case repo name, for fork-safe train/val splits), density (parts / cm² of the side's part extent),
+  smd_share, KiCad file version, part count.
+Robust to KiCad loader crashes, hangs (5 min per board) and memory blow-ups (24 GB per worker): each worker writes the board it is on to w<i>.cur; the driver relaunches a crashed worker and skips
+that board (w<i>.failed).
+Usage: /usr/bin/python3 kicad_links.py --run 24 [--list kicad_boards/selected.json --in kicad_boards --out linkdata/kicad_all.json]
+       full set: --list kicad_scan/selected.json --in kicad_scan/boards --out linkdata/kicad_full.json"""
+import json, re, sys, os, argparse, subprocess, time
 from pathlib import Path
-from multiprocessing import Pool
-ROOT = Path(os.environ.get("CROSSCLASS", Path.home()/"projects/crossclass")); IN = ROOT/"kicad_boards"; OUT = ROOT/"linkdata"
+ROOT = Path(os.environ.get("CROSSCLASS", Path.home()/"projects/crossclass"))
 DES = re.compile(r"^[A-Z]{1,4}\d{1,4}[A-Z]?$")
-# boards that might share layout or design style with a WACV board (WACV OlimexRed, Arty, DuetWIFI): kept out of training
-EXCLUDE = re.compile(r"^(OLIMEX/|Duet3D/|BehrensG/ARTY_Z7)", re.I)
+EXCLUDE = re.compile(r"^(OLIMEX/|Duet3D/|BehrensG/ARTY_Z7|boobalakrishnan08/Arty100T|antmicro/arty-expansion-board|muhardianab/ArduinoMega2560|"
+                     r"ISLOWIsmaeli/arduino-mega-design|AlanFord/ArduinoMega6axis|Moddler/CCD-Arduino-Mega|Villabaal/ArduinoMega-Autoclave|"
+                     r"gggmmm/pcb-spartan-3|Fabeltranm/SPARTAN6|jonthomasson/SpartanMini|tcfh2003/Virtex-6|viktor-nikolov/MicroZed)", re.I)
 PFX = [("RN", 0), ("R", 0), ("FB", 2), ("L", 2), ("C", 1), ("LED", 4), ("D", 4), ("SW", 5), ("S", 5), ("Q", 6), ("IC", 7), ("U", 7), ("Y", 8), ("X", 8), ("J", 3), ("P", 3)]
 def pcls(ref):
     m = re.match(r"([A-Z]+)\d", ref); return next((c for p, c in PFX if m and m.group(1) == p), -1)
-
 def box_mm(bb): return [bb.GetX()/1e6, bb.GetY()/1e6, (bb.GetX()+bb.GetWidth())/1e6, (bb.GetY()+bb.GetHeight())/1e6]
 def union(bs): return [min(b[0] for b in bs), min(b[1] for b in bs), max(b[2] for b in bs), max(b[3] for b in bs)]
 def inside_frac(t, b):
     iw = max(0.0, min(t[2], b[2])-max(t[0], b[0])); ih = max(0.0, min(t[3], b[3])-max(t[1], b[1]))
     return iw*ih/max((t[2]-t[0])*(t[3]-t[1]), 1e-9)
 
-def extract(entry):
+def extract(entry, indir):
     import pcbnew
-    key, name = entry["key"], entry["name"]; out = []; st = dict(sides_kept=0, hidden_labels=0)
-    if EXCLUDE.search(name): return out, dict(excluded=1)
-    try:
-        brd = pcbnew.LoadBoard(str(IN/f"{key}.kicad_pcb"))
-    except Exception:
-        brd = None
-    if brd is None: return out, dict(failed=1)
+    key, name = entry["key"], entry["name"]; out = []
+    if EXCLUDE.search(name): return out, "excluded"
+    try: brd = pcbnew.LoadBoard(str(Path(indir)/f"{key}.kicad_pcb"))
+    except Exception: brd = None
+    if brd is None: return out, "load_failed"
     for side, cu, silk, fab in (("top", pcbnew.F_Cu, pcbnew.F_SilkS, pcbnew.F_Fab), ("bottom", pcbnew.B_Cu, pcbnew.B_SilkS, pcbnew.B_Fab)):
         parts, texts, bodies = [], [], []
         for fp in brd.GetFootprints():
@@ -46,28 +47,65 @@ def extract(entry):
             if DES.match(ref) and pcls(ref) >= 0: parts.append(dict(box=body, des=ref, cls=pcls(ref)))
             if DES.match(ref) and r.IsVisible() and r.GetLayer() == silk:
                 texts.append(dict(box=box_mm(r.GetBoundingBox()), text=ref, angle=round(r.GetTextAngleDegrees(), 1)))
-        keep = [t for t in texts if max((inside_frac(t["box"], b) for b in bodies), default=0) < 0.5]
-        st["hidden_labels"] += len(texts)-len(keep); texts = keep
+        texts = [t for t in texts if max((inside_frac(t["box"], b) for b in bodies), default=0) < 0.5]
         if side == "bottom":
             for o in parts + texts: x0, y0, x1, y1 = o["box"]; o["box"] = [-x1, y0, -x0, y1]
         tset = {t["text"] for t in texts}; n_link = sum(1 for p in parts if p["des"] in tset)
         if n_link < 10: continue
-        allb = [o["box"] for o in parts+texts]; u = union(allb)
+        u = union([o["box"] for o in parts+texts]); pu = union([p["box"] for p in parts])
         for o in parts+texts: o["box"] = [round(o["box"][0]-u[0], 3), round(o["box"][1]-u[1], 3), round(o["box"][2]-u[0], 3), round(o["box"][3]-u[1], 3)]
-        out.append(dict(id=f"{key}_{side}", source="kicad", board=name, side=side, W=round(u[2]-u[0], 2), H=round(u[3]-u[1], 2), parts=parts, texts=texts))
-        st["sides_kept"] += 1
-    return out, st
+        area_cm2 = max((pu[2]-pu[0])*(pu[3]-pu[1])/100, 0.01)
+        out.append(dict(id=f"{key}_{side}", source="kicad", board=name, group=name.split("/")[-1].lower(), side=side,
+                        W=round(u[2]-u[0], 2), H=round(u[3]-u[1], 2), density=round(len(parts)/area_cm2, 3), n_parts=len(parts), n_links=n_link,
+                        smd_share=entry.get("smd_share"), version=entry.get("version"), parts=parts, texts=texts))
+    return out, "ok" if out else "no_side"
+
+def worker(a):
+    import resource, signal
+    resource.setrlimit(resource.RLIMIT_AS, (24 << 30, 24 << 30))   # a runaway board fails this worker instead of eating the shared machine
+    sel = json.load(open(a.list)); od = Path(a.outdir); i, n = a.worker, a.nworkers
+    done = set(open(od/f"w{i}.done").read().split()) if (od/f"w{i}.done").exists() else set()
+    failed = set(open(od/f"w{i}.failed").read().split()) if (od/f"w{i}.failed").exists() else set()
+    with open(od/f"w{i}.jsonl", "a") as fo, open(od/f"w{i}.done", "a") as fd, open(od/f"w{i}.status", "a") as fs:
+        for k, e in enumerate(sel):
+            if k % n != i or e["key"] in done or e["key"] in failed: continue
+            (od/f"w{i}.cur").write_text(e["key"])
+            signal.alarm(300)                     # default SIGALRM action kills the worker, even inside KiCad's C++; driver skips the board
+            o, st = extract(e, a.indir); signal.alarm(0)
+            for b in o: fo.write(json.dumps(b)+"\n")
+            fs.write(f"{e['key']} {st}\n"); fd.write(e["key"]+"\n"); fo.flush(); fd.flush(); fs.flush()
+    (od/f"w{i}.cur").unlink(missing_ok=True)
+
+def driver(a):
+    od = Path(a.outdir); od.mkdir(parents=True, exist_ok=True); n = a.run
+    cmd = lambda i: [sys.executable, __file__, "--worker", str(i), "--nworkers", str(n), "--list", a.list, "--in", a.indir, "--outdir", str(od)]
+    procs = {i: subprocess.Popen(cmd(i), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) for i in range(n)}; crashes = 0; t0 = time.time()
+    while procs:
+        time.sleep(5)
+        for i, p in list(procs.items()):
+            rc = p.poll()
+            if rc is None: continue
+            if rc == 0: del procs[i]; continue
+            cur = od/f"w{i}.cur"; bad = cur.read_text().strip() if cur.exists() else ""
+            with open(od/f"w{i}.failed", "a") as f: f.write(bad+"\n")
+            crashes += 1; procs[i] = subprocess.Popen(cmd(i), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if int(time.time()-t0) % 120 < 5:
+            nd = sum(len(open(f).read().split()) for f in od.glob("w*.done")); print(f"{int(time.time()-t0)}s boards done {nd}, crashes {crashes}", flush=True)
+    B = [json.loads(l) for f in sorted(od.glob("w*.jsonl")) for l in open(f)]
+    B.sort(key=lambda b: b["id"]); json.dump(B, open(a.out, "w"))
+    st = {}
+    for f in od.glob("w*.status"):
+        for l in open(f): s = l.split()[1]; st[s] = st.get(s, 0)+1
+    st["crashed"] = sum(len([x for x in open(f).read().split() if x]) for f in od.glob("w*.failed"))
+    links = sum(b["n_links"] for b in B)
+    stats = dict(boards_in=len(json.load(open(a.list))), status=st, sides=len(B), top=sum(b["side"] == "top" for b in B), layouts=len({b["id"].rsplit("_", 1)[0] for b in B}),
+                 groups=len({b["group"] for b in B}), parts=sum(b["n_parts"] for b in B), texts=sum(len(b["texts"]) for b in B), links=links)
+    json.dump(stats, open(Path(a.out).with_name(Path(a.out).stem+"_stats.json"), "w"), indent=1); print(json.dumps(stats))
 
 if __name__ == "__main__":
-    sel = json.load(open(IN/"selected.json")); B = []; tot = {}
-    with Pool(int(sys.argv[1]) if len(sys.argv) > 1 else 16) as pool:
-        for k, (o, st) in enumerate(pool.imap_unordered(extract, sel, chunksize=4)):
-            B += o
-            for a, v in st.items(): tot[a] = tot.get(a, 0)+v
-            if k % 200 == 0: print(f"boards {k+1}/{len(sel)}, sides kept {len(B)}", flush=True)
-    B.sort(key=lambda b: b["id"]); json.dump(B, open(OUT/"kicad_all.json", "w"))
-    n_p = sum(len(b["parts"]) for b in B); n_t = sum(len(b["texts"]) for b in B)
-    n_l = sum(sum(1 for p in b["parts"] if p["des"] in {t["text"] for t in b["texts"]}) for b in B)
-    stats = dict(boards_in=len(sel), projects=len({b["board"] for b in B}), sides=len(B), top=sum(b["side"] == "top" for b in B),
-                 parts=n_p, texts=n_t, linkable=n_l, **tot)
-    json.dump(stats, open(OUT/"kicad_all_stats.json", "w"), indent=1); print(json.dumps(stats))
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--run", type=int, default=0); ap.add_argument("--worker", type=int, default=-1); ap.add_argument("--nworkers", type=int, default=1)
+    ap.add_argument("--list", default=str(ROOT/"kicad_boards/selected.json")); ap.add_argument("--in", dest="indir", default=str(ROOT/"kicad_boards"))
+    ap.add_argument("--out", default=str(ROOT/"linkdata/kicad_all.json")); ap.add_argument("--outdir", default="")
+    a = ap.parse_args(); a.outdir = a.outdir or str(Path(a.out).with_suffix(".parts"))
+    worker(a) if a.worker >= 0 else driver(a) if a.run else print(__doc__)
