@@ -47,3 +47,25 @@ is not a test-set pick. (2) KiCad data is what makes the transformer work (WACV 
 (66.3 → 77.9 → 80.3 % for 300 → 1,000 → all), so more boards should help. (3) Strings help on KiCad validation (95.8 vs 94.6 %) but hurt
 on photos (80.3 vs 86.9 %): they transfer badly from layouts to photos (cause not yet checked). (4) The fixed WACV fine-tune lowered
 right-label for E1 (86.9 → 85.2 %) while raising precision; it helped E2 (80.3 → 83.1 %). (5) Still below the 90 % target.
+
+# dv1_E1_XL_150k (2026-10-11, cluster job 198314, 2× RTX PRO 6000 DDP, 3 h 41 min; wandb crossclass/31xhz6bv, group dv1)
+XL (39.3 M), geometry tokens (E1), CrossClass_data_v1 train (23,403 KiCad sides, 1.08 M links), 150k steps × 4 boards, bf16, same
+augmentation / regularisation as before. Fine-tunes from the final checkpoint: 1k steps, lr 1e-4, WACV fold only (_ft) or WACV : KiCad 1:1
+(_mix). Checkpoints: cluster `~/xrssd/crossclass/ckpt/dv1_E1_XL_150k{,_step25000..125000}.pt`. Report `dv1_E1_XL_150k_report.md`.
+
+| 42 WACV test images, exact pairs | right label | precision | F1 | 3 dev right label |
+|---|---|---|---|---|
+| B7 trees, geometry | 82.5 % | 79.0 % | 0.807 | |
+| B8 trees + detector class (③) | 85.7 % | 82.7 % | 0.842 | |
+| P_full_E1 (L, old 1,749-side data, 20k steps) | 86.9 % | 85.0 % | 0.860 | 86.4 % |
+| **dv1_E1_XL_150k, KiCad only** | **89.3 %** | 87.8 % | **0.885** | 87.7 % |
+| + WACV fine-tune (_ft) | 87.8 % | 88.0 % | 0.879 | 87.6 % |
+| + WACV / KiCad 1:1 fine-tune (_mix) | 88.3 % | 88.1 % | 0.882 | 88.7 % |
+KiCad validation (1,369 sides, full): 96.2 % right label, 97.2 % precision.
+
+Convergence (every 5k steps; kvalsub = 356 KiCad validation sides): kvalsub 86.1 (5k) → 90.7 (20k) → 94.3 (50k) → 95.5 (80k) →
+95.7 (100k) → 96.1 (150k); dev3 72.8 → 82.3 → 86.0 → 87.3 → 87.5 → 87.7; training loss 0.61 → 0.29 → 0.24 → 0.19 → 0.17 → 0.15.
+Both validation curves are flat (± noise) from ~80k steps, long before the cosine schedule reaches its minimum → converged; more steps
+would not help. Readings: (1) 10× data + XL: 86.9 → 89.3 % on the photos without any WACV training (+3.6 over B8, +6.8 over B7), 0.7 below
+the 90 % target. (2) WACV fine-tuning does not help on test (−1.5 / −1.0); dev3 would pick _mix (88.7 %), whose test number is 88.3 % —
+the three are within ~1 point and 3 dev images cannot separate them, so the dev-selected (clean) result is 88.3 %, the KiCad-only 89.3 %.

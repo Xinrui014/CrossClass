@@ -157,3 +157,6 @@ B8 here is 0.568 vs 0.570 in CrossClass.md: same method, retrained after the 202
   (18.6k) · > 11.2: 64 (2.5k) → WACV-like 2.1–11.2: 4,652 sides, 249k links. SMD ≥ 60 %: 14,531 sides (783k links). Group-hash split
   (md5(repo name) % 20 == 0): 577 val groups, 1,369 sides, 63,137 links. Incident: two boards hung KiCad, one worker reached ~200 GB RSS
   on the shared L40 → killed; workers now capped at 24 GB address space and 5 min per board.
+- **dv1_E1_XL_150k done (job 198314, `results/linkformer/README.md`):** XL geometry-only transformer on CrossClass_data_v1 = **89.3 %**
+  exact on the 42 test images (precision 87.8 %, F1 0.885) with no WACV training; WACV fine-tune 87.8 %, 1:1 mix 88.3 % (dev3 would pick
+  mix). Validation curves flat from ~80k of 150k steps → converged. 0.7 below the 90 % target.

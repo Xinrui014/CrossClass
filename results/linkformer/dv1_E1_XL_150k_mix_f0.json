@@ -1,0 +1,169 @@
+{
+ "args": {
+  "train": "fold0train",
+  "eval": "fold0train",
+  "size": "XL",
+  "tokens": "E1",
+  "steps": 1000,
+  "lr": 0.0001,
+  "warmup": 100,
+  "cosine": true,
+  "accum": 4,
+  "dropout": 0.1,
+  "wd": 0.01,
+  "aug": true,
+  "save": "",
+  "init": "ckpt/dv1_E1_XL_150k.pt",
+  "final_eval": "fold0test",
+  "device": "cuda",
+  "threads": 1,
+  "tag": "dv1_E1_XL_150k_mix_f0",
+  "eval_every": 250,
+  "seed": 0,
+  "wandb": "crossclass",
+  "wandb_group": "dv1",
+  "data": "CrossClass_data_v1",
+  "amp": true,
+  "ckpt_every": 0,
+  "mix": "ktrain",
+  "mix_p": 0.5,
+  "workers": 1
+ },
+ "params": 39318529,
+ "log": [
+  {
+   "step": 250,
+   "loss": 0.3281,
+   "fold0train": {
+    "acc": 0.8817,
+    "prec": 0.9244,
+    "f1": 0.9026,
+    "linkable": 3661,
+    "right": 3228,
+    "links": 3492
+   }
+  },
+  {
+   "step": 500,
+   "loss": 0.2913,
+   "fold0train": {
+    "acc": 0.9049,
+    "prec": 0.9296,
+    "f1": 0.9171,
+    "linkable": 3661,
+    "right": 3313,
+    "links": 3564
+   }
+  },
+  {
+   "step": 750,
+   "loss": 0.2839,
+   "fold0train": {
+    "acc": 0.9202,
+    "prec": 0.9384,
+    "f1": 0.9293,
+    "linkable": 3661,
+    "right": 3369,
+    "links": 3590
+   }
+  },
+  {
+   "step": 1000,
+   "loss": 0.298,
+   "fold0train": {
+    "acc": 0.917,
+    "prec": 0.9367,
+    "f1": 0.9267,
+    "linkable": 3661,
+    "right": 3357,
+    "links": 3584
+   }
+  }
+ ],
+ "final": {
+  "fold0test": {
+   "summary": {
+    "acc": 0.9192,
+    "prec": 0.8613,
+    "f1": 0.8893,
+    "linkable": 1621,
+    "right": 1490,
+    "links": 1730
+   },
+   "per_image": {
+    "ArduinoMega_Top": {
+     "linkable": 0,
+     "right": 0,
+     "links": 0
+    },
+    "EDA-008_Bottom": {
+     "linkable": 74,
+     "right": 72,
+     "links": 76
+    },
+    "EDA-008_Top": {
+     "linkable": 81,
+     "right": 75,
+     "links": 79
+    },
+    "ML365_Bottom": {
+     "linkable": 412,
+     "right": 373,
+     "links": 505
+    },
+    "ML365_Top": {
+     "linkable": 301,
+     "right": 278,
+     "links": 329
+    },
+    "Spartan6Redux_Bottom": {
+     "linkable": 27,
+     "right": 27,
+     "links": 27
+    },
+    "Spartan6Redux_Top": {
+     "linkable": 70,
+     "right": 62,
+     "links": 66
+    },
+    "Spartan6_Bottom": {
+     "linkable": 18,
+     "right": 17,
+     "links": 18
+    },
+    "Spartan6_Top": {
+     "linkable": 11,
+     "right": 9,
+     "links": 10
+    },
+    "SystemAce_Bottom": {
+     "linkable": 0,
+     "right": 0,
+     "links": 0
+    },
+    "SystemAce_Top": {
+     "linkable": 149,
+     "right": 137,
+     "links": 147
+    },
+    "UTL-016": {
+     "linkable": 58,
+     "right": 53,
+     "links": 53
+    },
+    "UTL-103": {
+     "linkable": 125,
+     "right": 120,
+     "links": 125
+    },
+    "Zedboard": {
+     "linkable": 295,
+     "right": 267,
+     "links": 295
+    }
+   }
+  }
+ },
+ "seconds": 122,
+ "ranks": 1
+}

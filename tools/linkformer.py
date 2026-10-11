@@ -17,7 +17,7 @@ import numpy as np, torch, torch.nn as nn, torch.nn.functional as F
 from scipy.optimize import linear_sum_assignment
 ROOT = Path(os.environ.get("CROSSCLASS", Path.home()/"projects/crossclass")); H = Path.home()
 DEV = ["ML450_Top1", "RPI3B_Top", "DuetWIFI_Top"]
-SIZES = {"S": (128, 4), "M": (256, 6), "L": (384, 8), "XL": (512, 12)}
+SIZES = {"S": (128, 4), "M": (256, 6), "L": (384, 8), "XL": (512, 12), "XXL": (768, 16), "3XL": (1024, 24)}
 PFX = re.compile(r"^([A-Z]+)(\d+)([A-Z]?)$")
 FAKE_PFX = ["TP", "R", "C", "U", "J", "D", "Q", "L", "FB", "SW", "Y", "P"]
 

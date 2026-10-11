@@ -1,0 +1,179 @@
+{
+ "args": {
+  "train": "fold1train",
+  "eval": "fold1train",
+  "size": "XL",
+  "tokens": "E1",
+  "steps": 1000,
+  "lr": 0.0001,
+  "warmup": 100,
+  "cosine": true,
+  "accum": 4,
+  "dropout": 0.1,
+  "wd": 0.01,
+  "aug": true,
+  "save": "",
+  "init": "ckpt/dv1_E1_XL_150k.pt",
+  "final_eval": "fold1test",
+  "device": "cuda",
+  "threads": 1,
+  "tag": "dv1_E1_XL_150k_mix_f1",
+  "eval_every": 250,
+  "seed": 0,
+  "wandb": "crossclass",
+  "wandb_group": "dv1",
+  "data": "CrossClass_data_v1",
+  "amp": true,
+  "ckpt_every": 0,
+  "mix": "ktrain",
+  "mix_p": 0.5,
+  "workers": 1
+ },
+ "params": 39318529,
+ "log": [
+  {
+   "step": 250,
+   "loss": 0.3041,
+   "fold1train": {
+    "acc": 0.9077,
+    "prec": 0.8972,
+    "f1": 0.9024,
+    "linkable": 3414,
+    "right": 3099,
+    "links": 3454
+   }
+  },
+  {
+   "step": 500,
+   "loss": 0.2688,
+   "fold1train": {
+    "acc": 0.9224,
+    "prec": 0.9091,
+    "f1": 0.9157,
+    "linkable": 3414,
+    "right": 3149,
+    "links": 3464
+   }
+  },
+  {
+   "step": 750,
+   "loss": 0.2502,
+   "fold1train": {
+    "acc": 0.9186,
+    "prec": 0.9194,
+    "f1": 0.919,
+    "linkable": 3414,
+    "right": 3136,
+    "links": 3411
+   }
+  },
+  {
+   "step": 1000,
+   "loss": 0.2602,
+   "fold1train": {
+    "acc": 0.9212,
+    "prec": 0.9223,
+    "f1": 0.9217,
+    "linkable": 3414,
+    "right": 3145,
+    "links": 3410
+   }
+  }
+ ],
+ "final": {
+  "fold1test": {
+   "summary": {
+    "acc": 0.8694,
+    "prec": 0.8967,
+    "f1": 0.8828,
+    "linkable": 1868,
+    "right": 1624,
+    "links": 1811
+   },
+   "per_image": {
+    "ACM-109_Bottom": {
+     "linkable": 19,
+     "right": 18,
+     "links": 18
+    },
+    "ACM-109_Top": {
+     "linkable": 49,
+     "right": 46,
+     "links": 48
+    },
+    "DigitalDiscovery": {
+     "linkable": 191,
+     "right": 131,
+     "links": 180
+    },
+    "ML450_Bottom1": {
+     "linkable": 119,
+     "right": 105,
+     "links": 129
+    },
+    "ML450_Bottom2": {
+     "linkable": 69,
+     "right": 55,
+     "links": 68
+    },
+    "ML450_Top1": {
+     "linkable": 335,
+     "right": 283,
+     "links": 306
+    },
+    "ML450_Top2": {
+     "linkable": 227,
+     "right": 209,
+     "links": 227
+    },
+    "MicroZed_Bottom": {
+     "linkable": 199,
+     "right": 192,
+     "links": 199
+    },
+    "MicroZed_Top": {
+     "linkable": 144,
+     "right": 123,
+     "links": 136
+    },
+    "OlimexRed": {
+     "linkable": 42,
+     "right": 26,
+     "links": 34
+    },
+    "RPI3B_Bottom": {
+     "linkable": 84,
+     "right": 81,
+     "links": 84
+    },
+    "RPI3B_Top": {
+     "linkable": 126,
+     "right": 118,
+     "links": 126
+    },
+    "XCM-307A_Bottom": {
+     "linkable": 20,
+     "right": 18,
+     "links": 19
+    },
+    "XCM-307A_Top": {
+     "linkable": 58,
+     "right": 57,
+     "links": 58
+    },
+    "Ztex": {
+     "linkable": 36,
+     "right": 35,
+     "links": 35
+    },
+    "Zybo": {
+     "linkable": 150,
+     "right": 127,
+     "links": 144
+    }
+   }
+  }
+ },
+ "seconds": 122,
+ "ranks": 1
+}
