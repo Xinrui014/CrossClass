@@ -5,7 +5,8 @@ Position (box centre, in units of the board's median part size) enters only thro
 Head: s_ij = <W_q h_i, W_k h_j> / sqrt(d) for part i, text j; one 'none' score per part. Loss: per-part softmax over texts + none,
 target = every text whose string equals the part's designator (or none). Decoding: Hungarian on -log p, own none column per part.
 Training options: --aug (90-degree rotations + mirror, box jitter, dropped labels, fake labels), --dropout, --accum (boards per
-optimizer step), cosine schedule, --save / --init checkpoints (fine-tuning). Results JSON keeps per-image counts so any image subset
+optimizer step), cosine schedule, --save / --init checkpoints (fine-tuning), --workers (background board preparation),
+multi-GPU data parallel when launched with torchrun (--accum boards per step are split across the ranks). Results JSON keeps per-image counts so any image subset
 (e.g. the 42 test images) can be scored afterwards (tools/linkformer_report.py). --wandb <project> logs loss, lr, eval and final scores.
 Usage: linkformer.py --train dev3 --eval dev3 --size L --tokens E1 --steps 1000 [--device cuda] [--tag name]
   board sets: dev3, test42, all45, fold<k>train, fold<k>test, kicad199, kicadtrain, kicadval, kicad300, kicad1000;
@@ -78,8 +79,8 @@ def augment(b, rng, p_drop=0.15, p_fake=0.05, jitter=0.1):
             texts.append(dict(box=[cx-w/2, cy-h/2, cx+w/2, cy+h/2], text=s, angle=None)); used.add(s)
     return dict(b, parts=parts, texts=texts)
 
-def encode(b, vocab):
-    """Board -> tensors. Units = median part size (longer side)."""
+def encode(b, vocab, as_numpy=False):
+    """Board -> tensors (or numpy arrays, for DataLoader workers). Units = median part size (longer side)."""
     P = np.array([p["box"] for p in b["parts"]], float).reshape(-1, 4); T = np.array([t["box"] for t in b["texts"]], float).reshape(-1, 4)
     unit = float(np.median(np.maximum(P[:, 2]-P[:, 0], P[:, 3]-P[:, 1]))) if len(P) else 1.0
     B = np.concatenate([P, T]) / max(unit, 1e-6); w = np.maximum(B[:, 2]-B[:, 0], 1e-3); h = np.maximum(B[:, 3]-B[:, 1], 1e-3)
@@ -95,9 +96,26 @@ def encode(b, vocab):
     strs = [t["text"] for t in b["texts"]]
     tgt = []   # per part: list of target text indices, [] = none
     for p in b["parts"]: tgt.append([j for j, s in enumerate(strs) if p["des"] and s == p["des"]])
+    tmask = np.zeros((n, m+1), bool)                 # target cells per part row (all same-string texts, or the none column)
+    for i, t in enumerate(tgt): tmask[i, t if t else [m]] = True
+    if as_numpy:
+        return dict(id=b["id"], n=n, m=m, feats=feats.astype(np.float32), pos=pos.astype(np.float32), pref=pref.astype(np.int64), dig=dig.astype(np.int64),
+                    tmask=tmask, tgt=tgt, strs=strs, des=[p["des"] for p in b["parts"]])
     f = lambda a, dt=torch.float32: torch.tensor(np.asarray(a), dtype=dt)
-    return dict(id=b["id"], n=n, m=m, feats=f(feats), pos=f(pos), pref=f(pref, torch.long), dig=f(dig, torch.long), tgt=tgt, strs=strs,
-                des=[p["des"] for p in b["parts"]])
+    return dict(id=b["id"], n=n, m=m, feats=f(feats), pos=f(pos), pref=f(pref, torch.long), dig=f(dig, torch.long), tmask=torch.from_numpy(tmask),
+                tgt=tgt, strs=strs, des=[p["des"] for p in b["parts"]])
+
+def from_numpy(e): return {k: (torch.from_numpy(v) if isinstance(v, np.ndarray) else v) for k, v in e.items()}
+
+class BoardStream(torch.utils.data.IterableDataset):
+    """Endless stream of (augmented) encoded training boards; each DataLoader worker has its own RNG. Yields numpy arrays (no shared memory)."""
+    def __init__(self, trb, mixb, mix_p, vocab, aug, seed): super().__init__(); self.trb, self.mixb, self.mix_p, self.vocab, self.aug, self.seed = trb, mixb, mix_p, vocab, aug, seed
+    def __iter__(self):
+        wi = torch.utils.data.get_worker_info(); rng = random.Random(self.seed*1000 + (wi.id if wi else 0))
+        while True:
+            mix = bool(self.mixb) and rng.random() < self.mix_p; b = rng.choice(self.mixb if mix else self.trb)
+            e = encode(augment(b, rng) if (self.aug or mix) else b, self.vocab, as_numpy=True)
+            if e["n"] and e["m"]: yield e
 
 def rope_2d(x, pos, freqs):
     """x: (heads, N, hd); first half of hd rotated by x-position, second half by y-position, one frequency per pair."""
@@ -136,10 +154,9 @@ class LinkFormer(nn.Module):
         S = self.wq(hp) @ self.wk(ht).T / math.sqrt(x.shape[1])
         return torch.cat([S, self.none(hp)], 1)                     # (n, m+1), last column = none
 
-def loss_fn(logits, tgt):
-    lse = torch.logsumexp(logits, 1); m = logits.shape[1]-1; ls = []
-    for i, t in enumerate(tgt): ls.append(lse[i] - torch.logsumexp(logits[i, t if t else [m]], 0))
-    return torch.stack(ls).mean()
+def loss_fn(logits, tmask):
+    """Per-part softmax over texts + none; -log of the probability mass on the target cells (same math as the old per-part loop)."""
+    return (torch.logsumexp(logits, 1) - torch.logsumexp(logits.masked_fill(~tmask, float("-inf")), 1)).mean()
 
 @torch.no_grad()
 def decode(logits):
@@ -185,46 +202,61 @@ if __name__ == "__main__":
     ap.add_argument("--data", default="", help="frozen dataset folder under linkdata/, e.g. CrossClass_data_v1")
     ap.add_argument("--amp", action="store_true", help="bf16 autocast on CUDA"); ap.add_argument("--ckpt_every", type=int, default=0)
     ap.add_argument("--mix", default="", help="second training set sampled with probability --mix_p (e.g. ktrain)"); ap.add_argument("--mix_p", type=float, default=0.5)
-    a = ap.parse_args(); torch.set_num_threads(a.threads); torch.manual_seed(a.seed); np.random.seed(a.seed); rng = random.Random(a.seed)
+    ap.add_argument("--workers", type=int, default=0, help="DataLoader worker processes for augmentation / encoding")
+    a = ap.parse_args(); torch.set_num_threads(a.threads)
+    world, rank, local = int(os.environ.get("WORLD_SIZE", 1)), int(os.environ.get("RANK", 0)), int(os.environ.get("LOCAL_RANK", 0)); is_main = rank == 0
+    torch.manual_seed(a.seed); np.random.seed(a.seed)
     sets = load_sets(a.data); AMP = a.amp
     if a.init:
         ck = torch.load(a.init, map_location="cpu"); vocab = Vocab(ck["vocab"])
     else:
         vocab = Vocab.from_boards(sets["all45"] + sets.get("ktrain", []) + sets.get("kval", []) + sets.get("kicadtrain", []) + sets.get("kicadval", []) + sets.get("kicad199", []))
-    trb = [b for b in sets[a.train] if b["parts"] and b["texts"]]; tr = None if a.aug else [encode(b, vocab) for b in trb]
+    trb = [b for b in sets[a.train] if b["parts"] and b["texts"]]
     mixb = [b for b in sets[a.mix] if b["parts"] and b["texts"]] if a.mix else []
-    evs = {s: [encode(b, vocab) for b in sets[s] if b["parts"] and b["texts"]] for s in a.eval.split(",") if s}
-    d, L = SIZES[a.size]; dev = torch.device(a.device)
+    # training stream first (DataLoader workers fork before CUDA is initialised)
+    loader = torch.utils.data.DataLoader(BoardStream(trb, mixb, a.mix_p, vocab, a.aug, a.seed*100+rank), batch_size=None, collate_fn=lambda x: x,
+                                         num_workers=a.workers, prefetch_factor=(8 if a.workers else None), persistent_workers=a.workers > 0)
+    stream = iter(loader)
+    evs = {s: [encode(b, vocab) for b in sets[s] if b["parts"] and b["texts"]] for s in a.eval.split(",") if s} if is_main else {}
+    if world > 1:
+        import datetime, torch.distributed as dist
+        dist.init_process_group("nccl", timeout=datetime.timedelta(hours=2)); torch.cuda.set_device(local); dev = torch.device("cuda", local)
+    else:
+        dev = torch.device(a.device)
+    d, L = SIZES[a.size]
     model = LinkFormer(d, L, len(vocab.idx)+2, a.tokens == "E2", a.dropout).to(dev)
     if a.init: model.load_state_dict(ck["model"])
+    net = torch.nn.parallel.DistributedDataParallel(model, device_ids=[local], find_unused_parameters=True) if world > 1 else model
+    acc = max(1, a.accum // world)                    # boards per rank per optimizer step; total = acc * world (= --accum)
     npar = sum(p.numel() for p in model.parameters()); tag = a.tag or f"{a.train}_{a.size}_{a.tokens}"
-    print(f"[{tag}] params {npar/1e6:.1f}M, train boards {len(trb)} ({sum(len(b['parts']) for b in trb)} parts), device {dev}, init {a.init or '-'}", flush=True)
+    if is_main: print(f"[{tag}] params {npar/1e6:.1f}M, train boards {len(trb)} ({sum(len(b['parts']) for b in trb)} parts), device {dev}, ranks {world} x {acc} boards/step, init {a.init or '-'}", flush=True)
     opt = torch.optim.AdamW(model.parameters(), lr=a.lr, weight_decay=a.wd)
     def lr_at(s):
         w = min(1.0, (s+1)/a.warmup)
         return w * (0.1 + 0.9*0.5*(1+math.cos(math.pi*min(s, a.steps)/a.steps)) if a.cosine else w)
     sched = torch.optim.lr_scheduler.LambdaLR(opt, lr_at)
     wb = None
-    if a.wandb:
+    if a.wandb and is_main:
         try:
             import wandb
-            kw = dict(project=a.wandb, group=a.wandb_group or None, name=tag, config=dict(vars(a), params=npar, train_boards=len(trb)))
+            kw = dict(project=a.wandb, group=a.wandb_group or None, name=tag, config=dict(vars(a), params=npar, train_boards=len(trb), ranks=world))
             try: wb = wandb.init(**kw)
             except Exception as ex: print(f"[{tag}] wandb online failed ({repr(ex)[:80]}), logging offline", flush=True); wb = wandb.init(mode="offline", **kw)
         except Exception as ex: print(f"[{tag}] wandb unavailable: {repr(ex)[:80]}", flush=True)
+    from contextlib import nullcontext
     log = []; t0 = time.time(); run = None
     for step in range(1, a.steps+1):
         opt.zero_grad(); tot = 0.0
-        for _ in range(a.accum):
-            src = mixb if mixb and rng.random() < a.mix_p else None
-            e = encode(augment(rng.choice(src or trb), rng), vocab) if (a.aug or src) else tr[rng.randrange(len(tr))]
-            if not (e["n"] and e["m"]): continue
-            with torch.autocast("cuda", dtype=torch.bfloat16, enabled=a.amp and dev.type == "cuda"):
-                logits = model(to_dev(e, dev))
-            loss = loss_fn(logits.float(), e["tgt"]) / a.accum; loss.backward(); tot += loss.item()
+        for micro in range(acc):
+            e = from_numpy(next(stream))
+            with (net.no_sync() if world > 1 and micro < acc-1 else nullcontext()):
+                with torch.autocast("cuda", dtype=torch.bfloat16, enabled=a.amp and dev.type == "cuda"):
+                    logits = net(to_dev(e, dev))
+                loss = loss_fn(logits.float(), e["tmask"].to(dev)) / acc; loss.backward(); tot += loss.item()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0); opt.step(); sched.step()
         run = tot if run is None else 0.98*run + 0.02*tot
-        if wb and step % 50 == 0: wb.log(dict(loss=run, lr=sched.get_last_lr()[0]), step=step)
+        if not is_main: continue
+        if wb and step % 50 == 0: wb.log(dict(loss=run, lr=sched.get_last_lr()[0], steps_per_s=step/(time.time()-t0)), step=step)
         if a.ckpt_every and a.save and step % a.ckpt_every == 0 and step < a.steps:
             Path(a.save).parent.mkdir(parents=True, exist_ok=True); torch.save(dict(model=model.state_dict(), vocab=vocab.prefixes, args=vars(a), step=step), a.save.replace(".pt", f"_step{step}.pt"))
         if evs and (step % a.eval_every == 0 or step == a.steps):
@@ -232,6 +264,9 @@ if __name__ == "__main__":
             log.append(dict(step=step, loss=round(run, 4), **res))
             if wb: wb.log({f"{s}/{m}": r[m] for s, r in res.items() for m in ("acc", "prec", "f1")}, step=step)
             print(f"[{tag}] step {step} loss {run:.3f} " + " ".join(f"{s}: acc {r['acc']:.3f} prec {r['prec']:.3f}" for s, r in res.items()) + f" ({time.time()-t0:.0f}s)", flush=True)
+    if world > 1:
+        import torch.distributed as dist
+        if not is_main: dist.destroy_process_group(); sys.exit(0)
     final = {}
     for s in [x for x in a.final_eval.split(",") if x]:
         es = [encode(b, vocab) for b in sets[s] if b["parts"] and b["texts"]]; summ, per = evaluate(model, es, dev); final[s] = dict(summary=summ, per_image=per)
@@ -240,5 +275,6 @@ if __name__ == "__main__":
     if a.save:
         Path(a.save).parent.mkdir(parents=True, exist_ok=True); torch.save(dict(model=model.state_dict(), vocab=vocab.prefixes, args=vars(a)), a.save)
     out = ROOT/"results/linkformer"; out.mkdir(parents=True, exist_ok=True)
-    json.dump(dict(args=vars(a), params=npar, log=log, final=final, seconds=round(time.time()-t0)), open(out/f"{tag}.json", "w"), indent=1)
+    json.dump(dict(args=vars(a), params=npar, log=log, final=final, seconds=round(time.time()-t0), ranks=world), open(out/f"{tag}.json", "w"), indent=1)
     if wb: wb.finish()
+    if world > 1: dist.destroy_process_group()
