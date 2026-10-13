@@ -69,3 +69,28 @@ Both validation curves are flat (± noise) from ~80k steps, long before the cosi
 would not help. Readings: (1) 10× data + XL: 86.9 → 89.3 % on the photos without any WACV training (+3.6 over B8, +6.8 over B7), 0.7 below
 the 90 % target. (2) WACV fine-tuning does not help on test (−1.5 / −1.0); dev3 would pick _mix (88.7 %), whose test number is 88.3 % —
 the three are within ~1 point and 3 dev images cannot separate them, so the dev-selected (clean) result is 88.3 %, the KiCad-only 89.3 %.
+
+# dv1_E1_XXL_150k (2026-10-12, cluster job 199198, 2× L40S DDP, 4 h 35 min; wandb crossclass/vr50dvcr, group dv1)
+Same recipe as dv1_E1_XL_150k, only the size changed: XXL = 768 wide × 16 layers (~114 M). Zero-shot only.
+| 42 WACV test images, exact pairs | right label | precision | F1 | 3 dev | KiCad val (full) | final training loss |
+|---|---|---|---|---|---|---|
+| dv1_E1_XL_150k (39 M) | **89.3 %** | **87.8 %** | **0.885** | 87.7 % | **96.2 %** | 0.15 |
+| dv1_E1_XXL_150k (114 M) | 86.6 % | 85.7 % | 0.861 | 87.8 % | 95.1 % | 0.19 |
+XXL trailed XL at every checkpoint on KiCad validation (e.g. 50k: 90.2 vs 94.3 %; 150k: 94.6 vs 96.1 %) and kept a higher training loss,
+so with the XL settings (lr 3e-4, 4 boards per step) the bigger model trained worse even on KiCad, not just transferred worse. Under this
+recipe size is not the lever; a fair size test would need its own learning rate / batch size. The 3 dev images rate the two runs equal
+(87.7 vs 87.8 %) while the test differs by 2.7 points: dev3 is too small to choose between models.
+
+# XXL learning-rate sweep (2026-10-12/13; only lr changed vs dv1_E1_XXL_150k)
+lr 1e-4: cluster job 200658, 2× RTX 6000 Ada DDP, 4.4 h, wandb n2p8rs83. lr 2e-4: L40 server GPU 3, single GPU (4 boards per step
+accumulated), env ~/miniconda3/envs/qwen_edit, 6.0 h, wandb pawomdw6. Zero-shot (KiCad only), 42 WACV test images, exact pairs.
+| run | lr | right label | precision | F1 | wrong parts | KiCad val (full) | dev3 | final loss |
+|---|---|---|---|---|---|---|---|---|
+| dv1_E1_XL_150k (39 M) | 3e-4 | 89.3 % | 87.8 % | 0.885 | 490 | 96.2 % | 87.7 % | 0.15 |
+| dv1_E1_XXL_150k (116 M) | 3e-4 | 86.6 % | 85.7 % | 0.861 | 614 | 95.1 % | 87.8 % | 0.19 |
+| dv1_E1_XXL_150k_lr2e-4 | 2e-4 | 88.8 % | 87.2 % | 0.880 | 516 | 96.0 % | 88.0 % | 0.16 |
+| **dv1_E1_XXL_150k_lr1e-4** | **1e-4** | **89.9 %** | **88.4 %** | **0.891** | **465** | **96.4 %** | **90.6 %** | **0.14** |
+Curves (kvalsub / dev3 / loss): lr1e-4 is ahead of every other run from the first evaluation (5k: 90.1 / 77.9 / 0.45 vs XL 86.1 / 72.8 /
+0.61) and ends highest on KiCad validation. Lower lr is monotonically better for XXL (3e-4 → 2e-4 → 1e-4: 86.6 → 88.8 → 89.9 %), so
+the earlier "bigger is worse" was the learning rate. Tuned, XXL beats XL by 0.6 points on test and 0.2 on KiCad val — a small size gain.
+Open: XL was never run at a lower lr, so the size effect at matched tuning is still unmeasured; the trend also leaves room below 1e-4.

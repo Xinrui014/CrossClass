@@ -160,3 +160,7 @@ B8 here is 0.568 vs 0.570 in CrossClass.md: same method, retrained after the 202
 - **dv1_E1_XL_150k done (job 198314, `results/linkformer/README.md`):** XL geometry-only transformer on CrossClass_data_v1 = **89.3 %**
   exact on the 42 test images (precision 87.8 %, F1 0.885) with no WACV training; WACV fine-tune 87.8 %, 1:1 mix 88.3 % (dev3 would pick
   mix). Validation curves flat from ~80k of 150k steps → converged. 0.7 below the 90 % target.
+- **dv1_E1_XXL_150k (job 199198):** 86.6 % on the 42 test images (XL 89.3 %); KiCad val 95.1 % (XL 96.2 %), higher training loss → with
+  the XL recipe the larger model trains worse; size is not the lever under this recipe.
+- **XXL lr sweep:** lr 3e-4 / 2e-4 / 1e-4 → 86.6 / 88.8 / **89.9 %** (42 test; F1 0.861 / 0.880 / **0.891**; KiCad val 95.1 / 96.0 / 96.4).
+  The XXL drop was the learning rate; tuned XXL beats XL (89.3 %) by 0.6. New best: dv1_E1_XXL_150k_lr1e-4. XL at lower lr untested.

@@ -1,25 +1,29 @@
 # crossclass — Status
 
 **Created:** 2026-10-09 (owner: "same as gdino_fewshot, a project folder from L40 sshfs to deskbox"; work done 2026-10-05 in gdino_fewshot).
+Session logs: `snapshot/<date>.md` (raw), `memory/<date>.md` (distilled; latest 2026-10-13).
 
 ## Done
 - ① detector 0.541 / ② VLM two-panel 0.450 (small crop 0.400) / ③ OCR link 0.570 mAP50 on WACV 42 test — `CrossClass.md`, `results/`,
   page https://claude.ai/artifact/T1MkAEUMAfBxDsgipdhyHK (v4). Raw answers `answers/`, result boxes `preds/`.
+- Linking sub-task (2026-10-10 →): problem setting, baselines, data, decisions in `LINKING.md`; prior work `results/literature_crossclass.md`;
+  design / error page https://claude.ai/artifact/GgsGXi8FHqvZ1CS4LzTeiw (`page/linking.html`).
+  Data **CrossClass_data_v1** (`linkdata/CrossClass_data_v1/`, card `datasets/CrossClass_data_v1.md`): 24,772 KiCad sides, 1.14 M links.
+  **Best linker: `dv1_E1_XXL_150k_lr1e-4` = 89.9 % exact right label on the 42 test images** (precision 88.4 %, F1 0.891; KiCad val 96.4 %),
+  vs XL lr3e-4 89.3 %, B8 (③) 85.7 %, B7 82.5 %. All runs: `results/linkformer/README.md`; wandb project `crossclass` (xinruiworkstation).
+  Checkpoints: cluster `~/xrssd/crossclass/ckpt/`, L40 `ckpt/` (lr2e-4 run).
 
-- 2026-10-10 linking task set up (owner: current linker = a baseline; find a better text–part linking): problem setting, data, metrics,
-  8 baselines + upper bound in `LINKING.md`; code `tools/link_baselines.py` (`~/venvs/gdino_fewshot`, CPU); results `results/linking/`.
-  Oracle: rules 61–81 %, learned ③ linker 85.7 % right label; end to end only learned linkers beat the detector (0.568 mAP50);
-  perfect linking on current OCR = 0.611, perfect reading + linking = 0.723. Waiting on owner decisions (LINKING.md §9).
-  Literature check "has anyone done this": `results/literature_crossclass.md`.
-- 2026-10-10 transformer-linker design page (token ablation E1–E4, 2D RoPE, KiCad K0–K3): https://claude.ai/artifact/GgsGXi8FHqvZ1CS4LzTeiw
-  (source `page/linking.html`, figures `tools/link_figs.py`). Waiting on the owner's four choices at the end of the page.
+## Waiting on the owner
+- WACV-clean review: https://claude.ai/artifact/RMi6e4cS2zhayvWGjPX1Hs (212 candidates, db collection "decisions"; 0 decided on 2026-10-13).
+  When done: read decisions (ArtifactData list), write `linkdata/CrossClass_data_v1/wacv_clean_v1.json` + change log, rescore B7 / B8 /
+  transformers on both label sets. Target 98 % (ceiling on current labels 98.32 %).
+- Uncommitted (ask "commit and push"): .gitignore, LINKING.md, results/linkformer/README.md + dv1_E1_XXL_150k*.json/_report.md,
+  tools/cluster/linkformer_dv1_xxl.sbatch (sibling guard; cluster copy identical), page/review/review.html, tools/wacv_review_cands.py,
+  results/linking/wacv_clean_candidates.json.
 
-- 2026-10-10 linking transformer: overfit OK (job 196808); full runs (job 197413, wandb crossclass/linkformer_full_197413): geometry-only
-  transformer trained on 1,749 KiCad layout sides = 86.9 % exact on the 42 test images (B8 85.7 %, B7 82.5 %); details
-  `results/linkformer/README.md`. Data: `linkdata/kicad_all.json` (110k links, `tools/kicad_select.py` + `tools/kicad_links.py`).
-  Cluster clone `~/xrssd/crossclass`, checkpoints `~/xrssd/crossclass/ckpt/`.
-
-## Next (owner to choose, see CrossClass.md "Not done")
-- V1 (VLM told to ignore printed text) · capacitor-cue test · Qwen3-VL-8B · FPIC transfer · clean gated hybrid on dev only.
+## Next (owner to choose)
+- Linking: XL lr1e-4 (size effect at matched lr) · XXL lr5e-5 · test-time augmentation · error analysis of the 89.9 % model · text tokens on
+  data_v1 · edge-gap attention bias · end-to-end track (detector + OCR) with the new linker.
+- CrossClass (older list): V1 (VLM told to ignore printed text) · capacitor-cue test · Qwen3-VL-8B · FPIC transfer · clean gated hybrid.
 - VLM server is OFF. To rerun ②: `GPUS=<free> tools/serve_qwen38_fp8_1gpu.sh` → `tools/qwen_class.py --tag <new> --view both` →
   `tools/qwen_class_score.py --tag <new>` → `tools/err_compare.py --qwen wacv<new>ALL42` → `tools/build_compare.py page` → republish.

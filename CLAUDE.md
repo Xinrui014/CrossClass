@@ -1,6 +1,8 @@
 # Project: crossclass — who decides the class of a detected PCB component?
 
 Read `CrossClass.md` first (task, setting, the three results, findings, next steps). Then `STATUS.md`.
+Linking sub-task (since 2026-10-10: transformer part↔designator linker, data CrossClass_data_v1, cluster runs): `LINKING.md`,
+`results/linkformer/README.md`, latest session notes `memory/<date>.md` (raw logs in `snapshot/`).
 
 ## Locations (owner rule: one folder per project, same name on both machines)
 - GitHub: https://github.com/Xinrui014/CrossClass (private; first push 2026-10-10 from the L40; `origin`). Ask the owner before every commit/push.
