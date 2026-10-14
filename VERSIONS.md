@@ -14,7 +14,23 @@ populated component, whatever its prefix (v1 kept only R RN FB L C LED D SW S Q 
 unknown prefix = class 9 "other". Train 24,152 sides / 1.40 M parts / 1.13 M links (v1 23,403 / 1.32 M / 1.08 M); WACV files unchanged.
 Fast training recipe (`--bps 16 --size_ratio 1e9 --tok_budget 16384`): 16 boards per step in padded forwards (same math as one board at
 a time), 37,500 steps = the same 600k boards, ~2× faster per board than `--batched`, ~3× than v1's one-board-at-a-time training.
-Round 1 on data v2 (intern02 A800 GPUs 6/7, lr 2e-4): v2d2_G (E1 + geobias) vs v2d2_GS (G + strings with noise) — running.
+Note: the padded forward gives the same outputs, but the recipe itself differs from v1's (4 → 16 boards per step, lr 1e-4 → 2e-4,
+150k → 37.5k steps, warmup 2000 → 500); its effect on accuracy was not checked before round 1.
+Round 1 on data v2 (intern02 A800 GPUs 6/7, fast recipe, lr 2e-4, ~1.6 h each): **v2d2_G** (E1 + geobias) clean41 90.3 % (prec 91.7 %),
+KiCad val 96.4 %; **v2d2_GS** (G + strings with noise) clean41 **91.6 %** (prec 91.0 %), KiCad val 97.7 %. Strings now help (+1.4,
+19 images better / 9 worse: the data v2 fix works), but both are below v2_G (92.2 %): G lost 2.0 points (22 of 27 changed images
+worse; losses spread over none-errors and wrong texts, not tied to the new prefixes). Data v2 and the recipe changed together, so the
+cause is open (overnight run `v1d_G_b16_lr2e-4` = G, data v1, fast recipe).
+
+**A800 optimization** (2026-10-14, tag `linker-v2-a800-optimize`; nsys on intern02 A800): the step was launch-bound (~5,500 kernels per
+step, GPU busy ~65 %, 46 % of GPU time in small casts / elementwise ops, ~113 host-device syncs per step from per-board copies). Changes,
+same math: one padded batch per step with the loss computed batched (`dense_batch`, `LinkFormer.train_loss`; per-board loop only for the
+lg head), one non-blocking copy per field, no `.item()` sync per step, RoPE cos/sin and the attention bias computed once per forward,
+bias made contiguous (a permuted bias silently sends SDPA to the slow math path), tokens padded to multiples of 16. Check against the
+original code (16 augmented boards × 3): fp32 loss / gradients agree to ~1e-6; under bf16 both codes have the same error against fp32
+(gradients ~1.5 %). Speed (A800, steps 50–199, same boards): G 0.133 → 0.094 s/step, GS 0.140 → 0.095 s/step (1.4–1.5×; a 600k-board
+run ≈ 65 min instead of ≈ 100). Options added: `--profile A:B` (NVTX ranges + CUDA profiler range), `--compile` (torch.compile of the
+training forward; ~0.085 s/step after compiling but recompiles cost ~2 min each, not used), `--fused_adam`.
 
 v2 smoke tests (L40, size S, `tools/v2_decode_check.py`): at 15k steps the lg head trails the v1 head (KiCad val subset 88.4 % with its
 best decoding vs 90.7 %; clean41 79.7 vs 81.2 %; the gap shrinks with training: −17 points at 2.5k steps, −8.5 at 15k with the default
@@ -41,5 +57,5 @@ a neighbour's label. Design discussion and references: `page/model/` (artifact 4
 | KiCad source boards (25 GB) | `kicad_scan/boards/` | – |
 | vendor design files | `designfiles/` | – |
 | v1 checkpoints | `ckpt/` (XL, XXL lr 3e-4 / 2e-4 / 1e-4) | `ckpt/` (all v1 runs) |
-| v2 checkpoints | `ckpt/` (v2_S) | `ckpt/` (`v2_A/G/S`); intern02 `/dev_vepfs/xiyu/crossclass/ckpt/` (`v2d2_*`) |
+| v2 checkpoints | `ckpt/` (v2_S, v2_G) | `ckpt/` (`v2_A/G/S`); intern02 `/dev_vepfs/xiyu/crossclass/ckpt/` (`v2d2_*`, overnight runs) |
 | training logs | – | `logs/linkformer/`; wandb project `crossclass` (group `dv1` = v1, `v2` = v2) |

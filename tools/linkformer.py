@@ -157,6 +157,35 @@ class BoardStream(torch.utils.data.IterableDataset):
             e = encode(augment(b, rng) if (self.aug or mix) else b, self.vocab, as_numpy=True)
             if e["n"] and e["m"]: yield e
 
+def dense_batch(es, dev, targets=False):
+    """Training boards (encode(..., as_numpy=True) dicts) -> one padded batch on dev, one non-blocking host->device copy per field:
+    tokens padded to the largest board, valid-token mask, part counts n; with targets, tm (B, max parts, N+1) = target cells per part
+    (text tokens at their token index, none at column N; padded part rows all True = no loss, like 'ign' rows)."""
+    B = len(es); Ns = [e["n"]+e["m"] for e in es]; r16 = lambda k: -(-k // 16) * 16
+    N = r16(max(Ns)); P = r16(max(e["n"] for e in es))     # multiples of 16: aligned kernels, one torch.compile graph (padding is masked)
+    feats = np.zeros((B, N, 4), np.float32); pos = np.zeros((B, N, 2), np.float32); box = np.zeros((B, N, 4), np.float32)
+    pref = np.zeros((B, N), np.int64); dig = np.full((B, N, 4), 10, np.int64); valid = np.zeros((B, N), bool)
+    for b, (e, k) in enumerate(zip(es, Ns)):
+        feats[b, :k], pos[b, :k], box[b, :k], pref[b, :k], dig[b, :k], valid[b, :k] = e["feats"], e["pos"], e["box"], e["pref"], e["dig"], True
+    out = dict(feats=feats, pos=pos, box=box, pref=pref, dig=dig, valid=valid, n=np.array([e["n"] for e in es], np.int64))
+    if targets:
+        tm = np.ones((B, P, N+1), bool)
+        for b, e in enumerate(es):
+            n, m = e["n"], e["m"]; tm[b, :n] = False; tm[b, :n, n:n+m] = e["tmask"][:, :m]; tm[b, :n, N] = e["tmask"][:, m]
+        out["tm"] = tm
+    return {k: torch.from_numpy(v).to(dev, non_blocking=True) for k, v in out.items()}
+
+def rope_cs(pos, freqs):
+    """cos / sin of the 2D RoPE angles per axis, (..., 1, N, q): computed once per forward, shared by q, k and all layers."""
+    return [(torch.cos(ang), torch.sin(ang)) for ang in ((pos[..., a:a+1] * freqs).unsqueeze(-3) for a in (0, 1))]
+
+def rope_apply(x, cs):
+    """Same rotation as rope_2d, with precomputed cos / sin."""
+    hd = x.shape[-1]; out = []
+    for (c, s), half in zip(cs, (x[..., :hd//2], x[..., hd//2:])):
+        x1, x2 = half[..., 0::2], half[..., 1::2]; out += [torch.stack([x1*c - x2*s, x1*s + x2*c], -1).flatten(-2)]
+    return torch.cat(out, -1)
+
 def rope_2d(x, pos, freqs):
     """x: (heads, N, hd) with pos (N, 2), or (B, heads, N, hd) with pos (B, N, 2); first half of hd rotated by x-position, second
     half by y-position, one frequency per pair."""
@@ -178,23 +207,25 @@ class Block(nn.Module):
         am = bias[None].to(q.dtype) if bias is not None else None                  # (1, heads, N, N), added to the attention scores
         a = F.scaled_dot_product_attention(q[None], k[None], v[None], attn_mask=am, dropout_p=self.p if self.training else 0.0)[0].permute(1, 0, 2).reshape(N, d)
         x = x + self.drop(self.o(a)); return x + self.drop(self.mlp(self.n2(x)))
-    def forward_b(self, x, pos, freqs, am):
-        """Padded batch: x (B, N, d), pos (B, N, 2), am (B, heads or 1, 1 or N, N) additive mask / bias (-inf on padded keys)."""
+    def forward_b(self, x, cs, am):
+        """Padded batch: x (B, N, d), cs = rope_cs(pos), am (B, heads or 1, 1 or N, N) additive mask / bias (-inf on padded keys), already
+        in the attention dtype."""
         B, N, d = x.shape; q, k, v = self.qkv(self.n1(x)).view(B, N, 3, self.h, d//self.h).permute(2, 0, 3, 1, 4)
-        q, k = rope_2d(q, pos, freqs), rope_2d(k, pos, freqs)
-        a = F.scaled_dot_product_attention(q, k, v, attn_mask=am.to(q.dtype), dropout_p=self.p if self.training else 0.0).transpose(1, 2).reshape(B, N, d)
+        q, k = rope_apply(q, cs), rope_apply(k, cs)
+        a = F.scaled_dot_product_attention(q, k, v, attn_mask=am, dropout_p=self.p if self.training else 0.0).transpose(1, 2).reshape(B, N, d)
         x = x + self.drop(self.o(a)); return x + self.drop(self.mlp(self.n2(x)))
 
 def pair_geometry(box, is_text):
     """(N, N, 10) features of every token pair (query a, key b), boxes in median-part units; offsets and gaps are measured in the
     query box's own width / height (Relation Networks style), plus the plain gap in units and the two token types."""
-    x0, y0, x1, y1 = box.unbind(1); w = (x1-x0).clamp_min(1e-3); h = (y1-y0).clamp_min(1e-3); cx, cy = (x0+x1)/2, (y0+y1)/2
-    dx = cx[None, :]-cx[:, None]; dy = cy[None, :]-cy[:, None]
-    gx = torch.maximum(x0[None, :]-x1[:, None], x0[:, None]-x1[None, :]).clamp_min(0); gy = torch.maximum(y0[None, :]-y1[:, None], y0[:, None]-y1[None, :]).clamp_min(0)
-    wa, ha = w[:, None], h[:, None]; g = torch.hypot(gx, gy); N = box.shape[0]
+    x0, y0, x1, y1 = box.unbind(-1); w = (x1-x0).clamp_min(1e-3); h = (y1-y0).clamp_min(1e-3); cx, cy = (x0+x1)/2, (y0+y1)/2
+    A = lambda t: t[..., :, None]; K = lambda t: t[..., None, :]                   # query (row) / key (column) broadcast; any leading batch dims
+    dx = K(cx)-A(cx); dy = K(cy)-A(cy)
+    gx = torch.maximum(K(x0)-A(x1), A(x0)-K(x1)).clamp_min(0); gy = torch.maximum(K(y0)-A(y1), A(y0)-K(y1)).clamp_min(0)
+    wa, ha = A(w), A(h); g = torch.hypot(gx, gy); sh = dx.shape
     return torch.stack([torch.sign(dx)*torch.log1p(dx.abs()/wa), torch.sign(dy)*torch.log1p(dy.abs()/ha), torch.log1p(gx/wa), torch.log1p(gy/ha),
-                        torch.log1p(g/torch.maximum(wa, ha)), torch.log(w[None, :]/wa), torch.log(h[None, :]/ha), torch.log1p(g),
-                        is_text[:, None].expand(N, N), is_text[None, :].expand(N, N)], -1)
+                        torch.log1p(g/torch.maximum(wa, ha)), torch.log(K(w)/wa), torch.log(K(h)/ha), torch.log1p(g),
+                        A(is_text).expand(sh), K(is_text).expand(sh)], -1)
 
 class LinkFormer(nn.Module):
     def __init__(self, d, layers, n_prefix, use_string, dropout=0.0, head="dot", geobias=False):
@@ -210,6 +241,7 @@ class LinkFormer(nn.Module):
         self.register_buffer("freqs", 2*math.pi/lam)
     def forward(self, e):
         if isinstance(e, list): return self.forward_batch(e)
+        if "tm" in e: return self.train_loss(e)
         x = self.inp(e["feats"])
         if self.use_string: x = x + self.pref(e["pref"]) + sum(emb(e["dig"][:, k]) for k, emb in enumerate(self.dig))
         bias = self.gb(pair_geometry(e["box"], e["feats"][:, 0])).permute(2, 0, 1) if self.geobias else None   # (heads, N, N)
@@ -228,9 +260,28 @@ class LinkFormer(nn.Module):
         am = torch.zeros(B, 1, 1, N, device=x.device).masked_fill(~valid[:, None, None, :], float("-inf"))
         if self.geobias:
             am = am + torch.stack([F.pad(self.gb(pair_geometry(e["box"], e["feats"][:, 0])).permute(2, 0, 1), (0, N-n, 0, N-n)) for e, n in zip(es, Ns)])
-        for blk in self.blocks: x = blk.forward_b(x, pos, self.freqs, am)
+        am = am.to(torch.get_autocast_dtype("cuda") if torch.is_autocast_enabled("cuda") else x.dtype).contiguous(); cs = rope_cs(pos, self.freqs)
+        for blk in self.blocks: x = blk.forward_b(x, cs, am)
         x = self.nf(x)
         return [self.head_out(x[b, :n], e["n"]) for b, (e, n) in enumerate(zip(es, Ns))]
+    def dense(self, d):
+        """Padded batch from dense_batch -> final token features (B, N, d). Same math as forward_batch, without per-board loops.
+        The bias must be contiguous: a permuted (strided) attn_mask makes SDPA fall back from the memory-efficient kernel to the slow math path."""
+        B, N = d["valid"].shape; x = self.inp(d["feats"])
+        if self.use_string: x = x + self.pref(d["pref"]) + sum(emb(d["dig"][..., k]) for k, emb in enumerate(self.dig))
+        am = torch.zeros(B, 1, 1, N, device=x.device).masked_fill(~d["valid"][:, None, None, :], float("-inf"))
+        if self.geobias: am = am + self.gb(pair_geometry(d["box"], d["feats"][..., 0])).permute(0, 3, 1, 2)
+        am = am.to(torch.get_autocast_dtype("cuda") if torch.is_autocast_enabled("cuda") else x.dtype).contiguous(); cs = rope_cs(d["pos"], self.freqs)
+        for blk in self.blocks: x = blk.forward_b(x, cs, am)
+        return self.nf(x)
+    def train_loss(self, d):
+        """Sum over the boards of loss_fn (mean over each board's parts), in one padded batch: part rows x (text tokens + none)."""
+        x = self.dense(d); B, N, D = x.shape; P = d["tm"].shape[1]; hp = x[:, :P]; n = d["n"][:, None]
+        L = torch.cat([self.wq(hp) @ self.wk(x).transpose(1, 2) / math.sqrt(D), self.none(hp)], 2).float()      # (B, P, N+1)
+        col = torch.cat([(torch.arange(N, device=x.device)[None] >= n) & d["valid"], d["valid"].new_ones(B, 1)], 1)   # text tokens + none
+        L = L.masked_fill(~col[:, None, :], float("-inf"))
+        per = torch.logsumexp(L, 2) - torch.logsumexp(L.masked_fill(~d["tm"], float("-inf")), 2)                # padded part rows: 0
+        return (per.sum(1) / d["n"]).sum()
     def head_out(self, x, n):
         hp, ht = x[:n], x[n:]
         S = self.wq(hp) @ self.wk(ht).T / math.sqrt(x.shape[1])
@@ -334,6 +385,10 @@ if __name__ == "__main__":
                     "cut into padded groups with sizes within --size_ratio and at most --tok_budget padded tokens, gradients accumulated")
     ap.add_argument("--size_ratio", type=float, default=2.0); ap.add_argument("--tok_budget", type=int, default=16384)
     ap.add_argument("--strnoise", action="store_true", help="training: 30 %% of text strings dropped, 15 %% corrupted like OCR (with --tokens E2)")
+    ap.add_argument("--compile", action="store_true", help="torch.compile the padded training forward + loss (dynamic shapes; single GPU)")
+    ap.add_argument("--fused_adam", action="store_true", help="fused AdamW kernel (same update rule)")
+    ap.add_argument("--profile", default="", help="'A:B': NVTX ranges per phase and a CUDA profiler range (nsys --capture-range=cudaProfilerApi) "
+                    "over steps A..B-1, print s/step, then exit")
     a = ap.parse_args(); torch.set_num_threads(a.threads)
     if a.strnoise: STRNOISE = (0.30, 0.15)
     if a.bps: a.accum, a.batched = a.bps, True
@@ -361,10 +416,11 @@ if __name__ == "__main__":
     model = LinkFormer(d, L, len(vocab.idx)+2, a.tokens == "E2", a.dropout, a.head, a.geobias).to(dev)
     if a.init: model.load_state_dict(ck["model"])
     net = torch.nn.parallel.DistributedDataParallel(model, device_ids=[local], find_unused_parameters=True) if world > 1 else model
+    if a.compile and world == 1 and a.batched and a.head == "dot": model.train_loss = torch.compile(model.train_loss, dynamic=True)
     acc = max(1, a.accum // world)                    # boards per rank per optimizer step; total = acc * world (= --accum)
     npar = sum(p.numel() for p in model.parameters()); tag = a.tag or f"{a.train}_{a.size}_{a.tokens}"
     if is_main: print(f"[{tag}] params {npar/1e6:.1f}M, train boards {len(trb)} ({sum(len(b['parts']) for b in trb)} parts), device {dev}, ranks {world} x {acc} boards/step, init {a.init or '-'}", flush=True)
-    opt = torch.optim.AdamW(model.parameters(), lr=a.lr, weight_decay=a.wd)
+    opt = torch.optim.AdamW(model.parameters(), lr=a.lr, weight_decay=a.wd, fused=a.fused_adam and dev.type == "cuda")
     def lr_at(s):
         w = min(1.0, (s+1)/a.warmup)
         return w * (0.1 + 0.9*0.5*(1+math.cos(math.pi*min(s, a.steps)/a.steps)) if a.cosine else w)
@@ -379,17 +435,25 @@ if __name__ == "__main__":
         except Exception as ex: print(f"[{tag}] wandb unavailable: {repr(ex)[:80]}", flush=True)
     from contextlib import nullcontext
     log = []; t0 = time.time(); run = None
+    pa, pb = map(int, a.profile.split(":")) if a.profile else (0, 0)
+    ph = (lambda s: torch.cuda.nvtx.range(s)) if a.profile else (lambda s: nullcontext())
     for step in range(1, a.steps+1):
+        if a.profile and step in (pa, pb):
+            torch.cuda.synchronize()
+            if step == pa: torch.cuda.cudart().cudaProfilerStart(); tp = time.time()
+            else: torch.cuda.cudart().cudaProfilerStop(); print(f"[{tag}] profile steps {pa}..{pb-1}: {(time.time()-tp)/(pb-pa):.4f} s/step", flush=True); sys.exit(0)
         opt.zero_grad(); tot = 0.0
         if a.batched:
-            es = [from_numpy(next(stream)) for _ in range(acc)]
+            with ph("data"): es = [next(stream) for _ in range(acc)]
             groups = size_groups(es, a.size_ratio, a.tok_budget) if a.bps else [es]
             for gi, g in enumerate(groups):
                 with (net.no_sync() if world > 1 and gi < len(groups)-1 else nullcontext()):
-                    with torch.autocast("cuda", dtype=torch.bfloat16, enabled=a.amp and dev.type == "cuda"):
-                        outs = net([to_dev(e, dev) for e in g])
-                    loss = sum((loss_lg(o, e["tmask"].to(dev), e["ign"]) if a.head == "lg" else loss_fn(o.float(), e["tmask"].to(dev))) for o, e in zip(outs, g)) / acc
-                    loss.backward(); tot += loss.item()
+                    with ph("forward"), torch.autocast("cuda", dtype=torch.bfloat16, enabled=a.amp and dev.type == "cuda"):
+                        if a.head == "dot": loss = net(dense_batch(g, dev, targets=True)) / acc      # one padded batch, loss included
+                        else:
+                            g = [from_numpy(e) for e in g]; outs = net([to_dev(e, dev) for e in g])
+                            loss = sum(loss_lg(o, e["tmask"].to(dev), e["ign"]) for o, e in zip(outs, g)) / acc
+                    with ph("backward"): loss.backward(); tot += loss.detach()                       # no host sync here
         for micro in (range(0) if a.batched else range(acc)):
             e = from_numpy(next(stream))
             with (net.no_sync() if world > 1 and micro < acc-1 else nullcontext()):
@@ -397,17 +461,17 @@ if __name__ == "__main__":
                     logits = net(to_dev(e, dev))
                 loss = (loss_lg(logits, e["tmask"].to(dev), e["ign"]) if a.head == "lg" else loss_fn(logits.float(), e["tmask"].to(dev))) / acc
                 loss.backward(); tot += loss.item()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0); opt.step(); sched.step()
-        run = tot if run is None else 0.98*run + 0.02*tot
+        with ph("optim"): torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0); opt.step(); sched.step()
+        run = tot if run is None else 0.98*run + 0.02*tot                                             # a GPU tensor when batched
         if not is_main: continue
-        if wb and step % 50 == 0: wb.log(dict(loss=run, lr=sched.get_last_lr()[0], steps_per_s=step/(time.time()-t0)), step=step)
+        if wb and step % 50 == 0: wb.log(dict(loss=float(run), lr=sched.get_last_lr()[0], steps_per_s=step/(time.time()-t0)), step=step)
         if a.ckpt_every and a.save and step % a.ckpt_every == 0 and step < a.steps:
             Path(a.save).parent.mkdir(parents=True, exist_ok=True); torch.save(dict(model=model.state_dict(), vocab=vocab.prefixes, args=vars(a), step=step), a.save.replace(".pt", f"_step{step}.pt"))
         if evs and (step % a.eval_every == 0 or step == a.steps):
             res = {s: evaluate(model, es, dev)[0] for s, es in evs.items()}
-            log.append(dict(step=step, loss=round(run, 4), **res))
+            log.append(dict(step=step, loss=round(float(run), 4), **res))
             if wb: wb.log({f"{s}/{m}": r[m] for s, r in res.items() for m in ("acc", "prec", "f1")}, step=step)
-            print(f"[{tag}] step {step} loss {run:.3f} " + " ".join(f"{s}: acc {r['acc']:.3f} prec {r['prec']:.3f}" for s, r in res.items()) + f" ({time.time()-t0:.0f}s)", flush=True)
+            print(f"[{tag}] step {step} loss {float(run):.3f} " + " ".join(f"{s}: acc {r['acc']:.3f} prec {r['prec']:.3f}" for s, r in res.items()) + f" ({time.time()-t0:.0f}s)", flush=True)
     if world > 1:
         import torch.distributed as dist
         if not is_main: dist.destroy_process_group(); sys.exit(0)
