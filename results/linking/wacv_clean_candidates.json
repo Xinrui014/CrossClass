@@ -18,6 +18,12 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
+"design": [
+"J25",
+"R3"
+],
 "img": "img/A_ATTIOT_Bottom_J25.jpg"
 },
 {
@@ -39,6 +45,12 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": true,
+"dropped": false,
+"design": [
+"J13",
+"J7"
+],
 "img": "img/A_ATTIOT_Bottom_J7.jpg"
 },
 {
@@ -60,6 +72,12 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": true,
+"dropped": false,
+"design": [
+"R28",
+"R23"
+],
 "img": "img/A_ATTIOT_Bottom_R23.jpg"
 },
 {
@@ -81,6 +99,12 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": true,
+"dropped": false,
+"design": [
+"R27",
+"R24"
+],
 "img": "img/A_ATTIOT_Bottom_R24.jpg"
 },
 {
@@ -102,6 +126,12 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": true,
+"dropped": false,
+"design": [
+"R42",
+"R35"
+],
 "img": "img/A_ATTIOT_Bottom_R35.jpg"
 },
 {
@@ -120,6 +150,11 @@
 "classes": [
 "resistor"
 ],
+"by_design": true,
+"dropped": false,
+"design": [
+"R43"
+],
 "img": "img/B_ATTIOT_Bottom_19.jpg"
 },
 {
@@ -137,6 +172,11 @@
 "printed": "R1",
 "classes": [
 "resistor"
+],
+"by_design": true,
+"dropped": false,
+"design": [
+"R17"
 ],
 "img": "img/B_ATTIOT_Bottom_94.jpg"
 },
@@ -157,6 +197,11 @@
 "connector"
 ],
 "dist": 0.33,
+"by_design": true,
+"dropped": false,
+"design": [
+"J2"
+],
 "img": "img/C_ATTIOT_Bottom_139.jpg"
 },
 {
@@ -176,6 +221,11 @@
 "connector"
 ],
 "dist": 1.44,
+"by_design": true,
+"dropped": false,
+"design": [
+"J1"
+],
 "img": "img/C_ATTIOT_Bottom_140.jpg"
 },
 {
@@ -195,6 +245,11 @@
 "connector"
 ],
 "dist": 1.21,
+"by_design": true,
+"dropped": false,
+"design": [
+"J4"
+],
 "img": "img/C_ATTIOT_Bottom_142.jpg"
 },
 {
@@ -214,6 +269,11 @@
 "resistor"
 ],
 "dist": 1.26,
+"by_design": true,
+"dropped": false,
+"design": [
+"R58"
+],
 "img": "img/C_ATTIOT_Bottom_152.jpg"
 },
 {
@@ -235,6 +295,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_Arty_Bottom_C184.jpg"
 },
 {
@@ -256,6 +318,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_Arty_Bottom_R138.jpg"
 },
 {
@@ -274,6 +338,8 @@
 "classes": [
 "capacitor"
 ],
+"by_design": false,
+"dropped": false,
 "img": "img/B_Arty_Bottom_217.jpg"
 },
 {
@@ -295,6 +361,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_Arty_Top_J13.jpg"
 },
 {
@@ -316,6 +384,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_Arty_Top_R231.jpg"
 },
 {
@@ -334,6 +404,8 @@
 "classes": [
 "connector"
 ],
+"by_design": false,
+"dropped": false,
 "img": "img/B_Arty_Top_150.jpg"
 },
 {
@@ -355,6 +427,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_DigitalDiscovery_J3.jpg"
 },
 {
@@ -374,6 +448,8 @@
 "connector"
 ],
 "dist": 0.79,
+"by_design": false,
+"dropped": false,
 "img": "img/C_DuetWIFI_Bottom_15.jpg"
 },
 {
@@ -393,6 +469,8 @@
 "connector"
 ],
 "dist": 0.91,
+"by_design": false,
+"dropped": false,
 "img": "img/C_DuetWIFI_Bottom_16.jpg"
 },
 {
@@ -412,6 +490,8 @@
 "connector"
 ],
 "dist": 0.9,
+"by_design": false,
+"dropped": false,
 "img": "img/C_DuetWIFI_Bottom_17.jpg"
 },
 {
@@ -431,6 +511,8 @@
 "connector"
 ],
 "dist": 1.09,
+"by_design": false,
+"dropped": false,
 "img": "img/C_DuetWIFI_Bottom_18.jpg"
 },
 {
@@ -450,6 +532,8 @@
 "connector"
 ],
 "dist": 0.31,
+"by_design": false,
+"dropped": false,
 "img": "img/C_DuetWIFI_Bottom_20.jpg"
 },
 {
@@ -469,6 +553,8 @@
 "connector"
 ],
 "dist": 1.91,
+"by_design": false,
+"dropped": false,
 "img": "img/C_DuetWIFI_Bottom_22.jpg"
 },
 {
@@ -486,6 +572,11 @@
 "printed": "C6",
 "classes": [
 "capacitor"
+],
+"by_design": true,
+"dropped": false,
+"design": [
+"C3"
 ],
 "img": "img/B_DuetWIFI_Top_150.jpg"
 },
@@ -506,6 +597,11 @@
 "capacitor"
 ],
 "dist": 1.79,
+"by_design": true,
+"dropped": false,
+"design": [
+"C60"
+],
 "img": "img/C_DuetWIFI_Top_179.jpg"
 },
 {
@@ -525,6 +621,11 @@
 "connector"
 ],
 "dist": 0.7,
+"by_design": true,
+"dropped": false,
+"design": [
+"JP13"
+],
 "img": "img/C_DuetWIFI_Top_209.jpg"
 },
 {
@@ -544,6 +645,11 @@
 "connector"
 ],
 "dist": 1.75,
+"by_design": true,
+"dropped": false,
+"design": [
+"RJ1"
+],
 "img": "img/C_DuetWIFI_Top_210.jpg"
 },
 {
@@ -563,6 +669,11 @@
 "connector"
 ],
 "dist": 1.45,
+"by_design": true,
+"dropped": false,
+"design": [
+"SL1"
+],
 "img": "img/C_DuetWIFI_Top_240.jpg"
 },
 {
@@ -582,6 +693,11 @@
 "connector"
 ],
 "dist": 0.14,
+"by_design": true,
+"dropped": false,
+"design": [
+"JP33"
+],
 "img": "img/C_DuetWIFI_Top_265.jpg"
 },
 {
@@ -601,6 +717,11 @@
 "connector"
 ],
 "dist": 0.18,
+"by_design": true,
+"dropped": false,
+"design": [
+"JP32"
+],
 "img": "img/C_DuetWIFI_Top_268.jpg"
 },
 {
@@ -620,6 +741,11 @@
 "resistor"
 ],
 "dist": 0.98,
+"by_design": true,
+"dropped": false,
+"design": [
+"R61"
+],
 "img": "img/C_DuetWIFI_Top_31.jpg"
 },
 {
@@ -641,6 +767,12 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": true,
+"dropped": false,
+"design": [
+"C19",
+"C13"
+],
 "img": "img/A_EDA-008_Bottom_C13.jpg"
 },
 {
@@ -658,6 +790,11 @@
 "printed": "U31",
 "classes": [
 "IC"
+],
+"by_design": true,
+"dropped": false,
+"design": [
+"U32"
 ],
 "img": "img/B_EDA-008_Bottom_66.jpg"
 },
@@ -678,6 +815,11 @@
 "capacitor"
 ],
 "dist": 1.57,
+"by_design": true,
+"dropped": false,
+"design": [
+"FC37"
+],
 "img": "img/C_EDA-008_Bottom_89.jpg"
 },
 {
@@ -699,6 +841,12 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
+"design": [
+null,
+"JP1"
+],
 "img": "img/A_EDA-008_Top_JP1.jpg"
 },
 {
@@ -720,6 +868,12 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
+"design": [
+"EM8",
+"JP2"
+],
 "img": "img/A_EDA-008_Top_JP2.jpg"
 },
 {
@@ -738,6 +892,8 @@
 "classes": [
 "capacitor"
 ],
+"by_design": false,
+"dropped": true,
 "img": "img/B_ML365_Bottom_346.jpg"
 },
 {
@@ -756,6 +912,8 @@
 "classes": [
 "resistor"
 ],
+"by_design": false,
+"dropped": true,
 "img": "img/B_ML365_Bottom_490.jpg"
 },
 {
@@ -774,6 +932,8 @@
 "classes": [
 "resistor"
 ],
+"by_design": false,
+"dropped": true,
 "img": "img/B_ML365_Bottom_496.jpg"
 },
 {
@@ -792,6 +952,8 @@
 "classes": [
 "resistor"
 ],
+"by_design": false,
+"dropped": true,
 "img": "img/B_ML365_Bottom_59.jpg"
 },
 {
@@ -811,6 +973,8 @@
 "resistor"
 ],
 "dist": 0.99,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_103.jpg"
 },
 {
@@ -830,6 +994,8 @@
 "resistor"
 ],
 "dist": 1.32,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_107.jpg"
 },
 {
@@ -849,6 +1015,8 @@
 "resistor"
 ],
 "dist": 1.16,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_110.jpg"
 },
 {
@@ -868,6 +1036,8 @@
 "resistor"
 ],
 "dist": 1.25,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_117.jpg"
 },
 {
@@ -887,6 +1057,8 @@
 "capacitor"
 ],
 "dist": 0.83,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_132.jpg"
 },
 {
@@ -906,6 +1078,8 @@
 "resistor"
 ],
 "dist": 1.32,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_17.jpg"
 },
 {
@@ -925,6 +1099,8 @@
 "capacitor"
 ],
 "dist": 1.22,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_185.jpg"
 },
 {
@@ -944,6 +1120,8 @@
 "resistor"
 ],
 "dist": 1.69,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_212.jpg"
 },
 {
@@ -963,6 +1141,8 @@
 "resistor"
 ],
 "dist": 1.15,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_230.jpg"
 },
 {
@@ -982,6 +1162,8 @@
 "resistor"
 ],
 "dist": 1.59,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_243.jpg"
 },
 {
@@ -1001,6 +1183,8 @@
 "resistor"
 ],
 "dist": 1.46,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_247.jpg"
 },
 {
@@ -1020,6 +1204,8 @@
 "resistor"
 ],
 "dist": 1.55,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_248.jpg"
 },
 {
@@ -1039,6 +1225,8 @@
 "resistor"
 ],
 "dist": 1.38,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_251.jpg"
 },
 {
@@ -1058,6 +1246,8 @@
 "resistor"
 ],
 "dist": 1.5,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_253.jpg"
 },
 {
@@ -1077,6 +1267,8 @@
 "resistor"
 ],
 "dist": 1.8,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_255.jpg"
 },
 {
@@ -1096,6 +1288,8 @@
 "resistor"
 ],
 "dist": 1.69,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_257.jpg"
 },
 {
@@ -1115,6 +1309,8 @@
 "resistor"
 ],
 "dist": 0.98,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_266.jpg"
 },
 {
@@ -1134,6 +1330,8 @@
 "resistor"
 ],
 "dist": 0.97,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_268.jpg"
 },
 {
@@ -1153,6 +1351,8 @@
 "resistor"
 ],
 "dist": 1.6,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_270.jpg"
 },
 {
@@ -1172,6 +1372,8 @@
 "resistor"
 ],
 "dist": 0.79,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_278.jpg"
 },
 {
@@ -1191,6 +1393,8 @@
 "resistor"
 ],
 "dist": 1.06,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_281.jpg"
 },
 {
@@ -1210,6 +1414,8 @@
 "resistor"
 ],
 "dist": 1.24,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_284.jpg"
 },
 {
@@ -1229,6 +1435,8 @@
 "capacitor"
 ],
 "dist": 1.92,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_291.jpg"
 },
 {
@@ -1248,6 +1456,8 @@
 "resistor"
 ],
 "dist": 1.02,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_303.jpg"
 },
 {
@@ -1267,6 +1477,8 @@
 "capacitor"
 ],
 "dist": 0.99,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_325.jpg"
 },
 {
@@ -1286,6 +1498,8 @@
 "resistor"
 ],
 "dist": 0.67,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_35.jpg"
 },
 {
@@ -1305,6 +1519,8 @@
 "resistor"
 ],
 "dist": 1.07,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_352.jpg"
 },
 {
@@ -1324,6 +1540,8 @@
 "resistor"
 ],
 "dist": 1.78,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_444.jpg"
 },
 {
@@ -1343,6 +1561,8 @@
 "resistor"
 ],
 "dist": 1.52,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_446.jpg"
 },
 {
@@ -1362,6 +1582,8 @@
 "resistor"
 ],
 "dist": 1.54,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_460.jpg"
 },
 {
@@ -1381,6 +1603,8 @@
 "resistor"
 ],
 "dist": 1.57,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_462.jpg"
 },
 {
@@ -1400,6 +1624,8 @@
 "capacitor"
 ],
 "dist": 1.98,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_505.jpg"
 },
 {
@@ -1419,6 +1645,8 @@
 "capacitor"
 ],
 "dist": 0.84,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_506.jpg"
 },
 {
@@ -1438,6 +1666,8 @@
 "capacitor"
 ],
 "dist": 1.1,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_512.jpg"
 },
 {
@@ -1457,6 +1687,8 @@
 "capacitor"
 ],
 "dist": 1.06,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_513.jpg"
 },
 {
@@ -1476,6 +1708,8 @@
 "capacitor"
 ],
 "dist": 0.55,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_580.jpg"
 },
 {
@@ -1495,6 +1729,8 @@
 "resistor"
 ],
 "dist": 1.26,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_60.jpg"
 },
 {
@@ -1514,6 +1750,8 @@
 "resistor"
 ],
 "dist": 1.59,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_74.jpg"
 },
 {
@@ -1533,6 +1771,8 @@
 "resistor"
 ],
 "dist": 1.63,
+"by_design": false,
+"dropped": true,
 "img": "img/C_ML365_Bottom_77.jpg"
 },
 {
@@ -1554,6 +1794,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_ML365_Top_P20.jpg"
 },
 {
@@ -1575,6 +1817,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_ML365_Top_P6.jpg"
 },
 {
@@ -1596,6 +1840,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_ML365_Top_P7.jpg"
 },
 {
@@ -1623,6 +1869,8 @@
 ],
 "n_parts": 5,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_ML365_Top_P8.jpg"
 },
 {
@@ -1641,6 +1889,8 @@
 "classes": [
 "resistor"
 ],
+"by_design": false,
+"dropped": false,
 "img": "img/B_ML365_Top_156.jpg"
 },
 {
@@ -1659,6 +1909,8 @@
 "classes": [
 "resistor"
 ],
+"by_design": false,
+"dropped": false,
 "img": "img/B_ML365_Top_229.jpg"
 },
 {
@@ -1677,6 +1929,8 @@
 "classes": [
 "resistor"
 ],
+"by_design": false,
+"dropped": false,
 "img": "img/B_ML365_Top_38.jpg"
 },
 {
@@ -1695,6 +1949,8 @@
 "classes": [
 "resistor"
 ],
+"by_design": false,
+"dropped": false,
 "img": "img/B_ML365_Top_6.jpg"
 },
 {
@@ -1713,6 +1969,8 @@
 "classes": [
 "connector"
 ],
+"by_design": false,
+"dropped": false,
 "img": "img/B_ML365_Top_91.jpg"
 },
 {
@@ -1732,6 +1990,8 @@
 "capacitor"
 ],
 "dist": 0.51,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_111.jpg"
 },
 {
@@ -1751,6 +2011,8 @@
 "resistor"
 ],
 "dist": 1.67,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_119.jpg"
 },
 {
@@ -1770,6 +2032,8 @@
 "resistor"
 ],
 "dist": 1.58,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_121.jpg"
 },
 {
@@ -1789,6 +2053,8 @@
 "resistor"
 ],
 "dist": 1.95,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_15.jpg"
 },
 {
@@ -1808,6 +2074,8 @@
 "resistor"
 ],
 "dist": 1.67,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_152.jpg"
 },
 {
@@ -1827,6 +2095,8 @@
 "resistor"
 ],
 "dist": 1.89,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_154.jpg"
 },
 {
@@ -1846,6 +2116,8 @@
 "resistor"
 ],
 "dist": 1.19,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_155.jpg"
 },
 {
@@ -1865,6 +2137,8 @@
 "resistor"
 ],
 "dist": 1.7,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_157.jpg"
 },
 {
@@ -1884,6 +2158,8 @@
 "resistor"
 ],
 "dist": 1.78,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_158.jpg"
 },
 {
@@ -1903,6 +2179,8 @@
 "resistor"
 ],
 "dist": 1.71,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_160.jpg"
 },
 {
@@ -1922,6 +2200,8 @@
 "resistor"
 ],
 "dist": 1.68,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_161.jpg"
 },
 {
@@ -1941,6 +2221,8 @@
 "resistor"
 ],
 "dist": 1.56,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_163.jpg"
 },
 {
@@ -1960,6 +2242,8 @@
 "resistor"
 ],
 "dist": 1.46,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_164.jpg"
 },
 {
@@ -1979,6 +2263,8 @@
 "resistor"
 ],
 "dist": 1.84,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_165.jpg"
 },
 {
@@ -1998,6 +2284,8 @@
 "resistor"
 ],
 "dist": 1.3,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_186.jpg"
 },
 {
@@ -2017,6 +2305,8 @@
 "resistor"
 ],
 "dist": 1.79,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_188.jpg"
 },
 {
@@ -2036,6 +2326,8 @@
 "resistor"
 ],
 "dist": 1.74,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_189.jpg"
 },
 {
@@ -2055,6 +2347,8 @@
 "resistor"
 ],
 "dist": 1.36,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_192.jpg"
 },
 {
@@ -2074,6 +2368,8 @@
 "resistor"
 ],
 "dist": 1.09,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_193.jpg"
 },
 {
@@ -2093,6 +2389,8 @@
 "resistor"
 ],
 "dist": 1.36,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_194.jpg"
 },
 {
@@ -2112,6 +2410,8 @@
 "resistor"
 ],
 "dist": 1.42,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_195.jpg"
 },
 {
@@ -2131,6 +2431,8 @@
 "resistor"
 ],
 "dist": 1.41,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_218.jpg"
 },
 {
@@ -2150,6 +2452,8 @@
 "resistor"
 ],
 "dist": 1.76,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_221.jpg"
 },
 {
@@ -2169,6 +2473,8 @@
 "resistor"
 ],
 "dist": 1.89,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_223.jpg"
 },
 {
@@ -2188,6 +2494,8 @@
 "resistor"
 ],
 "dist": 1.71,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_225.jpg"
 },
 {
@@ -2207,6 +2515,8 @@
 "resistor"
 ],
 "dist": 1.59,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_232.jpg"
 },
 {
@@ -2226,6 +2536,8 @@
 "resistor"
 ],
 "dist": 1.39,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_239.jpg"
 },
 {
@@ -2245,6 +2557,8 @@
 "resistor"
 ],
 "dist": 1.62,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_316.jpg"
 },
 {
@@ -2264,6 +2578,8 @@
 "resistor"
 ],
 "dist": 1.3,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_35.jpg"
 },
 {
@@ -2283,6 +2599,8 @@
 "resistor"
 ],
 "dist": 1.32,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_36.jpg"
 },
 {
@@ -2302,6 +2620,8 @@
 "resistor"
 ],
 "dist": 1.82,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_44.jpg"
 },
 {
@@ -2321,6 +2641,8 @@
 "resistor"
 ],
 "dist": 1.61,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_46.jpg"
 },
 {
@@ -2340,6 +2662,8 @@
 "resistor"
 ],
 "dist": 1.67,
+"by_design": false,
+"dropped": false,
 "img": "img/C_ML365_Top_47.jpg"
 },
 {
@@ -2359,6 +2683,11 @@
 "capacitor"
 ],
 "dist": 0.52,
+"by_design": true,
+"dropped": false,
+"design": [
+"C292"
+],
 "img": "img/C_ML450_Bottom1_127.jpg"
 },
 {
@@ -2378,6 +2707,11 @@
 "capacitor"
 ],
 "dist": 1.18,
+"by_design": true,
+"dropped": false,
+"design": [
+"C282"
+],
 "img": "img/C_ML450_Bottom1_129.jpg"
 },
 {
@@ -2397,6 +2731,11 @@
 "capacitor"
 ],
 "dist": 0.55,
+"by_design": true,
+"dropped": false,
+"design": [
+"C272"
+],
 "img": "img/C_ML450_Bottom1_137.jpg"
 },
 {
@@ -2416,6 +2755,11 @@
 "capacitor"
 ],
 "dist": 1.36,
+"by_design": true,
+"dropped": false,
+"design": [
+"C238"
+],
 "img": "img/C_ML450_Bottom1_23.jpg"
 },
 {
@@ -2435,6 +2779,11 @@
 "capacitor"
 ],
 "dist": 1.42,
+"by_design": true,
+"dropped": false,
+"design": [
+"C271"
+],
 "img": "img/C_ML450_Bottom1_25.jpg"
 },
 {
@@ -2454,6 +2803,11 @@
 "capacitor"
 ],
 "dist": 0.5,
+"by_design": true,
+"dropped": false,
+"design": [
+"C241"
+],
 "img": "img/C_ML450_Bottom2_27.jpg"
 },
 {
@@ -2475,6 +2829,12 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
+"design": [
+null,
+null
+],
 "img": "img/A_ML450_Top1_C10.jpg"
 },
 {
@@ -2496,6 +2856,12 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": true,
+"dropped": false,
+"design": [
+"C98",
+"C86"
+],
 "img": "img/A_ML450_Top1_C86.jpg"
 },
 {
@@ -2517,6 +2883,12 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
+"design": [
+null,
+"C93"
+],
 "img": "img/A_ML450_Top1_C93.jpg"
 },
 {
@@ -2540,6 +2912,13 @@
 ],
 "n_parts": 3,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
+"design": [
+"J7",
+null,
+"P39"
+],
 "img": "img/A_ML450_Top1_P39.jpg"
 },
 {
@@ -2563,6 +2942,13 @@
 ],
 "n_parts": 3,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
+"design": [
+"P45",
+null,
+"P41"
+],
 "img": "img/A_ML450_Top1_P41.jpg"
 },
 {
@@ -2584,6 +2970,12 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
+"design": [
+null,
+"SW1"
+],
 "img": "img/A_ML450_Top1_SW1.jpg"
 },
 {
@@ -2601,6 +2993,11 @@
 "printed": "L9",
 "classes": [
 "inductor"
+],
+"by_design": false,
+"dropped": false,
+"design": [
+null
 ],
 "img": "img/B_ML450_Top1_252.jpg"
 },
@@ -2626,6 +3023,13 @@
 ],
 "n_parts": 3,
 "n_labels": 2,
+"by_design": false,
+"dropped": false,
+"design": [
+null,
+null,
+null
+],
 "img": "img/A_ML450_Top2_C10.jpg"
 },
 {
@@ -2650,6 +3054,13 @@
 ],
 "n_parts": 3,
 "n_labels": 2,
+"by_design": false,
+"dropped": false,
+"design": [
+null,
+null,
+null
+],
 "img": "img/A_ML450_Top2_C18.jpg"
 },
 {
@@ -2671,6 +3082,12 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
+"design": [
+"P17",
+null
+],
 "img": "img/A_ML450_Top2_P17.jpg"
 },
 {
@@ -2692,6 +3109,12 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
+"design": [
+null,
+"P39"
+],
 "img": "img/A_ML450_Top2_P39.jpg"
 },
 {
@@ -2709,6 +3132,11 @@
 "printed": "C26",
 "classes": [
 "capacitor"
+],
+"by_design": false,
+"dropped": false,
+"design": [
+null
 ],
 "img": "img/B_ML450_Top2_47.jpg"
 },
@@ -2729,6 +3157,11 @@
 "resistor"
 ],
 "dist": 1.26,
+"by_design": false,
+"dropped": false,
+"design": [
+"C10"
+],
 "img": "img/C_ML450_Top2_203.jpg"
 },
 {
@@ -2748,6 +3181,11 @@
 "capacitor"
 ],
 "dist": 1.65,
+"by_design": false,
+"dropped": false,
+"design": [
+null
+],
 "img": "img/C_ML450_Top2_50.jpg"
 },
 {
@@ -2769,6 +3207,12 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": true,
+"dropped": false,
+"design": [
+"C176",
+"C177"
+],
 "img": "img/A_MicroZed_Bottom_C177.jpg"
 },
 {
@@ -2788,6 +3232,11 @@
 "capacitor"
 ],
 "dist": 1.41,
+"by_design": true,
+"dropped": false,
+"design": [
+"C132"
+],
 "img": "img/C_MicroZed_Bottom_201.jpg"
 },
 {
@@ -2809,6 +3258,12 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
+"design": [
+"JT1",
+"JP1"
+],
 "img": "img/A_MicroZed_Top_JP1.jpg"
 },
 {
@@ -2830,6 +3285,12 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
+"design": [
+"JT2",
+"JP2"
+],
 "img": "img/A_MicroZed_Top_JP2.jpg"
 },
 {
@@ -2851,6 +3312,12 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
+"design": [
+"JT3",
+"JP3"
+],
 "img": "img/A_MicroZed_Top_JP3.jpg"
 },
 {
@@ -2872,6 +3339,12 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": true,
+"dropped": false,
+"design": [
+"U11",
+"U12"
+],
 "img": "img/A_MicroZed_Top_U11.jpg"
 },
 {
@@ -2893,6 +3366,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_OlimexRed_R21.jpg"
 },
 {
@@ -2912,6 +3387,8 @@
 "connector"
 ],
 "dist": 0.33,
+"by_design": false,
+"dropped": false,
 "img": "img/C_OlimexRed_50.jpg"
 },
 {
@@ -2933,6 +3410,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_RPI3B_Bottom_C72.jpg"
 },
 {
@@ -2951,6 +3430,8 @@
 "classes": [
 "IC"
 ],
+"by_design": false,
+"dropped": false,
 "img": "img/B_RPI3B_Bottom_20.jpg"
 },
 {
@@ -2972,6 +3453,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_RPI3B_Top_C162.jpg"
 },
 {
@@ -2990,6 +3473,8 @@
 "classes": [
 "resistor"
 ],
+"by_design": false,
+"dropped": false,
 "img": "img/B_RPI3B_Top_1.jpg"
 },
 {
@@ -3011,6 +3496,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_Spartan3_JP1.jpg"
 },
 {
@@ -3032,6 +3519,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_Spartan3_PS2.jpg"
 },
 {
@@ -3053,6 +3542,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_Spartan6Redux_Top_JP1.jpg"
 },
 {
@@ -3074,6 +3565,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_Spartan6Redux_Top_JP2.jpg"
 },
 {
@@ -3095,7 +3588,49 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_Spartan6Redux_Top_L9.jpg"
+},
+{
+"id": "M_Spartan6Redux_Top_52",
+"type": "M",
+"image": "Spartan6Redux_Top",
+"dev": false,
+"parts": [
+52
+],
+"labels": [
+51
+],
+"designator": "Q1",
+"printed": "U5",
+"classes": [
+"transistor"
+],
+"note": "\u8fd9\u4e2a\u5c0f\u4e09\u811a IC \u5728\u6807\u6ce8\u91cc\u5199\u6210 Q1\uff1b\u4e1d\u5370\u56fe\u4e0a\u5b83\u662f U5\uff08U5 \u7ad6\u7740\u5370\u5728\u5de6\u8fb9\uff09\u3002",
+"by_design": false,
+"dropped": false,
+"img": "img/M_Spartan6Redux_Top_52.jpg"
+},
+{
+"id": "M_Spartan6Redux_Top_68",
+"type": "M",
+"image": "Spartan6Redux_Top",
+"dev": false,
+"parts": [
+68
+],
+"labels": [],
+"designator": "U5",
+"printed": "",
+"classes": [
+"IC"
+],
+"note": "\u8fd9\u4e2a\u5927 IC\uff08FPGA\uff09\u5728\u6807\u6ce8\u91cc\u5199\u6210 U5\uff1b\u677f\u4e0a\u5370\u7684\u662f FPGA\uff0c\u4f46\u6ca1\u6709\u6587\u5b57\u6846\u3002\u6309 T \u6846\u4f4f\u7167\u7247\u4e0a\u7684 FPGA \u5b57\u6837\uff0c\u6309 Enter\u3002",
+"by_design": false,
+"dropped": false,
+"img": "img/M_Spartan6Redux_Top_68.jpg"
 },
 {
 "id": "A_SystemAce_Top_C38",
@@ -3116,6 +3651,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_SystemAce_Top_C38.jpg"
 },
 {
@@ -3137,6 +3674,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_SystemAce_Top_DS13.jpg"
 },
 {
@@ -3158,6 +3697,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_SystemAce_Top_R5.jpg"
 },
 {
@@ -3176,6 +3717,8 @@
 "classes": [
 "capacitor"
 ],
+"by_design": false,
+"dropped": false,
 "img": "img/B_SystemAce_Top_18.jpg"
 },
 {
@@ -3195,6 +3738,8 @@
 "capacitor"
 ],
 "dist": 1.21,
+"by_design": false,
+"dropped": false,
 "img": "img/C_SystemAce_Top_31.jpg"
 },
 {
@@ -3214,6 +3759,8 @@
 "connector"
 ],
 "dist": 0.52,
+"by_design": false,
+"dropped": false,
 "img": "img/C_SystemAce_Top_7.jpg"
 },
 {
@@ -3233,6 +3780,8 @@
 "connector"
 ],
 "dist": 0.53,
+"by_design": false,
+"dropped": false,
 "img": "img/C_SystemAce_Top_8.jpg"
 },
 {
@@ -3254,6 +3803,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_ThingMagicM6e_J1.jpg"
 },
 {
@@ -3291,6 +3842,8 @@
 ],
 "n_parts": 10,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_ThingMagicM6e_J8.jpg"
 },
 {
@@ -3309,6 +3862,8 @@
 "classes": [
 "capacitor"
 ],
+"by_design": false,
+"dropped": false,
 "img": "img/B_ThingMagicM6e_65.jpg"
 },
 {
@@ -3327,6 +3882,8 @@
 "classes": [
 "resistor"
 ],
+"by_design": false,
+"dropped": false,
 "img": "img/B_ThingMagicM6e_67.jpg"
 },
 {
@@ -3348,6 +3905,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_UTL-016_JP1.jpg"
 },
 {
@@ -3369,6 +3928,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_UTL-016_JP2.jpg"
 },
 {
@@ -3390,6 +3951,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_UTL-103_U4.jpg"
 },
 {
@@ -3411,6 +3974,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_Virtex5_J5.jpg"
 },
 {
@@ -3432,6 +3997,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_Virtex6_J18.jpg"
 },
 {
@@ -3453,6 +4020,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_Virtex6_J19.jpg"
 },
 {
@@ -3476,6 +4045,8 @@
 ],
 "n_parts": 3,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_Virtex6_J35.jpg"
 },
 {
@@ -3497,6 +4068,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_Virtex6_J42.jpg"
 },
 {
@@ -3521,6 +4094,8 @@
 ],
 "n_parts": 3,
 "n_labels": 2,
+"by_design": false,
+"dropped": false,
 "img": "img/A_Virtex6_J6.jpg"
 },
 {
@@ -3542,6 +4117,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_Virtex6_J69.jpg"
 },
 {
@@ -3563,6 +4140,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_Virtex6_X3.jpg"
 },
 {
@@ -3581,6 +4160,8 @@
 "classes": [
 "connector"
 ],
+"by_design": false,
+"dropped": false,
 "img": "img/B_Virtex6_199.jpg"
 },
 {
@@ -3600,6 +4181,8 @@
 "connector"
 ],
 "dist": 0.48,
+"by_design": false,
+"dropped": false,
 "img": "img/C_Virtex6_221.jpg"
 },
 {
@@ -3619,6 +4202,8 @@
 "IC"
 ],
 "dist": 1.42,
+"by_design": false,
+"dropped": false,
 "img": "img/C_Virtex6_222.jpg"
 },
 {
@@ -3638,6 +4223,8 @@
 "IC"
 ],
 "dist": 1.04,
+"by_design": false,
+"dropped": false,
 "img": "img/C_Virtex6_243.jpg"
 },
 {
@@ -3657,6 +4244,8 @@
 "IC"
 ],
 "dist": 0.79,
+"by_design": false,
+"dropped": false,
 "img": "img/C_Virtex6_248.jpg"
 },
 {
@@ -3676,6 +4265,8 @@
 "IC"
 ],
 "dist": 0.96,
+"by_design": false,
+"dropped": false,
 "img": "img/C_Virtex6_250.jpg"
 },
 {
@@ -3695,6 +4286,8 @@
 "connector"
 ],
 "dist": 0.65,
+"by_design": false,
+"dropped": false,
 "img": "img/C_Virtex6_279.jpg"
 },
 {
@@ -3712,6 +4305,11 @@
 "printed": "R36",
 "classes": [
 "resistor"
+],
+"by_design": true,
+"dropped": false,
+"design": [
+"R26"
 ],
 "img": "img/B_XCM-307A_Bottom_5.jpg"
 },
@@ -3734,6 +4332,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_XLVDSproSupply_Top1_C102.jpg"
 },
 {
@@ -3755,6 +4355,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_XLVDSproSupply_Top1_J12.jpg"
 },
 {
@@ -3776,6 +4378,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_XLVDSproSupply_Top1_J14.jpg"
 },
 {
@@ -3794,6 +4398,8 @@
 "classes": [
 "capacitor"
 ],
+"by_design": false,
+"dropped": false,
 "img": "img/B_XLVDSproSupply_Top1_29.jpg"
 },
 {
@@ -3813,6 +4419,8 @@
 "capacitor"
 ],
 "dist": 1.02,
+"by_design": false,
+"dropped": false,
 "img": "img/C_XLVDSproSupply_Top1_215.jpg"
 },
 {
@@ -3832,6 +4440,8 @@
 "connector"
 ],
 "dist": 0.21,
+"by_design": false,
+"dropped": false,
 "img": "img/C_XLVDSproSupply_Top1_307.jpg"
 },
 {
@@ -3851,6 +4461,8 @@
 "capacitor"
 ],
 "dist": 0.74,
+"by_design": false,
+"dropped": false,
 "img": "img/C_XLVDSproSupply_Top1_78.jpg"
 },
 {
@@ -3872,6 +4484,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_ZTurn_JP1.jpg"
 },
 {
@@ -3890,6 +4504,8 @@
 "classes": [
 "resistor"
 ],
+"by_design": false,
+"dropped": false,
 "img": "img/B_ZTurn_167.jpg"
 },
 {
@@ -3908,6 +4524,8 @@
 "classes": [
 "capacitor"
 ],
+"by_design": false,
+"dropped": false,
 "img": "img/B_ZTurn_179.jpg"
 },
 {
@@ -3926,6 +4544,8 @@
 "classes": [
 "switch"
 ],
+"by_design": false,
+"dropped": false,
 "img": "img/B_ZTurn_186.jpg"
 },
 {
@@ -3947,6 +4567,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_Zedboard_C140.jpg"
 },
 {
@@ -3968,6 +4590,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_Zedboard_C233.jpg"
 },
 {
@@ -3991,6 +4615,8 @@
 ],
 "n_parts": 3,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_Zedboard_J18.jpg"
 },
 {
@@ -4012,6 +4638,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_Zedboard_JP10.jpg"
 },
 {
@@ -4033,6 +4661,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_Zedboard_JP11.jpg"
 },
 {
@@ -4054,6 +4684,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_Zedboard_JP7.jpg"
 },
 {
@@ -4075,6 +4707,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_Zedboard_JP8.jpg"
 },
 {
@@ -4096,6 +4730,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_Zedboard_JP9.jpg"
 },
 {
@@ -4114,6 +4750,8 @@
 "classes": [
 "capacitor"
 ],
+"by_design": false,
+"dropped": false,
 "img": "img/B_Zedboard_47.jpg"
 },
 {
@@ -4135,6 +4773,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_Zybo_C4.jpg"
 },
 {
@@ -4156,6 +4796,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_Zybo_JP5.jpg"
 },
 {
@@ -4177,6 +4819,8 @@
 ],
 "n_parts": 2,
 "n_labels": 1,
+"by_design": false,
+"dropped": false,
 "img": "img/A_Zybo_JP7.jpg"
 }
 ]

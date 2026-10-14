@@ -1,0 +1,331 @@
+<title>Linker Error Gallery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column for the answers, a wide card grid for the errors; PCB soldermask green as the accent */
+:root {
+  --bg: #f6f7f4; --panel: #ffffff; --fg: #1b231e; --muted: #5d6a61; --line: #d9dfd8; --accent: #1f6b46; --accent-soft: #e3efe7;
+  --t-neighbour: #b7791f; --t-free: #7b52c7; --t-none: #56646f; --t-extra: #c2415d;
+  --k-part: #22d3ee; --k-true: #4ade80; --k-pred: #f84040; --k-owner: #facc15;
+  --f-display: "Archivo", "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", system-ui, sans-serif;
+  --f-body: system-ui, "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+  --f-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111613; --panel: #19201b; --fg: #e4ebe5; --muted: #98a59c; --line: #2c362f; --accent: #5cc48d; --accent-soft: #1d3326;
+  --t-neighbour: #e0a948; --t-free: #a98be6; --t-none: #9aa9b4; --t-extra: #ec7290; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #111613; --panel: #19201b; --fg: #e4ebe5; --muted: #98a59c; --line: #2c362f; --accent: #5cc48d; --accent-soft: #1d3326;
+  --t-neighbour: #e0a948; --t-free: #a98be6; --t-none: #9aa9b4; --t-extra: #ec7290; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.65 }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 64px }
+.col { max-width: 760px }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; line-height: 1.25; margin: 0 }
+h1 { font-size: 30px; font-weight: 700 }
+h2 { font-size: 21px; font-weight: 700; margin-top: 44px; padding-top: 18px; border-top: 1px solid var(--line) }
+h3 { font-size: 16px; font-weight: 700; margin-top: 22px }
+p { margin: 10px 0 }
+.lede { color: var(--muted); margin-top: 8px }
+.q { font-family: var(--f-data); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--accent) }
+code, .num { font-family: var(--f-data); font-variant-numeric: tabular-nums }
+code { font-size: 13px; background: var(--accent-soft); padding: 1px 5px; border-radius: 3px }
+.tbl { overflow-x: auto; margin: 12px 0 }
+table { border-collapse: collapse; font-size: 14px; min-width: 520px }
+th, td { text-align: left; padding: 6px 12px 6px 0; border-bottom: 1px solid var(--line); vertical-align: top }
+th { font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em }
+td.r, th.r { text-align: right; font-family: var(--f-data); font-variant-numeric: tabular-nums }
+tr.hl td { background: var(--accent-soft) }
+.bars { display: grid; gap: 8px; margin: 16px 0 6px; max-width: 760px }
+.bar { display: grid; grid-template-columns: minmax(150px, 230px) 1fr 64px; gap: 10px; align-items: center; font-size: 13px }
+.track { position: relative; height: 16px; background: var(--line); border-radius: 2px }
+.fill { position: absolute; inset: 0 auto 0 0; background: var(--accent); border-radius: 2px }
+.fill.w { background: var(--t-neighbour) }
+.axis { display: grid; grid-template-columns: minmax(150px, 230px) 1fr 64px; gap: 10px; font-family: var(--f-data); font-size: 11px; color: var(--muted) }
+.axis div:nth-child(2) { display: flex; justify-content: space-between }
+.note { font-size: 13px; color: var(--muted) }
+.chip { display: inline-block; font-family: var(--f-data); font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 10px; color: #fff; white-space: nowrap }
+.c-ok { background: var(--accent) } .c-neighbour { background: var(--t-neighbour) } .c-free { background: var(--t-free) } .c-none { background: var(--t-none) } .c-extra { background: var(--t-extra) }
+.key { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; margin: 10px 0 }
+.key span::before { content: ""; display: inline-block; width: 14px; height: 10px; margin-right: 6px; border: 3px solid var(--c); vertical-align: -1px }
+.key .dash::before { border-style: dashed }
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 8px }
+.tabs button, .filters button { font: inherit; font-size: 13px; padding: 5px 12px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 4px; cursor: pointer }
+.tabs button[aria-pressed="true"], .filters button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 600 }
+button:focus-visible, select:focus-visible, .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 6px 0 14px }
+select { font: inherit; font-size: 13px; padding: 5px 8px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 4px; max-width: 100% }
+.count { font-size: 13px; color: var(--muted) }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; cursor: zoom-in; min-width: 0 }
+.thumb { width: 100%; aspect-ratio: 1; background-color: #222; background-repeat: no-repeat }
+.cap { padding: 7px 9px 9px; font-size: 12.5px; line-height: 1.5 }
+.cap .b { font-family: var(--f-data); font-size: 11px; color: var(--muted); overflow-wrap: anywhere }
+.cap .l { margin-top: 3px }
+.ok { color: var(--accent); font-weight: 600 } .bad { color: var(--t-extra); font-weight: 600 }
+.lb { position: fixed; inset: 0; background: rgba(0, 0, 0, .78); display: grid; place-items: center; z-index: 10; padding: 16px }
+.lb-in { background: var(--panel); border-radius: 6px; padding: 12px; max-width: min(560px, 100%); width: 100% }
+.lb .thumb { max-width: 100% }
+.lb .cap { font-size: 14px; padding: 10px 2px 0 }
+.lb-nav { display: flex; justify-content: space-between; gap: 8px; margin-top: 10px }
+.lb-nav button { font: inherit; font-size: 13px; padding: 5px 12px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 4px; cursor: pointer }
+.more { margin: 18px 0 0 }
+@media (max-width: 520px) { .bar, .axis { grid-template-columns: 110px 1fr 52px } h1 { font-size: 25px } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important } }
+</style>
+
+<div class="wrap">
+  <div class="col">
+    <div class="q">CrossClass · linker · 2026-10-14</div>
+    <h1>Linker 的错误在哪里：KiCad 验证集和 WACV</h1>
+    <p class="lede">模型：<code>dv1_E1_XXL_150k_lr1e-4</code>（目前最好的 linker），只在 KiCad 板子上训练过，没见过任何 WACV 照片。
+      分数都是 exact pair：元件连到的文字框，正好是标它的那个框才算对。</p>
+
+    <h2>1. KiCad 上的推理结果，以及到 WACV 的下降</h2>
+    <p>KiCad 没有单独的 “test” 集。我们按 GitHub 仓库把 KiCad 板子分成 train 和 val：val 是 <span class="num">577</span> 个仓库、<span class="num">1,369</span> 个板面，
+      训练时一张都没见过（同一个仓库的不同版本也都在 val 里，不会一半在 train 一半在 val）。所以 KiCad val 就是 KiCad 上的“没见过的测试集”。
+      严格说它也用来挑模型（比如挑 lr），所以 WACV 才是真正的最终测试。</p>
+    <div class="bars" role="img" aria-label="准确率：KiCad val 全部 96.4%，KiCad 中等密度 96.1%，KiCad 和 WACV 一样密的板 93.8%，WACV 干净 41 张 90.9%">
+      <div class="bar"><span>KiCad val，全部 1,369 面</span><div class="track"><div class="fill" style="width:76%"></div></div><span class="num">96.4 %</span></div>
+      <div class="bar"><span>KiCad val，稀疏板（&lt; 1）</span><div class="track"><div class="fill" style="width:85.9%"></div></div><span class="num">97.9 %</span></div>
+      <div class="bar"><span>KiCad val，中等（1 – 2.1）</span><div class="track"><div class="fill" style="width:74.3%"></div></div><span class="num">96.1 %</span></div>
+      <div class="bar"><span>KiCad val，和 WACV 一样密（2.1 – 11.2）</span><div class="track"><div class="fill" style="width:58.7%"></div></div><span class="num">93.8 %</span></div>
+      <div class="bar"><span>WACV 干净 41 张测试图</span><div class="track"><div class="fill w" style="width:39.6%"></div></div><span class="num">90.9 %</span></div>
+      <div class="axis"><div></div><div><span>85 %</span><span>90 %</span><span>95 %</span><span>100 %</span></div><div></div></div>
+    </div>
+    <p class="note">横轴从 85 % 开始，放大差别。密度 = 每平方厘米的元件数（KiCad 单位是毫米，所以能算真实面积）。</p>
+
+    <div class="tbl"><table>
+      <thead><tr><th>数据</th><th class="r">板面</th><th class="r">可连接元件</th><th class="r">准确率</th><th class="r">precision</th><th class="r">错的元件</th><th class="r">真 label 是最近的字</th></tr></thead>
+      <tbody>
+        <tr><td>KiCad val（全部）</td><td class="r">1,369</td><td class="r">63,137</td><td class="r">96.4 %</td><td class="r">97.6 %</td><td class="r">2,273</td><td class="r">78.5 %</td></tr>
+        <tr><td>KiCad val，和 WACV 一样密</td><td class="r">232</td><td class="r">13,439</td><td class="r">93.8 %</td><td class="r">95.4 %</td><td class="r">833</td><td class="r">–</td></tr>
+        <tr class="hl"><td>WACV 干净 41 张</td><td class="r">40*</td><td class="r">4,185</td><td class="r">90.9 %</td><td class="r">92.2 %</td><td class="r">379</td><td class="r">70.2 %</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">* 41 张测试图里，ArduinoMega_Bottom 没有文字框，所以只算了 40 张；另有 3 张（ArduinoMega_Top、SystemAce_Bottom、XLVDSproSupply_Bottom2）一个可连接的元件都没有。它们都不影响分数。</p>
+
+    <h3>下降有多少，从哪来</h3>
+    <p>从 KiCad val 全部到 WACV：<b>96.4 % → 90.9 %，掉 5.5 个点</b>。拆成两段：</p>
+    <p><b>密度（约 2.6 点）。</b>KiCad 大多是稀疏的业余板，WACV 是密的工业板。只看和 WACV 一样密的 KiCad 板，已经掉到 93.8 %。
+      板越密，一个元件周围的候选文字越多，越容易连到邻居。</p>
+    <p><b>照片和设计文件的差别（约 2.9 点）。</b>同样的密度下，照片上还是低 2.9 点。原因是：WACV 的框是人在照片上手画的，不像 KiCad 是精确的焊盘外形；
+      有的编号被元件挡住、印在别处或者干脆没印；照片有透视和压缩。一个直接的指标：真 label 恰好是离元件最近的文字，KiCad 是 78.5 %，WACV 只有 70.2 %。</p>
+
+    <h2>2. 错误长什么样</h2>
+    <p>每个错误分到四类之一（前三类算在“错的元件”里，第四类只影响 precision）：</p>
+    <div class="tbl"><table>
+      <thead><tr><th>类型</th><th>意思</th><th class="r">KiCad val</th><th class="r">WACV 41</th></tr></thead>
+      <tbody>
+        <tr><td><span class="chip c-neighbour">抢邻居</span></td><td>连到了另一个元件的 label</td><td class="r">833（37 %）</td><td class="r">142（37 %）</td></tr>
+        <tr><td><span class="chip c-free">空闲字</span></td><td>连到了一个不属于任何元件的文字（比如 TP、孔位、功能字）</td><td class="r">179（8 %）</td><td class="r">80（21 %）</td></tr>
+        <tr><td><span class="chip c-none">漏连</span></td><td>它的 label 印着，模型却输出 none</td><td class="r">1,261（55 %）</td><td class="r">157（41 %）</td></tr>
+        <tr><td><span class="chip c-extra">多连</span></td><td>元件没印 label，模型却给它连了一个字</td><td class="r">518</td><td class="r">102</td></tr>
+      </tbody>
+    </table></div>
+    <p>几个读数：</p>
+    <p>• 两边“抢邻居”都占 37 %，这是密板上最典型的错。WACV 的“空闲字”比例高很多（21 % 对 8 %），照片上有很多 KiCad 里没有的字被框成了文字。</p>
+    <p>• 错的元件里，模型选的字比真 label 离得更近的：KiCad 783 / 2,273（34 %），WACV 143 / 379（38 %）。也就是说三分之一的错，是模型“选了最近的”而真 label 在稍远处。</p>
+    <p>• 一对一规则（Hungarian）造成的错很少：模型第一选择其实是对的、但那个字被分给了别的元件，KiCad 53 个，WACV 17 个。</p>
+    <p>• WACV 的错误很集中：DigitalDiscovery 54、ATTIOT_Bottom 47、Arty_Bottom 32、Virtex6 32、ZTurn 30、Arty_Top 25，这 6 张图占 379 个里的 220 个（58 %）。每张图的数字在下面的表里。</p>
+
+    <div class="key" aria-label="图例">
+      <span style="--c: var(--k-part)">元件</span>
+      <span style="--c: var(--k-true)">它真正的 label（绿线）</span>
+      <span class="dash" style="--c: var(--k-pred)">模型选的字（红虚线）</span>
+      <span style="--c: var(--k-owner)">模型选的字真正属于的元件</span>
+    </div>
+    <p class="note">WACV 图来自照片；KiCad 没有照片，是用设计文件的框画的：灰色 = 元件，橙色 = 文字和它的字符串。点卡片放大，左右键翻页。</p>
+  </div>
+
+  <div class="tabs" role="group" aria-label="数据集">
+    <button id="tab-wacv" aria-pressed="true">WACV 干净 41 张（全部 481 个）</button>
+    <button id="tab-kicad" aria-pressed="false">KiCad val（随机 128 个，每类 32）</button>
+    <button id="tab-kplace" aria-pressed="false">KiCad：label 印得离别的元件更近（64）</button>
+    <button id="tab-wplace" aria-pressed="false">WACV：label 印得离别的元件更近（64）</button>
+  </div>
+  <div class="filters">
+    <div role="group" aria-label="类型" id="types"></div>
+    <select id="img" aria-label="图片"></select>
+    <span class="count" id="count"></span>
+  </div>
+  <div class="grid" id="grid"><p class="note">正在载入错误卡片…</p></div>
+
+  <div class="col">
+    <h3>WACV 每张图</h3>
+    <div class="tbl"><table id="perimg"><thead><tr><th>图片</th><th class="r">可连接</th><th class="r">准确率</th><th class="r">错</th><th class="r">抢邻居</th><th class="r">空闲字</th><th class="r">漏连</th><th class="r">多连</th></tr></thead><tbody></tbody></table></div>
+
+    <h2>3. “像是 label 错了”：label 印的位置在误导</h2>
+    <p>你在 KiCad 卡片里看到的 P3 / P10，我回到原始设计文件查了（KiCad 4 格式，2016 年）。用 KiCad 自己的导出器画出真实丝印：</p>
+    <figure style="margin:12px 0">
+      <img src="p3p10.png" alt="KiCad 导出的真实丝印：字 P3 印在元件 P10 旁边，字 P10 印在元件 P3 旁边" style="border:1px solid var(--line);border-radius:4px;background:#fff">
+      <figcaption class="note">橙色焊盘 = 元件 P10，蓝色焊盘 = 元件 P3。字 “P3” 印在 P10 旁边，字 “P10” 印在 P3 旁边。</figcaption>
+    </figure>
+    <p>两个接插件的 label 在封装里都放在 “1 脚上方 5.1 mm”，设计者把两个元件一个转 90°、一个转 270°，没有再挪 label，结果两个字交叉了。
+      我们的数据提取没有错，KiCad 的 “真值” 也没错（元件 P3 确实叫 P3），但<b>印出来的板子是误导的</b>：看板子的人也会像模型一样连错。</p>
+    <p>为了统计这类情况，我定义：一个 label 离另一个元件比离自己的元件近至少半个元件大小（按框的边缘距离），就叫 <b>“印得离别的元件更近”</b>。
+      两个元件的 label 正好互相印到对方旁边，叫 <b>“交叉”</b>（P3 / P10 就是）。</p>
+    <div class="tbl"><table>
+      <thead><tr><th></th><th class="r">KiCad val</th><th class="r">WACV 41</th></tr></thead>
+      <tbody>
+        <tr><td>印得离别的元件更近的 label</td><td class="r">4,194（6.6 %）</td><td class="r">413（9.9 %）</td></tr>
+        <tr><td>其中交叉的</td><td class="r">104</td><td class="r">0</td></tr>
+        <tr><td>模型在这些 label 上的准确率</td><td class="r">75.7 %</td><td class="r">59.1 %</td></tr>
+        <tr><td>模型在其余 label 上的准确率</td><td class="r">97.9 %</td><td class="r">94.4 %</td></tr>
+        <tr class="hl"><td>错的元件里，落在这些 label 上的</td><td class="r">1,019 / 2,273（45 %）</td><td class="r">169 / 379（45 %）</td></tr>
+      </tbody>
+    </table></div>
+    <p><b>你的感觉对了一半。</b>两边都有 45 % 的错误落在这类 label 上，模型在它们上面的准确率掉到 76 % / 59 %。但它们不全是 “label 错了”：</p>
+    <p>• <b>KiCad 里多是丝印没整理</b>：label 交叉、几个字叠在一起、离元件很远。这是设计者的问题，真板子上也会这样印，但一个读板子的人没法连对。
+      训练集里也有：KiCad train 108 万个 label 里有 5.3 %（57,321 个）是这种，老格式文件（KiCad 4/5，2017 年及以前）最多，6.8 %，新文件约 4–5 %。</p>
+    <p>• <b>WACV 里多是正常的印法</b>：一排元件上方印一张 “label 表”（Arty、ZTurn 那种 R21 R36 R32… 的一行行字），或者用引线指过去的 label。
+      这些按位置就是离别的元件更近，但规律是有的，模型应该学会。</p>
+    <p>下面两个标签页各放了 64 个例子（48 个模型错的，16 个模型对的）。</p>
+
+    <h2>4. 漏连（none）为什么多</h2>
+    <p>对每个漏连，看模型自己的第一选择（一对一分配之前，概率最高的那一项）：</p>
+    <div class="tbl"><table>
+      <thead><tr><th>情况</th><th class="r">KiCad val</th><th class="r">WACV 41</th></tr></thead>
+      <tbody>
+        <tr class="hl"><td>模型本来就觉得 “没有 label”（第一选择是 none）</td><td class="r">1,195（95 %）</td><td class="r">131（83 %）</td></tr>
+        <tr><td>　其中差一点就连上（none 和真 label 的对数概率差 &lt; 1）</td><td class="r">363</td><td class="r">50</td></tr>
+        <tr><td>模型想连真 label，但那个字被一对一分配给了别的元件</td><td class="r">28</td><td class="r">9</td></tr>
+        <tr><td>模型想连另一个字，那个字被别人拿走，只好 none</td><td class="r">38</td><td class="r">17</td></tr>
+      </tbody>
+    </table></div>
+    <p>所以漏连主要不是一对一规则造成的，而是模型自己判断 “这个元件没印 label”。这些元件和连对的元件比：</p>
+    <div class="tbl"><table>
+      <thead><tr><th></th><th class="r">KiCad 连对</th><th class="r">KiCad 漏连</th><th class="r">WACV 连对</th><th class="r">WACV 漏连</th></tr></thead>
+      <tbody>
+        <tr><td>label 到元件的边缘距离（中位数，单位 = 板上元件的中位尺寸）</td><td class="r">0.05</td><td class="r">0.53</td><td class="r">0.08</td><td class="r">0.55</td></tr>
+        <tr><td>label 离元件超过 1 个元件大小</td><td class="r">5 %</td><td class="r">33 %</td><td class="r">5 %</td><td class="r">44 %</td></tr>
+        <tr><td>label 印得离别的元件更近</td><td class="r">5 %</td><td class="r">38 %</td><td class="r">6 %</td><td class="r">44 %</td></tr>
+        <tr><td>大元件（≥ 2 倍中位尺寸）</td><td class="r">14 %</td><td class="r">29 %</td><td class="r">15 %</td><td class="r">35 %</td></tr>
+        <tr><td>接插件 + IC</td><td class="r">18 %</td><td class="r">32 %</td><td class="r">14 %</td><td class="r">36 %</td></tr>
+      </tbody>
+    </table></div>
+    <p><b>读法。</b>连对的元件，label 几乎都贴着它（中位距离 0.05）。漏连的元件，label 离得远，或者离别的元件更近，或者元件本身很大（接插件、IC 的 label 常印在离本体较远的地方）。
+      模型拿不准的时候选 none，是因为训练数据里本来就有 18 % 的元件没有可见的 label（KiCad train：132 万个元件、108 万条连线），“附近没有字就是没印” 是它学到的常见答案。</p>
+    <h3>调低 none 的分数</h3>
+    <p>不重训，只在一对一分配前给每个元件的 none 分数加一个偏置（负数 = 更愿意连）：</p>
+    <div class="tbl"><table>
+      <thead><tr><th class="r">偏置</th><th class="r">KiCad 准确率</th><th class="r">KiCad precision</th><th class="r">KiCad F1</th><th class="r">WACV 准确率</th><th class="r">WACV precision</th><th class="r">WACV F1</th><th class="r">WACV 漏连</th></tr></thead>
+      <tbody>
+        <tr><td class="r">0（现在）</td><td class="r">96.4 %</td><td class="r">97.6 %</td><td class="r">0.970</td><td class="r">90.9 %</td><td class="r">92.2 %</td><td class="r">0.916</td><td class="r">157</td></tr>
+        <tr><td class="r">−0.5</td><td class="r">96.7 %</td><td class="r">97.4 %</td><td class="r">0.970</td><td class="r">91.7 %</td><td class="r">91.8 %</td><td class="r">0.917</td><td class="r">117</td></tr>
+        <tr><td class="r">−1</td><td class="r">96.9 %</td><td class="r">97.3 %</td><td class="r">0.971</td><td class="r">92.0 %</td><td class="r">91.2 %</td><td class="r">0.916</td><td class="r">98</td></tr>
+        <tr class="hl"><td class="r">−1.5</td><td class="r">97.0 %</td><td class="r">97.2 %</td><td class="r">0.971</td><td class="r">92.3 %</td><td class="r">90.6 %</td><td class="r">0.915</td><td class="r">75</td></tr>
+        <tr><td class="r">−2</td><td class="r">97.1 %</td><td class="r">97.1 %</td><td class="r">0.971</td><td class="r">92.6 %</td><td class="r">90.3 %</td><td class="r">0.915</td><td class="r">65</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">−1.5 是 KiCad val 上 F1 最好的偏置（按 KiCad 选，不看 WACV）。准确率涨 1.4，precision 掉 1.5，F1 不变：漏连变成了一部分 “多连”。</p>
+    <p><b>空闲字。</b>WACV 的 80 个空闲字错误里，连到的字多是 R（23）和 C（22），TP / TPG 只有 6 个。这些 R / C 字属于标注里没画框的元件（比如没焊的空焊盘），不是 TP、JP 这类测试点。KiCad 抽样里 TP、JP 更多。</p>
+
+    <h2>5. 什么是 “3 张 dev 图”</h2>
+    <p>WACV 一共 45 张有标注的照片。项目一开始（2026-10-05）就定了规则：拿出 3 张做 <b>dev（开发集）</b>，其余 42 张（现在去掉 ML365_Bottom 是 41 张）做 <b>test（测试集）</b>。
+      这 3 张是 <code>ML450_Top1</code>、<code>RPI3B_Top</code>、<code>DuetWIFI_Top</code>，来自 3 块不同的板子。</p>
+    <p><b>为什么要分。</b>任何需要“调”的东西，比如规则 baseline 的距离阈值、“多远就算没有 label”，只能在 dev 上调。test 只用来报最后的数字，从不拿来调参。
+      如果在 test 上调，分数会偏高，因为它等于偷看了考题。</p>
+    <p><b>这 3 张现在的用处。</b>B1–B6 这些规则 baseline 的阈值是在 dev 上定的。transformer 只在 KiCad 上训练，3 张 dev 图对它没有参与训练，只是顺便报一下分。
+      dev 图也一起清洗了（ML450_Top1、DuetWIFI_Top 都有改动），但从不算进 test 分数。</p>
+    <p><b>问题。</b>3 张图太少，选不出模型。XL 和 XXL 在 dev 上分数一样（87.7 % 对 87.8 %），在 test 上却差 2.7 个点。
+      所以从 2026-10-12 起，挑模型（比如挑哪个 lr）用的是 KiCad val 的 1,369 个板面，不再看 dev。</p>
+  </div>
+</div>
+
+<div class="lb" id="lb" hidden>
+  <div class="lb-in" role="dialog" aria-modal="true" aria-label="错误放大">
+    <div class="thumb" id="lb-img"></div>
+    <div class="cap" id="lb-cap"></div>
+    <div class="lb-nav"><button id="lb-prev">← 上一个</button><button id="lb-close">关闭 (Esc)</button><button id="lb-next">下一个 →</button></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const TYPES = [["all", "全部"], ["neighbour", "抢邻居"], ["free", "空闲字"], ["none", "漏连"], ["extra", "多连"]];
+  const NAME = Object.fromEntries(TYPES);
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+  let D = null, set = "wacv", type = "all", img = "all", shown = [], limit = 120, lbi = -1;
+  let io = null;
+  const sprite = (el, r, w) => {
+    const g = D.grid, k = r.cell;
+    el.style.backgroundSize = `${g * w}px ${g * w}px`;
+    el.style.backgroundPosition = `-${(k % g) * w}px -${Math.floor(k / g) * w}px`;
+    el.dataset.src = r.sheet;
+  };
+  const caption = r => {
+    const board = r.board_name ? `${esc(r.board_name)} · ${esc(r.board)}` : esc(r.board);
+    const truth = r.true_str ? `真 label <span class="ok">${esc(r.true_str)}</span>` : "没印 label";
+    const pick = r.pred_str ? `模型选 <span class="bad">${esc(r.pred_str)}</span>` : `模型选 <span class="bad">none</span>`;
+    const own = r.owner_des ? `（它属于 ${esc(r.owner_des)}）` : "";
+    const rk = r.rank_true ? ` · 真 label 是第 ${r.rank_true} 近的字` : "";
+    return `<div class="b">${board} · 元件 #${r.part}</div>
+      <div class="l">${r.right ? '<span class="chip c-ok">模型对了</span>' : `<span class="chip c-${r.type}">${NAME[r.type]}</span>`} ${truth} · ${r.right ? "模型也选了它" : pick + own}</div>
+      ${r.p_pred != null ? `<div class="b">模型把握 ${Math.round(100 * r.p_pred)} %${rk}</div>` : `<div class="b">${r.crossed ? "交叉：两个 label 互相印到了对方旁边" : "label 印得离别的元件更近"}</div>`}`;
+  };
+  const list = () => D[set].filter(r => (type === "all" || r.type === type) && (set !== "wacv" || img === "all" || r.board === img));
+  function render() {
+    shown = list();
+    const grid = $("#grid"); grid.innerHTML = "";
+    io && io.disconnect();
+    io = "IntersectionObserver" in window ? new IntersectionObserver(es => es.forEach(e => {
+      if (e.isIntersecting) { const t = e.target; t.style.backgroundImage = `url("${t.dataset.src}")`; io.unobserve(t); }
+    }), {rootMargin: "400px"}) : null;
+    shown.slice(0, limit).forEach((r, i) => {
+      const c = document.createElement("div"); c.className = "card"; c.tabIndex = 0; c.setAttribute("role", "button");
+      c.innerHTML = `<div class="thumb"></div><div class="cap">${caption(r)}</div>`;
+      const th = c.querySelector(".thumb"); th.setAttribute("role", "img"); th.setAttribute("aria-label", `${r.board} 元件 ${r.part}`);
+      grid.appendChild(c);
+      const w = th.clientWidth || 200; sprite(th, r, w);
+      if (io) io.observe(th); else th.style.backgroundImage = `url("${r.sheet}")`;
+      c.addEventListener("click", () => openLb(i));
+      c.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openLb(i); } });
+    });
+    if (shown.length > limit) {
+      const b = document.createElement("button"); b.className = "more"; b.id = "more"; b.textContent = `再显示 ${Math.min(120, shown.length - limit)} 个（共 ${shown.length}）`;
+      b.style.cssText = "font:inherit;font-size:13px;padding:6px 14px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:4px;cursor:pointer;grid-column:1/-1;justify-self:start";
+      b.addEventListener("click", () => { limit += 120; render(); }); grid.appendChild(b);
+    }
+    if (!shown.length) grid.innerHTML = '<p class="note">这个筛选下没有错误。</p>';
+    $("#count").textContent = `${shown.length} 个`;
+  }
+  function filters() {
+    const n = t => D[set].filter(r => (t === "all" || r.type === t) && (set !== "wacv" || img === "all" || r.board === img)).length;
+    $("#types").innerHTML = TYPES.map(([k, v]) => `<button data-t="${k}" aria-pressed="${k === type}">${v} ${n(k)}</button>`).join(" ");
+    $("#types").querySelectorAll("button").forEach(b => b.addEventListener("click", () => { type = b.dataset.t; limit = 120; filters(); render(); }));
+    const s = $("#img"); s.hidden = set !== "wacv";
+    if (set === "wacv") {
+      const cnt = {}; D.wacv.forEach(r => cnt[r.board] = (cnt[r.board] || 0) + 1);
+      s.innerHTML = `<option value="all">全部图片</option>` + Object.entries(cnt).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<option value="${esc(k)}" ${k === img ? "selected" : ""}>${esc(k)}（${v}）</option>`).join("");
+    }
+  }
+  function openLb(i) {
+    lbi = i; const r = shown[i]; if (!r) return;
+    const el = $("#lb-img"); $("#lb").hidden = false;
+    const w = Math.min(el.parentElement.clientWidth - 24, 536); el.style.width = el.style.height = `${w}px`;
+    sprite(el, r, w); el.style.backgroundImage = `url("${r.sheet}")`; $("#lb-cap").innerHTML = caption(r);
+    $("#lb-close").focus();
+  }
+  const closeLb = () => { $("#lb").hidden = true; lbi = -1; };
+  $("#lb-close").addEventListener("click", closeLb);
+  $("#lb-prev").addEventListener("click", () => openLb(Math.max(0, lbi - 1)));
+  $("#lb-next").addEventListener("click", () => openLb(Math.min(shown.length - 1, lbi + 1)));
+  $("#lb").addEventListener("click", e => { if (e.target.id === "lb") closeLb(); });
+  document.addEventListener("keydown", e => {
+    if (lbi < 0) return;
+    if (e.key === "Escape") closeLb(); else if (e.key === "ArrowLeft") openLb(Math.max(0, lbi - 1)); else if (e.key === "ArrowRight") openLb(Math.min(shown.length - 1, lbi + 1));
+  });
+  const SETS = ["wacv", "kicad", "kplace", "wplace"];
+  const tab = s => { set = s; type = "all"; img = "all"; limit = 120; SETS.forEach(k => $(`#tab-${k}`).setAttribute("aria-pressed", s === k)); filters(); render(); };
+  SETS.forEach(k => $(`#tab-${k}`).addEventListener("click", () => { if (D && D[k]) tab(k); }));
+  $("#img").addEventListener("change", e => { img = e.target.value; limit = 120; filters(); render(); });
+  fetch("placement.json").then(r => r.json()).then(p => { const go = () => { D.kplace = p.kicad; D.wplace = p.wacv; }; D ? go() : setTimeout(function w() { D ? go() : setTimeout(w, 200); }, 200); }).catch(() => {});
+  fetch("errors.json").then(r => r.json()).then(d => {
+    D = d; filters(); render();
+    const P = d.summary.wacv_clean41.per_image;
+    $("#perimg tbody").innerHTML = Object.entries(P).filter(([, v]) => v.linkable).sort((a, b) => b[1].wrong - a[1].wrong).map(([k, v]) =>
+      `<tr><td>${esc(k)}</td><td class="r">${v.linkable}</td><td class="r">${v.acc.toFixed(1)} %</td><td class="r">${v.wrong}</td><td class="r">${v.neighbour}</td><td class="r">${v.free}</td><td class="r">${v.none}</td><td class="r">${v.extra}</td></tr>`).join("");
+  }).catch(() => { $("#grid").innerHTML = '<p class="note">错误数据没有载入。刷新页面再试一次。</p>'; });
+})();
+</script>

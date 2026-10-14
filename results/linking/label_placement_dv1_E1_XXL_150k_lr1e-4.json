@@ -1,0 +1,67 @@
+{
+ "kicad_val": {
+  "linkable": 63137,
+  "misplaced": 4194,
+  "misplaced_pct": 6.6,
+  "crossed": 104,
+  "acc_all": 96.4,
+  "acc_on_misplaced": 75.7,
+  "acc_on_rest": 97.9,
+  "wrong": 2273,
+  "wrong_on_misplaced": 1019,
+  "wrong_on_misplaced_pct": 44.8,
+  "wrong_on_misplaced_followed_print": 147,
+  "wrong_on_rest_followed_print": 324,
+  "crossed_wrong": 74
+ },
+ "wacv_clean41": {
+  "linkable": 4185,
+  "misplaced": 413,
+  "misplaced_pct": 9.9,
+  "crossed": 0,
+  "acc_all": 90.9,
+  "acc_on_misplaced": 59.1,
+  "acc_on_rest": 94.4,
+  "wrong": 379,
+  "wrong_on_misplaced": 169,
+  "wrong_on_misplaced_pct": 44.6,
+  "wrong_on_misplaced_followed_print": 12,
+  "wrong_on_rest_followed_print": 67,
+  "crossed_wrong": 0
+ },
+ "kicad_train_by_version": {
+  "2019": {
+   "labels": 2476,
+   "misplaced_pct": 3.6
+  },
+  "2020": {
+   "labels": 6417,
+   "misplaced_pct": 4.3
+  },
+  "2021": {
+   "labels": 152119,
+   "misplaced_pct": 4.0
+  },
+  "2022": {
+   "labels": 173386,
+   "misplaced_pct": 4.8
+  },
+  "2023": {
+   "labels": 1185,
+   "misplaced_pct": 2.0
+  },
+  "2024": {
+   "labels": 365339,
+   "misplaced_pct": 4.6
+  },
+  "\u22642017": {
+   "labels": 378220,
+   "misplaced_pct": 6.8
+  }
+ },
+ "kicad_train": {
+  "labels": 1079142,
+  "misplaced": 57321,
+  "misplaced_pct": 5.3
+ }
+}

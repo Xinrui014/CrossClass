@@ -3,14 +3,16 @@
 Tokens: one per part and one per text. Content: type, log width / height, orientation (E1); + prefix and digits of the string (E2).
 Position (box centre, in units of the board's median part size) enters only through 2D rotary embeddings (RoPE) in self-attention.
 Head: s_ij = <W_q h_i, W_k h_j> / sqrt(d) for part i, text j; one 'none' score per part. Loss: per-part softmax over texts + none,
-target = every text whose string equals the part's designator (or none). Decoding: Hungarian on -log p, own none column per part.
+target = every text whose string equals the part's designator (or none; WACV-clean boards give an explicit 'link' instead, and
+parts marked 'ign' are left out of loss and scores). Decoding: Hungarian on -log p, own none column per part.
 Training options: --aug (90-degree rotations + mirror, box jitter, dropped labels, fake labels), --dropout, --accum (boards per
 optimizer step), cosine schedule, --save / --init checkpoints (fine-tuning), --workers (background board preparation),
 multi-GPU data parallel when launched with torchrun (--accum boards per step are split across the ranks). Results JSON keeps per-image counts so any image subset
 (e.g. the 42 test images) can be scored afterwards (tools/linkformer_report.py). --wandb <project> logs loss, lr, eval and final scores.
 Usage: linkformer.py --train dev3 --eval dev3 --size L --tokens E1 --steps 1000 [--device cuda] [--tag name]
   board sets: dev3, test42, all45, fold<k>train, fold<k>test, kicad199, kicadtrain, kicadval, kicad300, kicad1000;
-  with --data CrossClass_data_v1: ktrain, kval, kvalsub (~25 % of kval), kdense (train sides with WACV density 2.1-11.2)"""
+  with --data CrossClass_data_v1: ktrain, kval, kvalsub (~25 % of kval), kdense (train sides with WACV density 2.1-11.2),
+  clean_dev3 / clean_test41 / clean_all44 (WACV-clean v1, tools/wacv_clean.py)"""
 import argparse, json, math, os, re, sys, time, hashlib, random
 from pathlib import Path
 import numpy as np, torch, torch.nn as nn, torch.nn.functional as F
@@ -32,6 +34,9 @@ def load_sets(data=""):
         sets["kval"] = [b for b in kic if b["group"] in val]; sets["ktrain"] = [b for b in kic if b["group"] not in val]
         sets["kvalsub"] = [b for b in sets["kval"] if int(hashlib.md5(b["id"].encode()).hexdigest(), 16) % 4 == 0]   # ~25 % for periodic checks
         sets["kdense"] = [b for b in sets["ktrain"] if 2.1 <= b["density"] <= 11.2]
+        if (D/"wacv_clean_v1.json").exists():          # WACV-clean v1: explicit links, ML365_Bottom dropped
+            cl = {b["id"]: b for b in json.load(open(D/"wacv_clean_v1.json"))}
+            sets["clean_dev3"] = [cl[s] for s in DEV]; sets["clean_all44"] = list(cl.values()); sets["clean_test41"] = [b for s, b in cl.items() if s not in DEV]
         return sets
     wacv = {b["id"]: b for b in json.load(open(ROOT/"linkdata/wacv.json"))}
     folds = json.load(open(ROOT/"linkdata/folds.json"))   # copy of gdino_fewshot/wacv_in/folds.json (written by linkdata.py)
@@ -95,15 +100,22 @@ def encode(b, vocab, as_numpy=False):
             ds = mm.group(2)[-4:]; dig[n+j, 4-len(ds):] = [int(c) for c in ds]
     strs = [t["text"] for t in b["texts"]]
     tgt = []   # per part: list of target text indices, [] = none
-    for p in b["parts"]: tgt.append([j for j, s in enumerate(strs) if p["des"] and s == p["des"]])
+    for p in b["parts"]: tgt.append(([p["link"]] if p["link"] is not None else []) if "link" in p else [j for j, s in enumerate(strs) if p["des"] and s == p["des"]])
+    ign = [bool(p.get("ign")) for p in b["parts"]]
     tmask = np.zeros((n, m+1), bool)                 # target cells per part row (all same-string texts, or the none column)
     for i, t in enumerate(tgt): tmask[i, t if t else [m]] = True
+    tmask[np.array(ign, bool)] = True                # unknown label: every cell is a target -> no loss
     if as_numpy:
         return dict(id=b["id"], n=n, m=m, feats=feats.astype(np.float32), pos=pos.astype(np.float32), pref=pref.astype(np.int64), dig=dig.astype(np.int64),
-                    tmask=tmask, tgt=tgt, strs=strs, des=[p["des"] for p in b["parts"]])
+                    tmask=tmask, tgt=tgt, ign=ign, strs=strs, des=[p["des"] for p in b["parts"]])
     f = lambda a, dt=torch.float32: torch.tensor(np.asarray(a), dtype=dt)
     return dict(id=b["id"], n=n, m=m, feats=f(feats), pos=f(pos), pref=f(pref, torch.long), dig=f(dig, torch.long), tmask=torch.from_numpy(tmask),
-                tgt=tgt, strs=strs, des=[p["des"] for p in b["parts"]])
+                tgt=tgt, ign=ign, strs=strs, des=[p["des"] for p in b["parts"]])
+
+def load_model(path, dev):
+    """A saved checkpoint -> (model in eval mode, vocab, its training args)."""
+    ck = torch.load(path, map_location="cpu"); A = ck["args"]; vocab = Vocab(ck["vocab"]); d, L = SIZES[A["size"]]
+    m = LinkFormer(d, L, len(vocab.idx)+2, A["tokens"] == "E2"); m.load_state_dict(ck["model"]); return m.to(dev).eval(), vocab, A
 
 def from_numpy(e): return {k: (torch.from_numpy(v) if isinstance(v, np.ndarray) else v) for k, v in e.items()}
 
@@ -166,10 +178,12 @@ def decode(logits):
     r, c = linear_sum_assignment(C); return {int(i): (int(j) if j < m else None) for i, j in zip(r, c)}
 
 def count(e, L):
-    sset = set(e["strs"]); c = dict(linkable=0, right=0, links=0)
-    for i, d in enumerate(e["des"]):
-        j = L.get(i); got = e["strs"][j] if j is not None else None; c["links"] += got is not None
-        if d and d in sset: c["linkable"] += 1; c["right"] += got == d
+    """Right = the chosen text is a target text (same string as the part's designator, or the explicit link); 'ign' parts skipped."""
+    c = dict(linkable=0, right=0, links=0)
+    for i, t in enumerate(e["tgt"]):
+        if e.get("ign") and e["ign"][i]: continue
+        j = L.get(i); c["links"] += j is not None
+        if t: c["linkable"] += 1; c["right"] += j in t
     return c
 
 def summarize(per):

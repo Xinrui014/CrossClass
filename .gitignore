@@ -12,3 +12,11 @@ kicad_boards/
 ckpt/
 kicad_scan/
 page/review/img/
+page/review/boards/
+page/review/boards.json
+designfiles/
+results/linking/design_check/
+page/review/design.json
+page/errors/sheets/
+page/errors/errors.json
+page/errors/placement.json

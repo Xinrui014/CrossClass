@@ -164,3 +164,28 @@ B8 here is 0.568 vs 0.570 in CrossClass.md: same method, retrained after the 202
   the XL recipe the larger model trains worse; size is not the lever under this recipe.
 - **XXL lr sweep:** lr 3e-4 / 2e-4 / 1e-4 → 86.6 / 88.8 / **89.9 %** (42 test; F1 0.861 / 0.880 / **0.891**; KiCad val 95.1 / 96.0 / 96.4).
   The XXL drop was the learning rate; tuned XXL beats XL (89.3 %) by 0.6. New best: dv1_E1_XXL_150k_lr1e-4. XL at lower lr untested.
+- **WACV-clean via design files (2026-10-13):** `tools/design_check.py` aligns a board's design (Allegro centroid, Eagle .brd, IPC-D-356
+  or a vector assembly PDF via `tools/pdf_to_centroid.py`) to the photo and reads each part's true designator; `tools/design_check_all.sh`
+  reruns all 13 checked images (results `results/linking/design_check/`, git-ignored). "DuetWIFI" in WACV is really a Smoothieboard.
+  Review page (owner) keeps every change in an append-only history; labels may be fixed (misread text / part designator), boxes
+  merged (same component), texts marked "not a designator".
+- **Owner decision 2026-10-13: drop ML365_Bottom** (test image, 665 parts, 43 review candidates) — no design file exists (only the
+  2004 user guide UG066 with schematics) and the dense board is too hard to clean by eye. The cleaned test set (wacv_clean_v1) leaves
+  it out; numbers on the old 42-image set stay reported for comparison. ML365_Top: same board, no design file — open.
+- **WACV-clean v1 built (2026-10-13, after the owner finished all 139 review candidates):** `tools/wacv_clean.py` →
+  `linkdata/CrossClass_data_v1/wacv_clean_v1.json` (44 images, 41 test; review db export `review_db_2026-10-13.json`, both git-ignored).
+  Truth = an explicit `link` (text index) per part instead of string equality; authority wacv string match < design file (only where its
+  designator is printed in the photo — later-revision renames keep the printed link) < Claude's answers < the owner's answers; parts the
+  owner could not read, and one open conflict (ML365_Top #155), are marked `ign` and left out (7 parts). Changes: 53 boxes merged into
+  their part, 6 deleted, 9 drawn, 2 redrawn, 7 text boxes added, 10 text strings fixed, 23 links moved by design files, 3 fixes on the
+  ML450 clock card that is in both Top1 and Top2 (Top2 had C11/C12 swapped; Top1 lacked the C22 box). Build log
+  `results/linking/wacv_clean_v1_build.json`.
+- **Rescored (`tools/wacv_clean_score.py`, `results/linking/wacv_clean_v1_scores.{json,md}`), exact right label on linkable parts:**
+  | set | linkable | ceiling | B7 | B8 | XL lr3e-4 | XXL lr3e-4 | XXL lr2e-4 | XXL lr1e-4 |
+  |---|---:|---:|---:|---:|---:|---:|---:|---:|
+  | old42 (published labels) | 4,591 | 98.32 % | 82.5 % | 85.7 % | 89.4 % | 86.5 % | 88.8 % | 89.7 % (473 wrong) |
+  | old41 (without ML365_Bottom) | 4,179 | 98.16 % | 81.8 % | 85.2 % | 89.0 % | 86.2 % | 88.2 % | 89.3 % (449 wrong) |
+  | clean41 | 4,185 | 100 % | 84.0 % | 86.9 % | 90.5 % | 87.8 % | 90.0 % | **90.9 % (379 wrong)** |
+  Cleaning moves every linker up 1.2–1.7 points on the same 41 images and keeps the ranking; best precision 88.3 → 92.2 %. With the
+  ceiling at 100 %, 98 % means ≤ 84 wrong of 4,185 — the remaining ~295-part gap is the linker, not the labels. Transformer numbers are
+  fp32 on the L40 and differ by 4–8 parts from the bf16 numbers logged on the cluster (e.g. XXL lr1e-4 473 vs 465 wrong on old42).

@@ -2,7 +2,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
-/* Layout: sticky progress bar, then one section per board, cards in a responsive grid; decisions colour the card edge */
+/* Two tabs (candidates to label, design-file check to verify), sticky progress bar, one section per board, cards in a grid;
+   a full-board viewer shared by both tabs */
 :root {
   --bg: #f3f6f4; --surface: #ffffff; --fg: #17211b; --muted: #5a675f; --line: #d4ddd6; --accent: #0f766e;
   --yes: #15803d; --no: #b91c1c; --unsure: #a16207; --yes-bg: #dcfce7; --no-bg: #fee2e2; --unsure-bg: #fef3c7;
@@ -17,14 +18,21 @@
   --yes: #4ade80; --no: #f87171; --unsure: #fbbf24; --yes-bg: #14341f; --no-bg: #3b1717; --unsure-bg: #3a2c0c; color-scheme: dark }
 body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.55; }
 .wrap { max-width: 78rem; margin: 0 auto; padding-inline: 16px; padding-block: 0 64px; }
-h1 { font-family: var(--f-head); font-size: 1.7rem; margin: 1.2rem 0 0.3rem; }
-.intro { max-width: 48rem; color: var(--muted); }
+h1 { font-family: var(--f-head); font-size: 1.7rem; margin: 1.2rem 0 0.5rem; }
+.tabs { display: flex; flex-wrap: wrap; gap: 0.25rem; border-bottom: 1px solid var(--line); margin-bottom: 0.6rem; }
+.tab { font: inherit; font-size: 0.95rem; padding: 0.45rem 0.9rem; border: none; border-bottom: 3px solid transparent; background: none; color: var(--muted); cursor: pointer; }
+.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); font-weight: 600; }
+.intro { max-width: 50rem; color: var(--muted); }
+.intro[hidden] { display: none; }
 .intro p { margin: 0.5rem 0; }
-.types { display: grid; gap: 0.5rem; margin: 0.8rem 0; padding: 0; list-style: none; max-width: 52rem; }
-.types li { display: grid; grid-template-columns: 2rem 1fr; gap: 0.5rem; }
-.types b { font-family: var(--f-mono); color: var(--accent); }
-.legend { display: flex; flex-wrap: wrap; gap: 0.3rem 1rem; font-size: 0.85rem; color: var(--muted); margin: 0.4rem 0 1rem; }
-.legend i { display: inline-block; width: 16px; height: 10px; border: 3px solid; margin-right: 0.35rem; vertical-align: -1px; }
+.intro b { color: var(--fg); }
+.types { display: grid; gap: 0.5rem; margin: 0.8rem 0; padding: 0; list-style: none; }
+.types li { display: grid; grid-template-columns: 4.5rem 1fr; gap: 0.5rem; }
+.types li > b { font-family: var(--f-mono); color: var(--accent); }
+.legend { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); gap: 0.25rem 1rem; font-size: 0.85rem; color: var(--muted); margin: 0.4rem 0 0.8rem; }
+.legend i { display: inline-block; width: 18px; height: 10px; border: 3px solid; margin-right: 0.4rem; vertical-align: -1px; }
+.legend i.dash { border-style: dashed; }
+.legend i.dot { width: 10px; border-radius: 50%; background: #facc15; border-color: #facc15; }
 .bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); padding-block: 0.6rem; }
 .bar-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
 .progress { flex: 1 1 14rem; min-width: 0; height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; }
@@ -41,42 +49,135 @@ section.board h2 { font-family: var(--f-head); font-size: 1.1rem; margin: 0 0 0.
 section.board h2 small { font-family: var(--f-mono); font-size: 0.75rem; color: var(--muted); font-weight: 400; }
 .tag { font-family: var(--f-mono); font-size: 0.7rem; padding: 0.05rem 0.4rem; border-radius: 4px; border: 1px solid var(--line); color: var(--muted); }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 12px; }
-.card { background: var(--surface); border: 1px solid var(--line); border-left: 5px solid var(--line); border-radius: 6px; padding: 8px; display: grid; gap: 8px; min-width: 0; outline: none; }
+.card { background: var(--surface); border: 1px solid var(--line); border-left: 5px solid var(--line); border-radius: 6px; padding: 8px; display: grid; gap: 8px; min-width: 0; outline: none; align-content: start; }
 .card:focus-visible, .card.focus { box-shadow: 0 0 0 2px var(--accent); }
-.card[data-d="accept"] { border-left-color: var(--yes); }
-.card[data-d="reject"] { border-left-color: var(--no); }
-.card[data-d="unsure"] { border-left-color: var(--unsure); }
-.card img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; background: var(--line); display: block; }
+.card[data-d="done"] { border-left-color: var(--yes); }
+.card[data-d="part"] { border-left-color: var(--unsure); }
+.card[data-d="no"] { border-left-color: var(--no); }
+.card img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; background: var(--line); display: block; cursor: zoom-in; }
 .q { font-size: 0.9rem; }
-.q code { font-family: var(--f-mono); font-size: 0.85rem; background: var(--bg); padding: 0 0.25rem; border-radius: 3px; }
+code { font-family: var(--f-mono); font-size: 0.85em; background: var(--bg); padding: 0 0.25rem; border-radius: 3px; }
+.plist { margin: 0; padding: 0; list-style: none; font-size: 0.85rem; display: grid; gap: 2px; }
+.plist .no { color: var(--muted); }
 .meta { font-family: var(--f-mono); font-size: 0.72rem; color: var(--muted); }
-.btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-.btns button { font: inherit; font-size: 0.85rem; padding: 0.45rem 0.2rem; border-radius: 5px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; }
-.btns button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-.btns button[data-v="accept"][aria-pressed="true"] { background: var(--yes-bg); border-color: var(--yes); color: var(--yes); font-weight: 600; }
-.btns button[data-v="reject"][aria-pressed="true"] { background: var(--no-bg); border-color: var(--no); color: var(--no); font-weight: 600; }
-.btns button[data-v="unsure"][aria-pressed="true"] { background: var(--unsure-bg); border-color: var(--unsure); color: var(--unsure); font-weight: 600; }
-.btns button:disabled { opacity: 0.5; cursor: default; }
+.cbtns { display: flex; flex-wrap: wrap; gap: 6px; }
+.cbtns button, .zoom { font: inherit; font-size: 0.85rem; padding: 0.35rem 0.6rem; border-radius: 5px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; }
+.cbtns button[data-act="open"], .zoom { color: var(--accent); border-color: var(--accent); justify-self: start; }
+.cbtns button:disabled { opacity: 0.5; cursor: default; }
+.vbtns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.vbtns button { font: inherit; font-size: 0.85rem; padding: 0.4rem 0.2rem; border-radius: 5px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; }
+.vbtns button:disabled { opacity: 0.5; cursor: default; }
+.vbtns button[data-vote="agree"][aria-pressed="true"] { background: var(--yes-bg); border-color: var(--yes); color: var(--yes); font-weight: 600; }
+.vbtns button[data-vote="disagree"][aria-pressed="true"] { background: var(--no-bg); border-color: var(--no); color: var(--no); font-weight: 600; }
+.vbtns button[data-vote="unsure"][aria-pressed="true"] { background: var(--unsure-bg); border-color: var(--unsure); color: var(--unsure); font-weight: 600; }
 .empty { color: var(--muted); padding: 2rem 0; }
 @media (prefers-reduced-motion: reduce) { .progress span { transition: none; } }
+/* Full-board viewer: always dark (it frames a photo); the photo, its boxes and the design overlay share one transformed layer */
+.viewer { position: fixed; inset: 0; z-index: 20; background: #0b0f0d; color: #e3eae5; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
+.viewer[hidden] { display: none; }
+.vbar, .vfoot { padding: 8px 16px; display: flex; flex-wrap: wrap; gap: 0.4rem 0.8rem; align-items: center; background: #141b17; }
+.vbar { padding-top: max(8px, env(safe-area-inset-top)); }
+.vfoot { padding-bottom: max(8px, env(safe-area-inset-bottom)); }
+.vtitle { font-family: var(--f-mono); font-size: 0.8rem; flex: 1 1 12rem; min-width: 0; overflow-wrap: anywhere; }
+.vtools, .vacts, .pchips { display: flex; flex-wrap: wrap; gap: 6px; }
+.viewer button { font: inherit; font-size: 0.85rem; padding: 0.35rem 0.7rem; border-radius: 5px; border: 1px solid #2b3731; background: #1d2621; color: #e3eae5; cursor: pointer; }
+.viewer button[hidden] { display: none; }
+.viewer button:focus-visible { outline: 2px solid #2dd4bf; outline-offset: 1px; }
+.viewer button:disabled { opacity: 0.5; cursor: default; }
+.viewer code { background: #0b0f0d; }
+.pchip[aria-pressed="true"] { border-color: #e879f9; color: #f5d0fe; font-weight: 600; }
+.pchip.ok { box-shadow: inset 3px 0 0 #4ade80; }
+.vacts button[data-act="sugg"] { border-color: #facc15; color: #fde68a; }
+.fixin { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; }
+.fixin input { font: inherit; font-family: var(--f-mono); font-size: 0.85rem; width: 8em; padding: 0.3rem 0.4rem; border-radius: 5px; border: 1px solid #f8fafc; background: #0b0f0d; color: #f8fafc; }
+.vacts button.primary { background: #f8fafc; color: #0b0f0d; border-color: #f8fafc; font-weight: 600; }
+.vacts button.primary code { background: #e2e8f0; color: #0b0f0d; }
+.vinfo button { font-size: 0.8rem; padding: 0.1rem 0.5rem; margin-left: 0.4rem; border-color: #f87171; color: #fecaca; }
+.vacts button[data-vote="agree"][aria-pressed="true"] { background: #14341f; border-color: #4ade80; color: #4ade80; font-weight: 600; }
+.vacts button[data-vote="disagree"][aria-pressed="true"] { background: #3b1717; border-color: #f87171; color: #f87171; font-weight: 600; }
+.vacts button[data-vote="unsure"][aria-pressed="true"] { background: #3a2c0c; border-color: #fbbf24; color: #fbbf24; font-weight: 600; }
+.vstage { position: relative; overflow: hidden; touch-action: none; cursor: crosshair; user-select: none; }
+.vlayer { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; }
+.vlayer img, .vlayer svg { position: absolute; left: 0; top: 0; display: block; max-width: none; max-height: none; }
+.vload { position: absolute; inset: 0; display: grid; place-items: center; color: #9caaa2; }
+.vload[hidden] { display: none; }
+.tip { position: absolute; pointer-events: none; background: #141b17; border: 1px solid #2b3731; color: #e3eae5; font-size: 0.8rem; padding: 0.2rem 0.5rem; border-radius: 4px; white-space: nowrap; }
+.tip[hidden] { display: none; }
+.vq { flex: 1 1 100%; min-width: 0; font-size: 0.92rem; }
+.vinfo { flex: 1 1 100%; min-width: 0; font-size: 0.85rem; color: #fde68a; min-height: 1.3em; }
+.vfoot .tag { color: #9caaa2; border-color: #2b3731; }
+.vleg { font-size: 0.8rem; color: #9caaa2; }
+.vleg b { font-weight: 600; }
+.viewer[data-boxes="focus"] .o { display: none; }
+.viewer[data-boxes="none"] #vsvg { display: none; }
+.viewer[data-design="off"] #vdz { display: none; }
+#vdrawp[aria-pressed="true"], #vdrawb[aria-pressed="true"] { border-color: #a3e635; color: #ecfccb; background: #365314; }
+.fixin select { font: inherit; font-size: 0.85rem; padding: 0.3rem; border-radius: 5px; border: 1px solid #f8fafc; background: #0b0f0d; color: #f8fafc; }
+#vdraw[aria-pressed="true"] { border-color: #34d399; color: #d1fae5; background: #064e3b; }
+.viewer[data-draw="on"] .vstage { cursor: crosshair; }
+#vauto[aria-pressed="true"] { border-color: #2dd4bf; color: #ccfbf1; }
+.hist { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.hist li { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.8rem; padding: 6px 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; font-size: 0.88rem; }
+.hist .when { font-family: var(--f-mono); font-size: 0.75rem; color: var(--muted); }
+.hist .what { flex: 1 1 18rem; min-width: 0; }
+.hist .old { color: var(--muted); text-decoration: line-through; }
+.hist button { font: inherit; font-size: 0.8rem; padding: 0.2rem 0.6rem; border-radius: 5px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; }
+.hist button[data-hundo] { color: var(--no); border-color: var(--no); }
+.hist button:disabled { opacity: 0.45; cursor: default; }
+h3.sub { font-family: var(--f-head); font-size: 1rem; margin: 1.4rem 0 0.5rem; }
+#vnon[aria-pressed="true"] { border-color: #94a3b8; color: #f1f5f9; background: #334155; }
+.viewer[data-xmode="on"] .vstage { cursor: cell; }
 </style>
 
 <div class="wrap">
   <h1>WACV Label Review</h1>
-  <div class="intro">
-    <p>WACV 标注里可能有问题的地方，共 <span id="n-total">…</span> 个候选。每张截图回答一个问题：<b>接受</b> = 是，按建议修改；<b>拒绝</b> = 不是，保持原标注；<b>看不清</b> = 照片上判断不了，也保持原标注。你的选择会自动保存，可以分几次做完。</p>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" data-mode="cand" aria-selected="true">候选审核</button>
+    <button class="tab" role="tab" data-mode="design" aria-selected="false">设计文件核对</button>
+    <button class="tab" role="tab" data-mode="history" aria-selected="false">我的记录</button>
+  </div>
+  <div class="intro" id="cand-help">
+    <p>WACV 标注里有 <span id="n-total">…</span> 处元件和丝印编号（label）对不上，大多是 label 被分给了错误的元件。每个候选里有 1–3 个元件：<b>请在整板照片上给每个元件点出它真正的 label</b>：点那个文字框（只是选中），再按 Enter 或「确定」保存。板上没印编号按 N，看不清按 U。选择会自动保存，可以分几次做完。</p>
     <ul class="types">
-      <li><b>A</b><span>同一个编号标在了多个框上，板上只印了一次。问：这些框是<b>同一个元件</b>吗？接受 → 评分时把它们当作一个元件。</span></li>
-      <li><b>B</b><span>元件的编号板上没印，旁边却有一个只差一个字符的 label。问：这个元件就是板上印的那个编号吗？接受 → 改成板上印的编号。</span></li>
-      <li><b>C</b><span>元件在标注里没有编号，旁边有一个没被使用、类型相符的 label。问：这个 label 是它的吗？接受 → 给它补上这个编号。</span></li>
+      <li><b>A</b><span>几个框标了同一个编号，板上只印了一次。两种情况：① 这几个框其实是<b>同一个元件</b>（比如一个排针上插了两个跳线帽）→ 按 S；② 是不同的元件 → 给每个元件点出它真正的 label。</span></li>
+      <li><b>B</b><span>元件编号和旁边一个文字框差一个字符：WACV 标注里有一边读错了（比如照片上印 C124，文字框却写成 C134）。看照片，点「文字框读错了」或「元件编号错了」。</span></li>
+      <li><b>C</b><span>元件在标注里没有编号。黄色虚线是旁边一个没被使用的 label。</span></li>
+      <li><b>M</b><span>你审核时发现、我手动加进来的问题（比如漏了文字框的 FPGA）。卡片上写着要做什么。</span></li>
     </ul>
     <div class="legend">
-      <span><i style="border-color:#e879f9"></i>A：同编号的多个框</span>
-      <span><i style="border-color:#22d3ee"></i>B / C：要判断的元件</span>
-      <span><i style="border-color:#facc15"></i>相关的 label</span>
-      <span>细框：其他元件和文字</span>
+      <span><i style="border-color:#e879f9"></i>现在要找 label 的元件</span>
+      <span><i class="dash" style="border-color:#22d3ee"></i>同一候选里的其他元件</span>
+      <span><i class="dash" style="border-color:#facc15"></i>建议的 label</span>
+      <span><i style="border-color:#facc15"></i>你选的 label（有连线）</span>
+      <span><i style="border-color:#fb923c"></i>没被任何元件使用的 label</span>
+      <span><i style="border-color:#fb923c;opacity:.5"></i>标注里已属于别的元件的 label</span>
+      <span><i class="dash" style="border-color:#9ca3af"></i>你已选给别的元件的 label</span>
+      <span><i style="border-color:#64748b;background:repeating-linear-gradient(45deg,transparent 0 3px,#64748b 3px 4px)"></i>你标为「不是元件编号」的文字</span>
     </div>
-    <p class="meta">键盘：J / K 或 ↓ / ↑ 切换卡片，A 接受，R 拒绝，U 看不清。选完自动跳到下一个未处理的。</p>
+    <p><b>板上印了编号，但没有文字框</b>（比如 "JTAG P1" 的 P1）：按 <b>T</b> 或点「画文字框」，在照片上拖一个框把那个编号框住，填上文字，按 Enter。新框是绿色的，会连到当前元件。</p>
+    <p><b>漏了元件，或者元件框不对</b>：按 <b>P</b>（画元件框）拖一个新框，选类别，再点它的 label 文字框（没印就点「没印」），按 Enter。按 <b>E</b>（改元件框）给当前元件重新拖一个框，按 Enter 替换（原来的框留作灰色虚线）。</p>
+    <p><b>有的字不是元件编号</b>（引脚名 P1.30、GND、3.3V、TX、功能说明……）：<b>Shift + 点</b>这个文字框，把它标为「不是元件编号」（再点一次取消；手机上先按工具栏的「标记非编号文字」再点）。元件旁边只有这种字的话，按 N（没印 label）。</p>
+    <p id="bydesign"></p>
+    <p class="meta">整板视图：点文字框 = 选中，Enter / 确定 = 保存，Esc = 取消；每次保存后都可以「撤销」，或按 Ctrl+Z；滚轮 / 双指缩放，拖动平移；鼠标停在框上会显示它的文字。S 把当前元件和还没选答案的框合并成一个元件（A 类；已经选好的框不动），R 删除这个元件框（框住的不是元件，比如整块洞洞板），Shift + 点 / X 标记非编号文字，N 没印，U 看不清，Del 清除，Tab 换元件，J / K 下一个 / 上一个候选，B 切换框，D 设计编号（有设计文件的板子），F 整板，H 回到目标，Esc 关闭。保存后停在原地，按 J 去下一个。</p>
+  </div>
+  <div class="intro" id="design-help" hidden>
+    <p>这里是我用<b>官方设计文件</b>自己核对过的 <span id="n-design">…</span> 张照片。设计文件记着每个元件真正的编号和位置；我把它对齐到照片上，再和标注比较。下面列出的是我判为有问题的元件，以及候选里的元件。<b>请对照照片看设计文件说得对不对</b>：同意 (A)，不同意 (R)，看不清 (U)。</p>
+    <div class="legend">
+      <span><i class="dot"></i>黄点 + 黄字：设计文件里的元件编号和位置</span>
+      <span><i style="border-color:#e879f9"></i>要看的元件</span>
+      <span><i style="border-color:#ef4444"></i>标注里给它的 label</span>
+      <span><i style="border-color:#4ade80"></i>设计编号对应的 label（板上印了的话）</span>
+    </div>
+    <ul class="types">
+      <li><b>标错</b><span>标注的编号和设计文件不一样，而且设计文件的元件就在这个框上。</span></li>
+      <li><b>漏连</b><span>标注没给编号，但板上印了设计编号的 label。</span></li>
+      <li><b>不确定</b><span>不一样，但设计文件的元件离这个框较远（常常是设计文件和照片的板子版本不同）。</span></li>
+      <li><b>没印编号</b><span>设计文件有编号，但板上没有印这个编号（标注留空是对的）。</span></li>
+    </ul>
+    <p class="meta">整板视图里按 D 显示 / 隐藏设计编号，J / K 下一个 / 上一个，A / R / U 判断，Esc 关闭。每张板标题右边的按钮可以打开整板，看全部设计编号。</p>
+  </div>
+  <div class="intro" id="history-help" hidden>
+    <p>你在这个页面上的<b>每一次改动</b>都记在这里（最新的在最上面）：改了哪个元件、从什么改成什么。点错了就按「撤销」，或者在任何地方按 <b>Ctrl+Z</b> 撤销你自己的最近一步（Claude 写的改动只能在这里逐条点「撤销」）。「打开」会回到那个元件。下面还列出了现在保存着的全部答案。</p>
   </div>
   <div id="notice" class="notice" hidden></div>
   <div class="bar">
@@ -86,107 +187,759 @@ section.board h2 small { font-family: var(--f-mono); font-size: 0.75rem; color: 
       <span class="status" id="status" role="status" aria-live="polite">正在连接存储…</span>
     </div>
     <div class="bar-row" style="margin-top:0.45rem">
-      <div class="chips" role="group" aria-label="筛选">
-        <button class="chip" data-f="todo" aria-pressed="true">未处理</button>
-        <button class="chip" data-f="all" aria-pressed="false">全部</button>
-        <button class="chip" data-f="A" aria-pressed="false">A</button>
-        <button class="chip" data-f="B" aria-pressed="false">B</button>
-        <button class="chip" data-f="C" aria-pressed="false">C</button>
-        <button class="chip" data-f="done" aria-pressed="false">已处理</button>
-      </div>
+      <div class="chips" role="group" aria-label="筛选" id="chips"></div>
     </div>
   </div>
-  <div id="list"><p class="empty">正在载入候选…</p></div>
+  <div id="list"><p class="empty">正在载入…</p></div>
+</div>
+
+<div id="viewer" class="viewer" hidden role="dialog" aria-modal="true" aria-label="整板照片" data-boxes="all" data-design="off">
+  <div class="vbar">
+    <span class="vtitle" id="vtitle"></span>
+    <div class="vtools">
+      <button data-z="in" aria-label="放大">＋</button><button data-z="out" aria-label="缩小">－</button>
+      <button data-z="home">回到目标 (H)</button><button data-z="fit">整板 (F)</button>
+      <button id="vboxes">框：全部 (B)</button><button id="vdesign" hidden>设计编号：关 (D)</button><button id="vnon" aria-pressed="false">标记非编号文字：关 (X)</button><button id="vdraw" aria-pressed="false">画文字框 (T)</button><button id="vdrawp" aria-pressed="false">画元件框 (P)</button><button id="vdrawb" aria-pressed="false">改元件框 (E)</button><button id="vauto" aria-pressed="false">自动下一个：关</button><button id="vundo">撤销 (Ctrl+Z)</button><button data-z="close">关闭 (Esc)</button>
+    </div>
+  </div>
+  <div class="vstage" id="vstage"><div class="vlayer" id="vlayer"><img id="vimg" alt="整板照片" draggable="false"><svg id="vsvg" aria-hidden="true"></svg><svg id="vdz" aria-hidden="true"></svg><svg id="vtmp" aria-hidden="true"></svg></div><div class="vload" id="vload" hidden>正在载入整板照片…</div><div class="tip" id="tip" hidden></div></div>
+  <div class="vfoot">
+    <div class="vq" id="vq"></div>
+    <div class="pchips" id="pchips"></div>
+    <div class="vacts" id="vacts"></div>
+    <div class="vinfo" id="vinfo" aria-live="polite"></div>
+  </div>
 </div>
 
 <script>
 (() => {
   const CLS_ZH = {resistor: "电阻", capacitor: "电容", inductor: "电感", connector: "连接器", diode: "二极管", switch: "开关", transistor: "三极管", IC: "IC", oscillator: "晶振"};
-  const LABEL = {accept: "接受", reject: "拒绝", unsure: "看不清"};
-  let cands = [], dec = {}, filter = "todo", db = null, coll = null, canWrite = true, focusId = null;
+  const ST_ZH = {wrong: "标错", missed: "漏连", uncertain: "不确定", unprinted: "没印编号", agree: "一致", no_design_part: "设计里没有"};
+  const VOTES = [["agree", "同意设计", "A"], ["disagree", "不同意", "R"], ["unsure", "看不清", "U"]];
+  const CHIPS = {cand: [["todo", "未完成"], ["all", "全部"], ["A", "A"], ["B", "B"], ["C", "C"], ["M", "M（手动）"], ["done", "已完成"]],
+                 design: [["all", "全部"], ["wrong", "标错"], ["missed", "漏连"], ["uncertain", "不确定"], ["cand", "候选里的"], ["novote", "还没判断"]], history: []};
+  let cands = [], boards = null, design = {}, dItems = [], ans = {}, votes = {}, mode = "cand", filter = "todo", dfilter = "all";
+  let db = null, coll = null, vcoll = null, ncoll = null, hcoll = null, canWrite = true, focusId = null, nonText = {}, xMode = false;
+  let history = [], curGrp = null, autoNext = false, newTexts = {}, tcoll = null, drawMode = false, drawing = null, pendingNew = null;
+  let newParts = {}, pcoll = null, partBoxes = {}, bcoll = null, partDraw = null, pendingPart = null, pendingBox = null;   // partDraw: "part" | "box"
+  try { autoNext = localStorage.getItem("autoNext") === "1"; } catch (_) {}
+  const uid = () => Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 7);
+  const canon = v => JSON.stringify(v == null ? null : typeof v === "object" ? Object.keys(v).sort().reduce((o, k) => (o[k] = v[k], o), {}) : v);
+  const same = (x, y) => canon(x) === canon(y);                          // the store returns object keys sorted
+  let pending = null;                                                    // text box picked in the viewer, not yet saved
+  const nkey = (img, j) => `${img}__t${j}`;
+  const isNon = (img, j) => !!nonText[nkey(img, j)];
   const $ = (s, r = document) => r.querySelector(s);
   const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
   const setStatus = (t, err) => { const el = $("#status"); el.textContent = t; el.classList.toggle("err", !!err); };
+  const key = (img, i) => `${img}__${i}`;
+  const got = (c, i) => ans[key(c.image, i)];
+  const vote = it => votes[key(it.image, it.part)];
+  const isDone = c => c.parts.every(i => complete(got(c, i)));
+  const isStarted = c => c.parts.some(i => got(c, i));
+  const cls = (c, k) => CLS_ZH[c.classes[k]] || c.classes[k];
+  const orig = c => c.type === "C" ? "" : c.designator;                      // what the annotation calls the part(s) now
+  const suggStr = c => c.type === "A" ? c.designator : c.printed;
+  const ansHtml = a => !a ? '<span class="no">未选</span>' : ansCore(a) + (a.cfix ? `（类别改成${esc(CLS_ZH[a.cfix] || a.cfix)}）` : "") + (a.by === "claude" ? ' <span class="tag">Claude</span>' : "");
+  const ansCore = a => a.kind === "text" ? (a.fix ? `<code>${esc(a.fix)}</code>（文字框原来读成 ${esc(a.str)}）` : a.pfix ? `<code>${esc(a.str)}</code>（元件编号改成 ${esc(a.pfix)}）` : `<code>${esc(a.str)}</code>`)
+    : a.kind === "newtext" ? `<code>${esc(a.str)}</code>（新画的文字框）`
+    : a.kind === "same" ? "合并为一个元件 · " + (a.text >= 0 || a.nid ? `<code>${esc(a.fix || a.str)}</code>${a.nid ? "（新画的文字框）" : ""}` : a.none ? "没印 label" : a.unsure ? "看不清" : '<span class="no">还没选 label</span>')
+    : a.kind === "delete" ? "删除这个元件框（不是元件）"
+    : a.kind === "none" ? "没印 label" : "看不清";
+  const hasText = a => a && (a.kind === "text" || a.kind === "same") && a.text >= 0;
+  const sameAns = c => ({kind: "same", text: c.labels.length ? c.labels[0] : -1, str: c.designator});   // A: the boxes are one part
+  const mergeSet = (c, i) => c.parts.filter(q => q === i || !got(c, q) || got(c, q).kind === "same");     // current + unanswered + merged
+  function groupAns(base) {                                             // a merged part keeps the current part's label (none if it has none)
+    if (!base || base.kind === "delete") return {kind: "same", text: -1, str: ""};
+    if (base.kind === "none") return {kind: "same", text: -1, str: "", none: true};
+    if (base.kind === "unsure") return {kind: "same", text: -1, str: "", unsure: true};
+    const o = {kind: "same", text: base.text ?? -1, str: base.str || ""};
+    for (const f of ["nid", "fix", "pfix", "none", "unsure"]) if (base[f]) o[f] = base[f];
+    return o;
+  }
+  const groupOf = (c) => c.parts.filter(q => (got(c, q) || {}).kind === "same");
+  const complete = a => !!a && !(a.kind === "same" && a.text < 0 && !a.nid && !a.none && !a.unsure);     // merged but no label yet = open
+  const canSave = () => !!coll && canWrite;
+  const canVote = () => !!vcoll && canWrite;
 
-  function question(c) {
-    const cls = c.classes.map(x => CLS_ZH[x] || x);
-    if (c.type === "A") return `这 ${c.n_parts} 个框都标成 <code>${esc(c.designator)}</code>（${esc(cls.join("、"))}），板上只印了 ${c.n_labels} 个。它们是<b>同一个元件</b>吗？`;
-    if (c.type === "B") return `标注写的是 <code>${esc(c.designator)}</code>，旁边印的是 <code>${esc(c.printed)}</code>。这个${esc(cls[0])}就是 <code>${esc(c.printed)}</code> 吗？`;
-    return `这个${esc(cls[0])}在标注里没有编号。旁边的 <code>${esc(c.printed)}</code> 是它的 label 吗？`;
+  function summary(c) {
+    if (c.type === "A") return `${c.n_parts} 个元件都标成了 <code>${esc(c.designator)}</code>，板上只印了 ${c.n_labels} 个。给每个元件点出它真正的 label。`;
+    if (c.type === "M") return esc(c.note || "");
+    if (c.type === "B") return `${esc(cls(c, 0))}在标注里是 <code>${esc(c.designator)}</code>，旁边的文字框在标注里写成 <code>${esc(c.printed)}</code>，差一个字符，有一边读错了。看照片上印的是哪个？`;
+    return `${esc(cls(c, 0))}在标注里没有编号，旁边有没被使用的 <code>${esc(c.printed)}</code>。点出它真正的 label。`;
+  }
+  function dText(it) {
+    const a = it.annotated ? `<code>${esc(it.annotated)}</code>` : "（没有编号）", d = it.design ? `<code>${esc(it.design)}</code>` : "—";
+    return {wrong: `标注 ${a}，设计文件说是 ${d}`, missed: `标注没有编号；板上印了设计编号 ${d}，但没连上`,
+            uncertain: `标注 ${a}，设计文件最近的是 ${d}，但离得较远（可能版本不同）`, unprinted: `设计编号 ${d}，板上没印编号`,
+            agree: `标注 ${a} 和设计文件一致`, no_design_part: `标注 ${a}；设计文件里找不到这个元件（可能是子板或版本不同）`}[it.status] || "";
   }
   function visible(c) {
-    const d = dec[c.id];
-    if (filter === "todo") return !d; if (filter === "done") return !!d;
+    if (filter === "todo") return !isDone(c); if (filter === "done") return isDone(c);
     if (filter === "all") return true; return c.type === filter;
   }
+  const dVisible = it => dfilter === "all" || (dfilter === "cand" ? !!it.cand : dfilter === "novote" ? !vote(it) : it.status === dfilter);
   function counts() {
-    const n = cands.length, done = cands.filter(c => dec[c.id]).length;
-    const by = v => cands.filter(c => dec[c.id] === v).length;
-    $("#counts").textContent = `${done} / ${n} 已处理 · 接受 ${by("accept")} · 拒绝 ${by("reject")} · 看不清 ${by("unsure")}`;
-    $("#prog").style.width = n ? (100*done/n) + "%" : "0";
+    if (mode === "history") { $("#counts").textContent = `${history.filter(e => !same(e.before, e.after)).length} 条改动记录 · 现在保存着 ${Object.keys(ans).length} 个元件答案、${Object.keys(votes).length} 个设计判断、${Object.keys(nonText).length} 个非编号文字`; $("#prog").style.width = "0"; return; }
+    if (mode === "design") {
+      const n = dItems.length, by = v => dItems.filter(it => vote(it) === v).length, dn = dItems.filter(vote).length;
+      $("#counts").textContent = `${dn} / ${n} 个元件已判断 · 同意 ${by("agree")} · 不同意 ${by("disagree")} · 看不清 ${by("unsure")}`;
+      $("#prog").style.width = n ? (100 * dn / n) + "%" : "0"; return;
+    }
+    const n = cands.length, dc = cands.filter(isDone).length;
+    const np = cands.reduce((s, c) => s + c.parts.length, 0), dp = cands.reduce((s, c) => s + c.parts.filter(i => got(c, i)).length, 0);
+    $("#counts").textContent = `${dc} / ${n} 个候选完成 · ${dp} / ${np} 个元件`;
+    $("#prog").style.width = n ? (100 * dc / n) + "%" : "0";
     $("#n-total").textContent = n;
   }
-  function render() {
-    counts();
-    const list = $("#list"); const shown = cands.filter(visible);
-    if (!shown.length) { list.innerHTML = `<p class="empty">${filter === "todo" ? "全部处理完了，谢谢！" : "这个筛选下没有候选。"}</p>`; return; }
+  function chips() {
+    const f = mode === "cand" ? filter : dfilter;
+    $("#chips").innerHTML = CHIPS[mode].map(([k, t]) => `<button class="chip" data-f="${k}" aria-pressed="${k === f}">${t}</button>`).join("");
+  }
+  function renderCands() {
+    const list = $("#list"), shown = cands.filter(visible);
+    if (!shown.length) { list.innerHTML = `<p class="empty">${filter === "todo" ? "全部完成了，谢谢！" : "这个筛选下没有候选。"}</p>`; return; }
     const byImg = new Map(); shown.forEach(c => { if (!byImg.has(c.image)) byImg.set(c.image, []); byImg.get(c.image).push(c); });
     let html = "";
     for (const [img, cs] of byImg) {
-      html += `<section class="board"><h2>${esc(img)} <small>${cs.length} 个</small>${cs[0].dev ? '<span class="tag">dev</span>' : '<span class="tag">test</span>'}</h2><div class="grid">`;
+      html += `<section class="board"><h2>${esc(img)} <small>${cs.length} 个</small><span class="tag">${cs[0].dev ? "dev" : "test"}</span></h2><div class="grid">`;
       for (const c of cs) {
-        const d = dec[c.id] || "";
-        html += `<article class="card${c.id === focusId ? " focus" : ""}" tabindex="0" data-id="${esc(c.id)}" data-d="${d}">
+        const d = isDone(c) ? "done" : isStarted(c) ? "part" : "";
+        const sugg = c.type !== "A" && !got(c, c.parts[0]);
+        html += `<article class="card${c.id === focusId ? " focus" : ""}" tabindex="0" data-kind="cand" data-id="${esc(c.id)}" data-d="${d}">
           <img src="${esc(c.img)}" alt="${esc(c.type + " " + c.image)}" loading="lazy" width="380" height="380">
-          <div class="q"><span class="tag">${c.type}</span> ${question(c)}</div>
-          <div class="btns">${["accept", "reject", "unsure"].map(v => `<button data-v="${v}" aria-pressed="${d === v}" ${canWrite && coll ? "" : "disabled"}>${LABEL[v]}</button>`).join("")}</div>
+          <div class="q"><span class="tag">${c.type}</span> ${summary(c)}</div>
+          <ul class="plist">${c.parts.every(i => (got(c, i) || {}).kind === "same") ? `<li>这 ${c.parts.length} 个框${ansHtml(got(c, c.parts[0]))}</li>`
+            : c.parts.map((i, k) => `<li>元件${c.parts.length > 1 ? k + 1 : ""}（${esc(cls(c, k))}${orig(c) ? "，原标注 <code>" + esc(orig(c)) + "</code>" : ""}）→ ${ansHtml(got(c, i))}</li>`).join("")}</ul>
+          <div class="cbtns">${sugg && c.type === "B" ? `<button data-act="tfix" ${canSave() ? "" : "disabled"}>文字框读错了，是 <code>${esc(c.designator)}</code></button><button data-act="pfix" ${canSave() ? "" : "disabled"}>元件编号错了，是 <code>${esc(c.printed)}</code></button>` : sugg ? `<button data-act="sugg" ${canSave() ? "" : "disabled"}>用建议 <code>${esc(c.printed)}</code></button>` : ""}${c.type === "A" ? `<button data-act="same" ${canSave() ? "" : "disabled"}>同一个元件</button>` : ""}<button data-act="open">打开整板来选（空格）</button></div>
           <div class="meta">${esc(c.id)}</div></article>`;
       }
       html += `</div></section>`;
     }
     list.innerHTML = html;
   }
-  async function decide(id, v) {
-    if (!coll || !canWrite) return;
-    const c = cands.find(x => x.id === id); if (!c) return;
-    const prev = dec[id]; dec[id] = v; const next = nextTodo(id);
-    focusId = next; render(); setStatus("保存中…");
-    try { await coll.doc(id).set({decision: v, type: c.type, image: c.image, at: new Date().toISOString()}); setStatus("已保存"); }
-    catch (e) {
-      if (prev) dec[id] = prev; else delete dec[id]; render();
-      if (e && e.code === "invalid_argument") { canWrite = false; setStatus("你没有写入权限，这个页面只能查看", true); render(); }
-      else setStatus("保存失败（" + (e && e.code || "unknown") + "），请再点一次", true);
-    }
-    const el = focusId && document.querySelector(`.card[data-id="${CSS.escape(focusId)}"]`); if (el) { el.focus({preventScroll: true}); el.scrollIntoView({block: "nearest"}); }
+  function dCard(it) {
+    const v = vote(it) || "", dis = canVote() ? "" : "disabled";
+    return `<article class="card${it.id === focusId ? " focus" : ""}" tabindex="0" data-kind="design" data-id="${esc(it.id)}" data-d="${v === "agree" ? "done" : v === "disagree" ? "no" : v ? "part" : ""}">
+      <img src="${esc(it.img)}" alt="${esc(it.image)}" loading="lazy" width="380" height="380">
+      <div class="q"><span class="tag">${ST_ZH[it.status] || esc(it.status)}</span> ${esc(CLS_ZH[it.cls] || it.cls)}：${dText(it)}${it.cand ? ` <span class="tag">候选 ${esc(it.cand.split("_")[0])}</span>` : ""}</div>
+      <div class="vbtns">${VOTES.map(([k, t]) => `<button data-vote="${k}" aria-pressed="${v === k}" ${dis}>${t}</button>`).join("")}</div>
+      <button class="zoom" data-act="open">打开整板（空格）</button>
+      <div class="meta">${esc(it.id)} · 距离 ${it.dist ?? "—"} 个元件大小</div></article>`;
   }
+  function renderDesign() {
+    let html = "";
+    for (const [img, d] of Object.entries(design)) {
+      const its = d.items.filter(dVisible), t = d.tally;
+      html += `<section class="board"><h2>${esc(img)} <small>${esc(d.source)} · 对齐误差 ${d.residual} 个元件大小 · 一致 ${t.agree || 0} · 标错 ${t.wrong || 0} · 漏连 ${t.missed || 0} · 不确定 ${t.uncertain || 0} · 没印 ${t.unprinted || 0}</small>`
+        + `<span class="tag">${d.dev ? "dev" : "test"}</span><button class="zoom" data-board="${esc(img)}">打开整板，看全部设计编号</button></h2>`
+        + (its.length ? `<div class="grid">${its.map(dCard).join("")}</div>` : `<p class="meta">这个筛选下没有需要看的元件。</p>`) + `</section>`;
+    }
+    $("#list").innerHTML = html || '<p class="empty">设计文件数据还在载入…</p>';
+  }
+  function render() {
+    counts(); chips();
+    document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t.dataset.mode === mode));
+    $("#cand-help").hidden = mode !== "cand"; $("#design-help").hidden = mode !== "design"; $("#history-help").hidden = mode !== "history";
+    if (mode === "design") renderDesign(); else if (mode === "history") renderHistory(); else renderCands();
+    if (!V.root.hidden && vItem) refreshViewer();
+  }
+  async function setAns(c, i, a, extra = {}) {                           // a = {kind, text, str} or null to clear
+    if (!canSave()) { setStatus("不能保存：没有存储权限", true); return; }
+    const k = key(c.image, i), prev = ans[k];
+    if (same(prev, a)) return;                                           // nothing changes: no write, no history entry
+    if (a) ans[k] = a; else delete ans[k];
+    const h = addH({t: "label", key: k, cand: c.id, image: c.image, part: i, before: prev || null, after: a || null, grp: curGrp || uid(), ...extra});
+    render(); setStatus("保存中…");
+    try {
+      if (a) await coll.doc(k).set({...a, cand: c.id, type: c.type, image: c.image, part: i, at: new Date().toISOString()});
+      else await coll.doc(k).delete();
+      setStatus("已保存"); saveH(h);
+    } catch (e) {
+      dropH(h); if (prev) ans[k] = prev; else delete ans[k]; render();
+      if (e && (e.code === "invalid_argument" || e.code === "not_granted")) { canWrite = false; setStatus("你没有写入权限，这个页面只能查看", true); render(); }
+      else setStatus("保存失败（" + (e && e.code || "unknown") + "），请再选一次", true);
+    }
+  }
+  async function setVote(it, v, extra = {}) {
+    if (!canVote()) { setStatus("不能保存：没有存储权限", true); return; }
+    const k = key(it.image, it.part), prev = votes[k]; if (same(prev, v)) return;
+    if (v) votes[k] = v; else delete votes[k];
+    const h = addH({t: "vote", key: k, item: it.id, image: it.image, part: it.part, before: prev || null, after: v || null, grp: curGrp || uid(), ...extra});
+    render(); setStatus("保存中…");
+    try {
+      if (v) await vcoll.doc(k).set({vote: v, status: it.status, design: it.design, annotated: it.annotated, image: it.image, part: it.part, at: new Date().toISOString()});
+      else await vcoll.doc(k).delete();
+      setStatus("已保存"); saveH(h);
+    }
+    catch (e) { dropH(h); if (prev) votes[k] = prev; else delete votes[k]; render(); setStatus("保存失败（" + (e && e.code || "unknown") + "），请再点一次", true); }
+  }
+  async function toggleNon(img, j, extra = {}) {
+    if (!ncoll || !canWrite) { setStatus("不能保存：没有存储权限", true); return; }
+    const k = nkey(img, j), on = !nonText[k], str = boards[img].tt[j];
+    if (on) nonText[k] = true; else delete nonText[k];
+    const h = addH({t: "nontext", key: k, image: img, text: j, str, before: !on, after: on, grp: curGrp || uid(), ...extra});
+    info(on ? `<code>${esc(str)}</code> 标为「不是元件编号」` : `<code>${esc(str)}</code> 取消标记`); render(); setStatus("保存中…");
+    try {
+      if (on) await ncoll.doc(k).set({image: img, text: j, str, at: new Date().toISOString()}); else await ncoll.doc(k).delete();
+      setStatus("已保存"); saveH(h);
+    }
+    catch (e) { dropH(h); if (on) delete nonText[k]; else nonText[k] = true; render(); setStatus("保存失败（" + (e && e.code || "unknown") + "）", true); }
+  }
+  // history: append-only, every change with the value before and after; added locally at once (so an undo right after a click
+  // finds it), written to the store once the change itself is saved
+  function addH(e) { const h = {id: uid(), ...e, at: new Date().toISOString()}; history = [h, ...history]; return h; }
+  function dropH(h) { history = history.filter(x => x.id !== h.id); }
+  async function saveH(h) {
+    if (!hcoll) return; const {id, ...doc} = h;
+    try { await hcoll.doc(id).set(doc); } catch (err) { setStatus("改动记录保存失败（" + (err && err.code || "unknown") + "）", true); }
+  }
+  const real = x => !x.undone && !x.undo_of && !same(x.before, x.after);   // a change that can still be undone
+  const curVal = e => e.t === "label" ? (ans[e.key] || null) : e.t === "vote" ? (votes[e.key] || null) : e.t === "newtext" ? (newTexts[e.key] || null)
+    : e.t === "newpart" ? (newParts[e.key] || null) : e.t === "partbox" ? (partBoxes[e.key] || null) : !!nonText[e.key];
+  const VOTE_ZH = {agree: "同意设计", disagree: "不同意", unsure: "看不清"};
+  function hVal(e, v) {
+    if (e.t === "label") return v ? ansHtml(v) : "未选";
+    if (e.t === "vote") return v ? VOTE_ZH[v] || v : "未判断";
+    if (e.t === "newtext") return v ? `新文字框 <code>${esc(v.str)}</code>` : "没有";
+    if (e.t === "newpart") return v ? `新元件（${esc(CLS_ZH[v.cls] || v.cls)}）→ ${v.text >= 0 ? "<code>" + esc(v.str) + "</code>" : "没印 label"}` : "没有";
+    if (e.t === "partbox") return v ? "新画的框" : "原来的框";
+    return v ? "不是元件编号" : "普通文字";
+  }
+  function hWhat(e) {
+    if (e.t === "label") { const c = cands.find(x => x.id === e.cand); return `候选 <code>${esc(e.cand)}</code> 的元件 #${e.part}${c ? "（" + esc(CLS_ZH[c.classes[c.parts.indexOf(e.part)]] || "") + "）" : ""}`; }
+    if (e.t === "vote") return `设计核对 <code>${esc(e.image)}</code> 元件 #${e.part}`;
+    if (e.t === "newtext") return `画的文字框（${esc(e.image)}）`;
+    if (e.t === "newpart") return `补画的元件（${esc(e.image)}）`;
+    if (e.t === "partbox") return `元件框 <code>${esc(e.image)}</code> #${esc(e.key.split("__").pop())}`;
+    return `文字 <code>${esc(e.str)}</code>（${esc(e.image)}）`;
+  }
+  async function undoEntry(e) {                                         // undo = write the "before" value again (logged as undo_of)
+    const todo = history.filter(x => x.grp === e.grp && real(x) && same(curVal(x), x.after));
+    if (!todo.length) { setStatus("这一步已经撤销过，或者后来又改过了", true); return; }
+    curGrp = uid(); const gone = [];
+    for (const x of todo) {
+      x.undone = true; gone.push(x);
+      if (x.t === "label") { const c = cands.find(y => y.id === x.cand); if (c) setAns(c, x.part, x.before, {undo_of: x.id}); }
+      else if (x.t === "vote") { const it = dItems.find(y => y.image === x.image && y.part === x.part); if (it) setVote(it, x.before, {undo_of: x.id}); }
+      else if (x.t === "newtext") setNewText(x.key, x.before, {undo_of: x.id});
+      else if (x.t === "newpart") setDoc(pcoll, newParts, "newpart", x.key, x.before, {undo_of: x.id});
+      else if (x.t === "partbox") setDoc(bcoll, partBoxes, "partbox", x.key, x.before, {undo_of: x.id});
+      else if (!!nonText[x.key] !== !!x.before) toggleNon(x.image, x.text, {undo_of: x.id});
+    }
+    curGrp = null; pending = null;
+    info(`已撤销：${todo.map(x => hWhat(x) + " 回到 " + hVal(x, x.before)).join("；")}`); setStatus("已撤销"); render();
+    for (const x of gone) if (hcoll) hcoll.doc(x.id).update({undone: true}).catch(() => {});
+  }
+  function undoLast() {                                                 // Ctrl+Z / 撤销: only the reviewer's own steps (Claude's are undone per row)
+    const e = history.find(x => real(x) && x.by !== "claude" && same(curVal(x), x.after));
+    if (e) undoEntry(e); else setStatus("没有可以撤销的改动（Claude 写的改动请在「我的记录」里逐条撤销）", true);
+  }
+  function renderHistory() {
+    const t = iso => { const d = new Date(iso); return isNaN(d) ? "" : d.toLocaleString("zh-CN", {hour12: false}); };
+    const shown = history.filter(e => !same(e.before, e.after));
+    let html = shown.length ? `<ul class="hist">${shown.map(e => {
+      const ok = real(e) && same(curVal(e), e.after), why = e.undone ? "已撤销" : e.undo_of ? "" : ok ? "" : "后来又改过了";
+      return `<li><span class="when">${t(e.at)}</span><span class="what">${e.undo_of ? '<span class="tag">撤销</span> ' : ""}${e.by === "claude" ? '<span class="tag">Claude 写入</span> ' : ""}${hWhat(e)}：<span class="old">${hVal(e, e.before)}</span> → <b>${hVal(e, e.after)}</b>${why ? ` <span class="meta">（${why}）</span>` : ""}</span>`
+        + `<button data-hopen="${esc(e.id)}">打开</button>${e.undo_of ? "" : `<button data-hundo="${esc(e.id)}" ${ok && canWrite ? "" : "disabled"}>撤销</button>`}</li>`; }).join("")}</ul>`
+      : '<p class="empty">还没有改动记录（这个功能是 10 月 13 日晚上加的，之前的改动只保存了最后结果，见下面）。</p>';
+    const cur = Object.entries(ans).map(([k, a]) => ({k, a, img: k.split("__")[0], part: +k.split("__")[1]}));
+    html += `<h3 class="sub">现在保存着的元件答案（${cur.length}）</h3>` + (cur.length ? `<ul class="hist">${cur.map(x => {
+      const c = cands.find(y => y.image === x.img && y.parts.includes(x.part));
+      return `<li><span class="what"><code>${esc(x.img)}</code> 元件 #${x.part}${c ? " · 候选 <code>" + esc(c.id) + "</code>" : ""} → <b>${ansHtml(x.a)}</b></span>${c ? `<button data-copen="${esc(c.id)}">打开</button>` : ""}</li>`; }).join("")}</ul>` : '<p class="meta">还没有。</p>');
+    $("#list").innerHTML = html;
+  }
+  function setAuto(on) { autoNext = on; try { localStorage.setItem("autoNext", on ? "1" : "0"); } catch (_) {} const b = $("#vauto"); b.setAttribute("aria-pressed", on); b.textContent = `自动下一个：${on ? "开" : "关"}`; }
+  async function setNewText(id, val, extra = {}) {                      // val = {image, box, str} or null to remove
+    if (!tcoll || !canWrite) { setStatus("不能保存：没有存储权限", true); return; }
+    const prev = newTexts[id]; if (same(prev, val)) return;
+    if (val) newTexts[id] = val; else delete newTexts[id];
+    const h = addH({t: "newtext", key: id, image: (val || prev).image, before: prev || null, after: val || null, grp: curGrp || uid(), ...extra});
+    render(); setStatus("保存中…");
+    try { if (val) await tcoll.doc(id).set({...val, at: new Date().toISOString()}); else await tcoll.doc(id).delete(); setStatus("已保存"); saveH(h); }
+    catch (e) { dropH(h); if (prev) newTexts[id] = prev; else delete newTexts[id]; render(); setStatus("保存失败（" + (e && e.code || "unknown") + "）", true); }
+  }
+  async function setDoc(col, store, t, id, val, extra = {}) {          // generic: newparts / partboxes (val null = remove)
+    if (!col || !canWrite) { setStatus("不能保存：没有存储权限", true); return; }
+    const prev = store[id]; if (same(prev, val)) return;
+    if (val) store[id] = val; else delete store[id];
+    const h = addH({t, key: id, image: (val || prev).image, before: prev || null, after: val || null, grp: curGrp || uid(), ...extra});
+    render(); setStatus("保存中…");
+    try { if (val) await col.doc(id).set({...val, at: new Date().toISOString()}); else await col.doc(id).delete(); setStatus("已保存"); saveH(h); }
+    catch (e) { dropH(h); if (prev) store[id] = prev; else delete store[id]; render(); setStatus("保存失败（" + (e && e.code || "unknown") + "）", true); }
+  }
+  function setPartDraw(kind) {                                          // kind: "part" | "box" | null
+    partDraw = kind; drawing = null; if (kind && drawMode) setDraw(false);
+    V.root.dataset.draw = kind || drawMode ? "on" : "off"; V.tmp.innerHTML = "";
+    $("#vdrawp").setAttribute("aria-pressed", kind === "part"); $("#vdrawp").textContent = kind === "part" ? "画元件框：拖一个框 (P)" : "画元件框 (P)";
+    $("#vdrawb").setAttribute("aria-pressed", kind === "box"); $("#vdrawb").textContent = kind === "box" ? "改元件框：拖新框 (E)" : "改元件框 (E)";
+  }
+  function finishPart() {
+    const it = cur(); if (!pendingPart || !it) return;
+    const cls = $("#vpcls") ? $("#vpcls").value : pendingPart.cls, j = pendingPart.text ?? -1;
+    const id = `${it.image}__p${uid()}`, val = {image: it.image, box: pendingPart.box, cls, text: j, str: j >= 0 ? vBoard.tt[j] : ""};
+    setDoc(pcoll, newParts, "newpart", id, val); pendingPart = null; setPartDraw(null);
+    info(`已保存：补画了一个${esc(CLS_ZH[cls] || cls)}${j >= 0 ? " → <code>" + esc(val.str) + "</code>" : "（没印 label）"}${UNDO_BTN}`); refreshViewer();
+  }
+  function finishBox() {
+    const c = cur(); if (!pendingBox || !c || vKind !== "cand") return;
+    const i = c.parts[vk]; setDoc(bcoll, partBoxes, "partbox", key(c.image, i), {image: c.image, part: i, box: pendingBox.box});
+    pendingBox = null; setPartDraw(null); info(`已保存：元件${c.parts.length > 1 ? vk + 1 : ""} 换成新画的框${UNDO_BTN}`); refreshViewer();
+  }
+  function setDraw(on) { if (on && partDraw) setPartDraw(null); drawMode = on; drawing = null; V.root.dataset.draw = on ? "on" : "off"; const b = $("#vdraw"); b.setAttribute("aria-pressed", on); b.textContent = on ? "画文字框：拖一个框 (T)" : "画文字框 (T)"; V.tmp.innerHTML = ""; }
+  function finishNew() {                                                // save the drawn box with its text and give it to the current part
+    const c = cur(); if (!pendingNew || !c) return;
+    const str = ($("#vnew") ? $("#vnew").value : "").trim(); if (!str) { setStatus("先填上框里的文字", true); return; }
+    const id = `${c.image}__n${uid()}`, val = {image: c.image, box: pendingNew.box, str}, i = c.parts[vk];
+    curGrp = uid(); setNewText(id, val);
+    if ((got(c, i) || {}).kind === "same") groupOf(c).forEach(q => setAns(c, q, {kind: "same", text: -1, str, nid: id}));
+    else setAns(c, i, {kind: "newtext", text: -1, str, nid: id});
+    curGrp = null;
+    pendingNew = null; setDraw(false); info(`已保存：元件${c.parts.length > 1 ? vk + 1 : ""} → <code>${esc(str)}</code>（新画的文字框）${UNDO_BTN}`); answered(c);
+  }
+  function setX(on) { xMode = on; V.root.dataset.xmode = on ? "on" : "off"; const b = $("#vnon"); b.setAttribute("aria-pressed", on); b.textContent = `标记非编号文字：${on ? "开" : "关"} (X)`; }
   function nextTodo(id) {
     const i = cands.findIndex(c => c.id === id);
-    for (let k = 1; k <= cands.length; k++) { const c = cands[(i + k) % cands.length]; if (!dec[c.id]) return c.id; }
+    for (let k = 1; k <= cands.length; k++) { const c = cands[(i + k) % cands.length]; if (!isDone(c)) return c.id; }
     return null;
   }
+  function nextUnvoted(id) {
+    const list = dItems.filter(dVisible), i = list.findIndex(x => x.id === id);
+    for (let k = 1; k <= list.length; k++) { const x = list[(i + k) % list.length]; if (!vote(x)) return x.id; }
+    return null;
+  }
+
+  // ---- full-board viewer, shared by both tabs: wheel / pinch zoom, drag to pan; in the candidate tab a click on a text box gives
+  //      it to the current part; the design overlay (D) draws every design designator where the design file puts it
+  const V = {root: $("#viewer"), stage: $("#vstage"), layer: $("#vlayer"), img: $("#vimg"), svg: $("#vsvg"), dz: $("#vdz"), tmp: $("#vtmp"), load: $("#vload"), tip: $("#tip")};
+  const BOXES = ["all", "focus", "none"], BOXLABEL = {all: "框：全部", focus: "框：只留相关", none: "框：隐藏"};
+  let vKind = "cand", vItem = null, vk = 0, vBoard = null, st = {s: 1, tx: 0, ty: 0}, advTimer = null;
+  const cur = () => vItem;
+  const itParts = it => vKind === "cand" ? it.parts : vKind === "design" ? [it.part] : [];
+  const itLabels = it => vKind === "cand" ? it.labels : vKind === "design" ? [it.ann_text, it.des_text].filter(j => j >= 0) : [];
+  const apply = () => { V.layer.style.transform = `translate(${st.tx}px,${st.ty}px) scale(${st.s})`; };
+  const stageRect = () => V.stage.getBoundingClientRect();
+  function usage(b) {                                                    // per board: designator -> annotated parts, text -> parts owning it
+    if (b._use) return b._use;
+    const byDes = new Map(); b.pd.forEach((d, i) => { if (d) { if (!byDes.has(d)) byDes.set(d, []); byDes.get(d).push(i); } });
+    return (b._use = {byDes, owners: b.tt.map(t => byDes.get(t) || [])});
+  }
+  function chosenElsewhere(c) {                                          // text index -> answer key, for answers on this board outside candidate c
+    const m = new Map(), mine = new Set(c.parts.map(i => key(c.image, i)));
+    for (const [k, a] of Object.entries(ans)) if (hasText(a) && k.startsWith(c.image + "__") && !mine.has(k)) m.set(a.text, k);
+    return m;
+  }
+  function view(x0, y0, x1, y1) {
+    const r = stageRect(); st.s = Math.min(r.width / (x1 - x0), r.height / (y1 - y0), 8);
+    st.tx = r.width / 2 - st.s * (x0 + x1) / 2; st.ty = r.height / 2 - st.s * (y0 + y1) / 2; apply();
+  }
+  const fit = () => view(0, 0, vBoard.w, vBoard.h);
+  function home() {                                                      // the item's parts and labels in a window of ~10 part sizes
+    const it = cur(), B = [...itParts(it).map(i => vBoard.parts[i]), ...itLabels(it).map(j => vBoard.texts[j])];
+    if (!B.length) return fit();
+    const x0 = Math.min(...B.map(b => b[0])), y0 = Math.min(...B.map(b => b[1])), x1 = Math.max(...B.map(b => b[2])), y1 = Math.max(...B.map(b => b[3]));
+    const half = Math.max(1.5 * Math.max(x1 - x0, y1 - y0), 5 * vBoard.med), cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+    view(cx - half, cy - half, cx + half, cy + half);
+  }
+  function zoomAt(x, y, f) {
+    const r = stageRect(), ns = Math.max(Math.min(r.width / vBoard.w, r.height / vBoard.h) * 0.5, Math.min(st.s * f, 8)); f = ns / st.s;
+    st.tx = x - (x - st.tx) * f; st.ty = y - (y - st.ty) * f; st.s = ns; apply();
+  }
+  const zoomMid = f => { const r = stageRect(); zoomAt(r.width / 2, r.height / 2, f); };
+  const R = (x, col, w, extra = "") => `<rect x="${x[0]}" y="${x[1]}" width="${x[2] - x[0]}" height="${x[3] - x[1]}" fill="none" stroke="${col}" stroke-width="${w}" vector-effect="non-scaling-stroke" ${extra}/>`;
+  function drawBoxes() {
+    const it = cur(), b = vBoard; let s = "", top = "";
+    if (vKind === "cand") {
+      const c = it, use = usage(b), elsewhere = chosenElsewhere(c);
+      const mineText = new Map(); c.parts.forEach((i, k) => { const a = got(c, i); if (hasText(a) && !mineText.has(a.text)) mineText.set(a.text, k); });
+      const sugg = new Set(c.labels), fp = new Set(c.parts);
+      b.texts.forEach((x, j) => {
+        if (j === pending) { top += R(x, "#ffffff", 3.5, 'stroke-dasharray="3 3"'); return; }
+        if (isNon(c.image, j) && !mineText.has(j)) { s += R(x, "#64748b", 2, 'stroke-dasharray="3 3"') + `<line x1="${x[0]}" y1="${x[1]}" x2="${x[2]}" y2="${x[3]}" stroke="#64748b" stroke-width="2" vector-effect="non-scaling-stroke"/>`; return; }
+        if (mineText.has(j)) top += R(x, "#facc15", mineText.get(j) === vk ? 3.5 : 2.5);
+        else if (sugg.has(j)) top += R(x, "#facc15", 2.5, 'stroke-dasharray="6 4"');
+        else if (elsewhere.has(j)) s += R(x, "#9ca3af", 1.5, 'stroke-dasharray="4 3"');
+        else if (!use.owners[j].length) s += R(x, "#fb923c", 1.5);
+        else s += R(x, "#fb923c", 1, 'class="o" stroke-opacity="0.5"');
+      });
+      b.parts.forEach((x, i) => { if (!fp.has(i)) s += R(x, "#22d3ee", 1, 'class="o"'); });
+      const merged = c.parts.filter(i => { const a = got(c, i); return a && a.kind === "same"; });
+      c.parts.forEach((i, k) => {
+        const p = b.parts[i], a = got(c, i);
+        if (hasText(a) && a.kind !== "same") { const t = b.texts[a.text]; top += `<line x1="${(p[0] + p[2]) / 2}" y1="${(p[1] + p[3]) / 2}" x2="${(t[0] + t[2]) / 2}" y2="${(t[1] + t[3]) / 2}" stroke="#facc15" stroke-width="2" vector-effect="non-scaling-stroke"/>`; }
+        top += k === vk ? R(p, "#e879f9", 4) : R(p, "#22d3ee", 3, 'stroke-dasharray="6 4"');
+        if (a && a.kind === "delete") top += `<line x1="${p[0]}" y1="${p[1]}" x2="${p[2]}" y2="${p[3]}" stroke="#ef4444" stroke-width="3" vector-effect="non-scaling-stroke"/><line x1="${p[2]}" y1="${p[1]}" x2="${p[0]}" y2="${p[3]}" stroke="#ef4444" stroke-width="3" vector-effect="non-scaling-stroke"/>`;
+      });
+      if (merged.length) {                                               // "same component": one merged outline, one line to its label
+        const P = merged.map(i => b.parts[i]), pad = b.med * 0.12;
+        const U = [Math.min(...P.map(q => q[0])) - pad, Math.min(...P.map(q => q[1])) - pad, Math.max(...P.map(q => q[2])) + pad, Math.max(...P.map(q => q[3])) + pad];
+        top += R(U, "#a3e635", 3.5) + `<text x="${U[0]}" y="${U[3] + b.med * 0.32}" font-size="${b.med * 0.28}" font-family="sans-serif" font-weight="700" fill="#a3e635" stroke="#000" stroke-width="${b.med * 0.05}" paint-order="stroke">合并为一个元件</text>`;
+        const a = got(c, merged[0]);
+        const tb = a.text >= 0 ? b.texts[a.text] : a.nid && newTexts[a.nid] ? newTexts[a.nid].box : null;
+        if (tb) { const t = tb; top += `<line x1="${(U[0] + U[2]) / 2}" y1="${(U[1] + U[3]) / 2}" x2="${(t[0] + t[2]) / 2}" y2="${(t[1] + t[3]) / 2}" stroke="#facc15" stroke-width="2.5" vector-effect="non-scaling-stroke"/>`; }
+      }
+    } else {
+      const lab = new Map(); if (vKind === "design") { if (it.des_text >= 0) lab.set(it.des_text, "#4ade80"); if (it.ann_text >= 0) lab.set(it.ann_text, "#ef4444"); }
+      const fp = new Set(itParts(it));
+      b.texts.forEach((x, j) => { if (lab.has(j)) top += R(x, lab.get(j), 3); else if (isNon(it.image, j)) s += R(x, "#64748b", 2, 'stroke-dasharray="3 3"'); else s += R(x, "#fb923c", 1, 'class="o"'); });
+      b.parts.forEach((x, i) => { if (fp.has(i)) top += R(x, "#e879f9", 4); else s += R(x, "#22d3ee", 1, 'class="o"'); });
+    }
+    for (const [id, nt] of Object.entries(newTexts)) {                  // boxes the reviewer drew
+      if (nt.image !== it.image) continue; const x = nt.box;
+      top += R(x, "#34d399", 3, 'stroke-dasharray="5 3"') + `<text x="${x[0]}" y="${x[1] - 4}" font-size="${b.med * 0.3}" font-family="sans-serif" font-weight="700" fill="#34d399" stroke="#000" stroke-width="${b.med * 0.05}" paint-order="stroke">${esc(nt.str)}</text>`;
+      if (vKind === "cand") it.parts.forEach(i => { const a = got(it, i); if (a && a.nid === id && a.kind !== "same") { const p = b.parts[i]; top += `<line x1="${(p[0] + p[2]) / 2}" y1="${(p[1] + p[3]) / 2}" x2="${(x[0] + x[2]) / 2}" y2="${(x[1] + x[3]) / 2}" stroke="#34d399" stroke-width="2" vector-effect="non-scaling-stroke"/>`; } });
+    }
+    if (pendingNew) { const x = pendingNew.box; top += R(x, "#34d399", 3); }
+    for (const [id, np] of Object.entries(newParts)) {                  // parts the reviewer added
+      if (np.image !== it.image) continue; const x = np.box;
+      top += R(x, "#a3e635", 3, 'stroke-dasharray="6 3"') + `<text x="${x[0]}" y="${x[3] + b.med * 0.3}" font-size="${b.med * 0.26}" font-family="sans-serif" font-weight="700" fill="#a3e635" stroke="#000" stroke-width="${b.med * 0.05}" paint-order="stroke">补：${esc(CLS_ZH[np.cls] || np.cls)}</text>`;
+      if (np.text >= 0) { const t = b.texts[np.text]; top += `<line x1="${(x[0] + x[2]) / 2}" y1="${(x[1] + x[3]) / 2}" x2="${(t[0] + t[2]) / 2}" y2="${(t[1] + t[3]) / 2}" stroke="#a3e635" stroke-width="2" vector-effect="non-scaling-stroke"/>`; }
+    }
+    for (const [k, pb] of Object.entries(partBoxes)) {                  // corrected part boxes: old one grey dashed, new one solid
+      if (pb.image !== it.image) continue; const old = b.parts[pb.part];
+      top += R(old, "#9ca3af", 1.5, 'stroke-dasharray="3 3"') + R(pb.box, "#f0abfc", 2.5);
+    }
+    if (pendingPart) { const x = pendingPart.box; top += R(x, "#a3e635", 3.5);
+      if (pendingPart.text != null && pendingPart.text >= 0) { const t = b.texts[pendingPart.text]; top += R(t, "#a3e635", 3) + `<line x1="${(x[0] + x[2]) / 2}" y1="${(x[1] + x[3]) / 2}" x2="${(t[0] + t[2]) / 2}" y2="${(t[1] + t[3]) / 2}" stroke="#a3e635" stroke-width="2" vector-effect="non-scaling-stroke"/>`; } }
+    if (pendingBox) top += R(pendingBox.box, "#f0abfc", 3.5, 'stroke-dasharray="5 3"');
+    for (const el of [V.svg, V.dz, V.tmp]) { el.setAttribute("viewBox", `0 0 ${b.w} ${b.h}`); el.setAttribute("width", b.w); el.setAttribute("height", b.h); }
+    V.svg.innerHTML = s + top;
+    const dd = design[it.image];
+    V.dz.innerHTML = !dd ? "" : dd.pts.map(([n, x, y]) => {
+      const r = dd.med * 0.07, fs = dd.med * 0.3;
+      return `<circle cx="${x}" cy="${y}" r="${r}" fill="#facc15"/><text x="${x + r * 1.6}" y="${y + fs * 0.35}" font-size="${fs}" font-family="sans-serif" font-weight="700" fill="#facc15" stroke="#000" stroke-width="${fs * 0.18}" paint-order="stroke">${esc(n)}</text>`;
+    }).join("");
+  }
+  function textNote(c, j) {                                              // who owns text j now (candidate tab)
+    const b = vBoard, own = usage(b).owners[j].filter(i => !c.parts.includes(i)), el = chosenElsewhere(c).get(j);
+    if (el) { const i = +el.split("__").pop(); return `你已经把它选给了另一个元件（${esc(CLS_ZH[b.pc[i]] || b.pc[i])}${b.pd[i] ? "，原标注 " + esc(b.pd[i]) : ""}）`; }
+    if (own.length) return `标注里它属于另一个元件（${own.map(i => esc(CLS_ZH[b.pc[i]] || b.pc[i]) + " " + esc(b.pd[i])).join("、")}）——选它就说明那个元件标错了`;
+    return "没被任何元件使用";
+  }
+  function setDesign(on) { V.root.dataset.design = on ? "on" : "off"; $("#vdesign").textContent = `设计编号：${on ? "开" : "关"} (D)`; }
+  function refreshViewer() {
+    const it = cur(); if (!it) return;
+    drawBoxes(); $("#vdesign").hidden = !design[it.image];
+    if (vKind === "cand") {
+      const c = it, dis = canSave() ? "" : "disabled";
+      $("#vtitle").textContent = `${c.image} · ${c.id}`;
+      $("#vq").innerHTML = `<span class="tag">${c.type}</span> ${summary(c)}`;
+      $("#pchips").innerHTML = c.parts.map((i, k) => `<button class="pchip${got(c, i) ? " ok" : ""}" data-k="${k}" aria-pressed="${k === vk}">元件${c.parts.length > 1 ? k + 1 : ""} · ${esc(cls(c, k))}${orig(c) ? " · 原 " + esc(orig(c)) : ""} → ${ansHtml(got(c, i))}</button>`).join("");
+      const keep = $("#vfix") ? {v: $("#vfix").value, f: document.activeElement === $("#vfix")} : null;
+      const keepN = $("#vnew") ? {v: $("#vnew").value, f: document.activeElement === $("#vnew")} : null;
+      $("#vacts").innerHTML = partFoot() + (pendingBox ? `<span class="fixin">把元件${c.parts.length > 1 ? vk + 1 : ""} 的框换成新画的？</span><button data-act="boxok" class="primary" ${dis}>确定 (Enter)</button><button data-act="boxcancel">取消 (Esc)</button>` : "")
+        + (pendingNew ? `<span class="fixin">新文字框的文字：<input id="vnew" value="${esc(orig(c))}" size="9" spellcheck="false" autocomplete="off"></span><button data-act="newok" class="primary" ${dis}>确定 (Enter)</button><button data-act="newcancel">取消 (Esc)</button>` : "")
+        + (pending != null ? `<span class="fixin">元件${c.parts.length > 1 ? vk + 1 : ""} → <input id="vfix" value="${esc(vBoard.tt[pending])}" size="9" spellcheck="false" autocomplete="off" title="文字框读错了可以直接改"></span><button data-act="confirm" class="primary" ${dis}>确定 (Enter)</button><button data-act="cancel">取消 (Esc)</button>` : "")
+        + (c.type === "A" ? `<button data-act="same" ${dis}>和没选的框合并成一个元件 (S)</button>` : "")
+        + (c.type === "B" ? `<button data-act="tfix" ${dis}>文字框读错了，是 <code>${esc(c.designator)}</code></button><button data-act="pfix" ${dis}>元件编号错了，是 <code>${esc(c.printed)}</code></button>` : "")
+        + (c.type === "C" && c.labels.length ? `<button data-act="sugg" ${dis}>用建议 <code>${esc(suggStr(c))}</code></button>` : "")
+        + `<button data-act="none" ${dis}>没印 label (N)</button><button data-act="unsure" ${dis}>看不清 (U)</button><button data-act="delete" ${dis}>删除这个元件框 (R)</button><button data-act="clear" ${dis}>清除 (Del)</button>`
+        + `<button data-act="prev">‹ 上一个 (K)</button><button data-act="next">下一个 › (J)</button>`;
+      if (keep && pending != null && $("#vfix")) { $("#vfix").value = keep.v; if (keep.f) $("#vfix").focus(); }
+      if (pendingNew && $("#vnew")) { if (keepN) $("#vnew").value = keepN.v; if (!keepN || keepN.f) $("#vnew").focus(); }
+    } else if (vKind === "design") {
+      const v = vote(it) || "", dis = canVote() ? "" : "disabled";
+      $("#vtitle").textContent = `${it.image} · ${it.id}`;
+      $("#vq").innerHTML = `<span class="tag">${ST_ZH[it.status] || esc(it.status)}</span> ${esc(CLS_ZH[it.cls] || it.cls)}：${dText(it)}。设计文件说得对吗？`;
+      $("#pchips").innerHTML = `<span class="vleg"><b style="color:#facc15">黄点</b> 设计文件 · <b style="color:#f0abfc">粉框</b> 这个元件 · <b style="color:#f87171">红框</b> 标注给它的 label · <b style="color:#4ade80">绿框</b> 设计编号的 label</span>`;
+      $("#vacts").innerHTML = VOTES.map(([k, t, h]) => `<button data-vote="${k}" aria-pressed="${v === k}" ${dis}>${t} (${h})</button>`).join("")
+        + `<button data-act="prev">‹ 上一个 (K)</button><button data-act="next">下一个 › (J)</button>`;
+    } else {
+      $("#vtitle").textContent = `${it.image} · 整板`;
+      $("#vq").innerHTML = `整板照片。黄点和黄字是设计文件里每个元件的编号和位置（${esc(design[it.image] ? design[it.image].source : "")}），按 D 显示 / 隐藏。`;
+      $("#pchips").innerHTML = ""; $("#vacts").innerHTML = partFoot();
+    }
+  }
+  function info(html) { $("#vinfo").innerHTML = html; }
+  function partFoot() {                                                 // footer while an added part waits for class + label
+    if (!pendingPart) return "";
+    const keepC = $("#vpcls") ? $("#vpcls").value : pendingPart.cls, j = pendingPart.text;
+    return `<span class="fixin">补画的元件：<select id="vpcls">${Object.keys(CLS_ZH).map(k => `<option value="${k}" ${k === keepC ? "selected" : ""}>${CLS_ZH[k]}</option>`).join("")}</select>`
+      + ` label：${j == null ? "<b>点一个文字框</b>" : j >= 0 ? "<code>" + esc(vBoard.tt[j]) + "</code>" : "没印"}</span>`
+      + `<button data-act="pnone">没印 label</button><button data-act="pok" class="primary" ${j == null ? "disabled" : ""}>确定 (Enter)</button><button data-act="pcancel">取消 (Esc)</button>`;
+  }
+  function openViewer(kind, id, k) {
+    const it = kind === "cand" ? cands.find(x => x.id === id) : kind === "design" ? dItems.find(x => x.id === id) : {id: "B_" + id, image: id};
+    if (!boards || !it || !boards[it.image]) { setStatus(boards ? "这张板没有整板照片" : "整板照片列表还在载入，稍等再试", !!boards); return; }
+    clearTimeout(advTimer);
+    const nb = boards[it.image], same = nb === vBoard, wasKind = vKind; vKind = kind; vItem = it; vBoard = nb;
+    vk = kind === "cand" ? (k ?? Math.max(0, it.parts.findIndex(i => !got(it, i)))) : 0; pending = null; pendingNew = null; pendingPart = null; pendingBox = null; if (drawMode) setDraw(false); if (partDraw) setPartDraw(null);
+    if (V.root.hidden || wasKind !== kind) setDesign(kind !== "cand");
+    V.root.hidden = false; document.body.style.overflow = "hidden"; V.tip.hidden = true; info("");
+    refreshViewer();
+    if (same && V.img.complete && V.img.naturalWidth) { home(); return; }
+    V.layer.style.visibility = "hidden"; V.load.textContent = "正在载入整板照片…"; V.load.hidden = false;
+    V.img.onload = () => { if (vBoard !== nb) return; V.load.hidden = true; V.layer.style.visibility = ""; home(); };
+    V.img.onerror = () => { V.load.textContent = "整板照片载入失败，请关闭后重试"; };
+    V.img.width = nb.w; V.img.height = nb.h; V.img.src = nb.src; home();
+  }
+  function closeViewer() {
+    clearTimeout(advTimer); V.root.hidden = true; document.body.style.overflow = "";
+    if (vKind === "board") return;
+    focusId = vItem.id; render();
+    const el = document.querySelector(`.card[data-id="${CSS.escape(vItem.id)}"]`); if (el) { el.focus({preventScroll: true}); el.scrollIntoView({block: "nearest"}); }
+  }
+  function vStep(d) {
+    if (vKind === "board") return;
+    const all = vKind === "cand" ? cands : dItems, list = all.filter(vKind === "cand" ? visible : dVisible); if (!list.length) return;
+    let i = list.findIndex(c => c.id === vItem.id);
+    if (i < 0) { const j = all.findIndex(c => c.id === vItem.id); i = list.findIndex(c => all.indexOf(c) > j); i = d > 0 ? (i < 0 ? 0 : i) : (i < 0 ? list.length : i) - 1; }
+    else i += d;
+    openViewer(vKind, list[(i + list.length) % list.length].id);
+  }
+  function answered(c) {                                                 // after an answer: stay on this part; say what is left
+    pending = null; refreshViewer();
+    const left = c.parts.map((i, k) => complete(got(c, i)) ? -1 : k).filter(k => k >= 0);
+    if (left.length) { info($("#vinfo").innerHTML + ` · 还没选：${left.map(k => "元件" + (k + 1)).join("、")}（点下面的元件按钮或按 Tab）`); return; }
+    clearTimeout(advTimer);
+    const next = nextTodo(c.id);
+    if (!autoNext) { info($("#vinfo").innerHTML + ` <b style="color:#86efac">✓ 这个候选完成了，按 J 去下一个。</b>`); return; }
+    if (next) advTimer = setTimeout(() => { if (vItem && vItem.id === c.id && !V.root.hidden) openViewer("cand", next); }, 700);
+  }
+  function vVote(v) {
+    const it = cur(); if (vKind !== "design" || !it) return;
+    setVote(it, v); clearTimeout(advTimer);
+    if (!autoNext) { info(`已记下：${VOTE_ZH[v]}。按 J 去下一个。`); return; }
+    const next = nextUnvoted(it.id);
+    if (next && next !== it.id) advTimer = setTimeout(() => { if (vItem && vItem.id === it.id && !V.root.hidden) openViewer("design", next); }, 500);
+  }
+  const UNDO_BTN = '<button data-undolast>撤销</button>';
+  function pick(j) {                                                    // first click: only mark the text box; Enter / 确定 saves it
+    const c = cur(); pending = j; refreshViewer();
+    info(`元件${c.parts.length > 1 ? vk + 1 : ""} → <code>${esc(vBoard.tt[j])}</code>？ ${textNote(c, j)}。<b>按 Enter 或点「确定」保存</b>，Esc 取消。文字框读错了的话，先在下面的框里改成照片上印的字。`);
+  }
+  function giveText(j, extra = {}) {                                     // extra: {fix} = text box misread, {pfix} = part designator wrong
+    const c = cur(), i = c.parts[vk]; curGrp = uid();
+    c.parts.forEach(q => { const a = got(c, q); if (q !== i && hasText(a) && a.text === j) setAns(c, q, null); });   // one label, one part
+    const str = vBoard.tt[j], merged = (got(c, i) || {}).kind === "same";
+    const a = merged ? {kind: "same", text: j, str, ...extra} : {kind: "text", text: j, str, ...extra};
+    (merged ? groupOf(c) : [i]).forEach(q => setAns(c, q, a)); curGrp = null;
+    info(`已保存：元件${c.parts.length > 1 ? vk + 1 : ""} → ${ansHtml(a)}${UNDO_BTN}`); answered(c);
+  }
+  function act(a) {
+    const c = cur(); if (!c) return;
+    if (a === "prev") return vStep(-1); if (a === "next") return vStep(1);
+    if (["pnone", "pok", "pcancel"].includes(a)) { if (a === "pnone" && pendingPart) { pendingPart.text = -1; refreshViewer(); } else if (a === "pok" && pendingPart && pendingPart.text != null) finishPart(); else if (a === "pcancel") { pendingPart = null; info(""); refreshViewer(); } return; }
+    if (a === "cancel") { pending = null; info(""); refreshViewer(); return; }
+    if (a === "newcancel") { pendingNew = null; info(""); refreshViewer(); return; }
+    if (a === "newok") { finishNew(); return; }
+    if (a === "pnone") { if (pendingPart) { pendingPart.text = -1; refreshViewer(); } return; }
+    if (a === "pok") { if (pendingPart && pendingPart.text != null) finishPart(); return; }
+    if (a === "pcancel") { pendingPart = null; info(""); refreshViewer(); return; }
+    if (a === "boxok") { finishBox(); return; }
+    if (a === "boxcancel") { pendingBox = null; info(""); refreshViewer(); return; }
+    if (a === "confirm") {
+      if (pending == null) return;
+      const v = ($("#vfix") ? $("#vfix").value : "").trim(), j = pending;
+      giveText(j, v && v !== vBoard.tt[j] ? {fix: v} : {}); return;
+    }
+    if (vKind !== "cand") return;
+    if (!canSave()) { setStatus("不能保存：没有存储权限", true); return; }
+    const i = c.parts[vk];
+    if (a === "tfix" || a === "pfix") { if (c.type === "B") giveText(c.labels[0], a === "tfix" ? {fix: c.designator} : {pfix: c.printed}); return; }
+    if (a === "sugg") { const free = c.labels.find(j => !c.parts.some(q => { const x = got(c, q); return q !== i && hasText(x) && x.text === j; })); if (free !== undefined) giveText(free); return; }
+    if (a === "clear") { pending = null; if (got(c, i)) { setAns(c, i, null); info(`已清除：元件${c.parts.length > 1 ? vk + 1 : ""}${UNDO_BTN}`); } refreshViewer(); return; }
+    if (a === "same") {                                                 // merge the current part with the parts that have no other answer yet
+      if (c.type !== "A") return;
+      const grp = mergeSet(c, i); if (grp.length < 2) { setStatus("至少要两个框才能合并：其他元件都已经有答案了，先清除（Del）再合并", true); return; }
+      const base = grp.map(q => got(c, q)).find(x => x && (x.kind !== "same" || x.text >= 0 || x.nid || x.none));
+      const ga = base ? groupAns(base) : (grp.length === c.parts.length ? sameAns(c) : groupAns(null));
+      curGrp = uid(); grp.forEach(q => setAns(c, q, ga)); curGrp = null;
+      info(`已保存：${grp.map(q => "元件" + (c.parts.indexOf(q) + 1)).join("、")} 合并成一个元件` + (complete(ga) ? ` → ${ansCore(ga)}` : "。<b>现在点它的 label，按 Enter</b>（没印按 N）") + UNDO_BTN); answered(c); return;
+    }
+    if ((got(c, i) || {}).kind === "same" && (a === "none" || a === "unsure")) {
+      const ga = {kind: "same", text: -1, str: "", [a]: true}; curGrp = uid(); groupOf(c).forEach(q => setAns(c, q, ga)); curGrp = null;
+      info(`已保存：合并后的元件 → ${a === "none" ? "没印 label" : "看不清"}${UNDO_BTN}`); answered(c); return;
+    }
+    setAns(c, i, {kind: a, text: -1, str: ""}); info(`已保存：元件${c.parts.length > 1 ? vk + 1 : ""} → ${a === "none" ? "没印 label" : a === "delete" ? "删除这个元件框" : "看不清"}${UNDO_BTN}`); answered(c);
+  }
+  function hit(x, y) {
+    const it = cur(), ix = (x - st.tx) / st.s, iy = (y - st.ty) / st.s, tol = 6 / st.s;
+    const inside = b => ix >= b[0] - tol && ix <= b[2] + tol && iy >= b[1] - tol && iy <= b[3] + tol;
+    let best = null, area = Infinity;
+    vBoard.texts.forEach((b, j) => { if (inside(b)) { const a = (b[2] - b[0]) * (b[3] - b[1]); if (a < area) { area = a; best = {t: j}; } } });
+    if (best) return best;
+    itParts(it).forEach((i, k) => { if (inside(vBoard.parts[i])) best = {p: k}; });
+    return best;
+  }
+  function cycleBoxes() { const m = BOXES[(BOXES.indexOf(V.root.dataset.boxes) + 1) % 3]; V.root.dataset.boxes = m; $("#vboxes").textContent = BOXLABEL[m] + " (B)"; }
+  fetch("boards.json").then(r => r.json()).then(b => { boards = b; }).catch(() => { boards = {}; });
+  setAuto(autoNext);
+  fetch("design.json").then(r => r.json()).then(d => { design = d; dItems = Object.values(d).flatMap(x => x.items); $("#n-design").textContent = Object.keys(d).length; render(); }).catch(() => {});
+
+  const pts = new Map(); let down = null;
+  const toImg = (e) => { const r = stageRect(); return [(e.clientX - r.left - st.tx) / st.s, (e.clientY - r.top - st.ty) / st.s]; };
+  V.stage.addEventListener("pointerdown", e => {
+    if (((drawMode && vKind === "cand") || (partDraw === "part" && vKind !== "design") || (partDraw === "box" && vKind === "cand")) && !pts.size) { V.stage.setPointerCapture(e.pointerId); const [x, y] = toImg(e); drawing = {id: e.pointerId, x0: x, y0: y, x1: x, y1: y}; return; }
+    V.stage.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]);
+    down = pts.size === 1 ? {x: e.clientX, y: e.clientY, moved: false} : (down && {...down, moved: true});
+  });
+  V.stage.addEventListener("pointermove", e => {
+    if (drawing && e.pointerId === drawing.id) {
+      [drawing.x1, drawing.y1] = toImg(e);
+      const x0 = Math.min(drawing.x0, drawing.x1), y0 = Math.min(drawing.y0, drawing.y1), x1 = Math.max(drawing.x0, drawing.x1), y1 = Math.max(drawing.y0, drawing.y1);
+      V.tmp.innerHTML = R([x0, y0, x1, y1], "#34d399", 2.5, 'stroke-dasharray="4 3"'); return;
+    }
+    const p = pts.get(e.pointerId), r = stageRect();
+    if (!p) {                                                            // hover: show what the box under the mouse says
+      if (e.pointerType !== "mouse" || !vBoard) return;
+      const h = hit(e.clientX - r.left, e.clientY - r.top);
+      if (h && h.t !== undefined) { V.tip.hidden = false; V.tip.innerHTML = `<code>${esc(vBoard.tt[h.t])}</code>${isNon(cur().image, h.t) ? " · 已标为「不是元件编号」" : vKind === "cand" ? " · " + textNote(cur(), h.t) : ""}`; V.tip.style.left = Math.min(e.clientX - r.left + 14, r.width - 40) + "px"; V.tip.style.top = (e.clientY - r.top + 16) + "px"; }
+      else V.tip.hidden = true;
+      return;
+    }
+    if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) down.moved = true;
+    if (pts.size === 1) { st.tx += e.clientX - p[0]; st.ty += e.clientY - p[1]; apply(); }
+    else {                                                               // pinch: scale about the other finger
+      const q = [...pts].find(([k]) => k !== e.pointerId)[1];
+      const d0 = Math.hypot(p[0] - q[0], p[1] - q[1]), d1 = Math.hypot(e.clientX - q[0], e.clientY - q[1]);
+      if (d0 > 0) zoomAt(q[0] - r.left, q[1] - r.top, d1 / d0);
+    }
+    pts.set(e.pointerId, [e.clientX, e.clientY]);
+  });
+  V.stage.addEventListener("pointerup", e => {
+    if (drawing && e.pointerId === drawing.id) {
+      const d = drawing; drawing = null; V.tmp.innerHTML = "";
+      const box = [Math.min(d.x0, d.x1), Math.min(d.y0, d.y1), Math.max(d.x0, d.x1), Math.max(d.y0, d.y1)].map(v => Math.round(v));
+      if ((box[2] - box[0]) * st.s < 6 || (box[3] - box[1]) * st.s < 6) return;           // a click, not a box
+      if (partDraw === "part") { pending = null; pendingPart = {box, cls: "resistor", text: null}; setPartDraw(null); info("选类别，再点它的 label 文字框（没印就点「没印 label」），按 Enter 保存。"); refreshViewer(); return; }
+      if (partDraw === "box") { pending = null; pendingBox = {box}; setPartDraw(null); info("按 Enter 用新框替换，Esc 取消。"); refreshViewer(); return; }
+      pending = null; pendingNew = {box}; info("填上框里的文字（照片上印的编号），按 Enter 保存，Esc 取消。"); refreshViewer(); return;
+    }
+    const was = pts.has(e.pointerId); pts.delete(e.pointerId);
+    if (!was || pts.size || !down || down.moved) return;
+    const r = stageRect(), h = hit(e.clientX - r.left, e.clientY - r.top);
+    if (!h) return;
+    if (h.t !== undefined && (xMode || e.shiftKey)) { toggleNon(cur().image, h.t); return; }
+    if (h.t !== undefined && pendingPart) { pendingPart.text = h.t; refreshViewer(); return; }
+    if (vKind !== "cand") return;
+    if (h.t !== undefined) { if (canSave()) pick(h.t); else setStatus("不能保存：没有存储权限", true); }
+    else { vk = h.p; pending = null; info(""); refreshViewer(); }
+  });
+  V.stage.addEventListener("pointercancel", e => { pts.delete(e.pointerId); if (down) down.moved = true; });
+  V.stage.addEventListener("pointerleave", () => { V.tip.hidden = true; });
+  V.stage.addEventListener("wheel", e => { e.preventDefault(); const r = stageRect(); zoomAt(e.clientX - r.left, e.clientY - r.top, Math.exp(-e.deltaY * (e.deltaMode ? 0.05 : 0.0015))); }, {passive: false});
+
   document.addEventListener("click", e => {
-    const b = e.target.closest(".btns button"); if (b) { decide(b.closest(".card").dataset.id, b.dataset.v); return; }
-    const ch = e.target.closest(".chip"); if (ch) { filter = ch.dataset.f; document.querySelectorAll(".chip").forEach(x => x.setAttribute("aria-pressed", x === ch)); render(); }
+    const tab = e.target.closest(".tab"); if (tab) { mode = tab.dataset.mode; focusId = null; render(); return; }
+    const z = e.target.closest("[data-z]");
+    if (z) { ({in: () => zoomMid(1.5), out: () => zoomMid(1 / 1.5), home, fit, close: closeViewer})[z.dataset.z](); return; }
+    if (e.target.closest("#vboxes")) { cycleBoxes(); return; }
+    if (e.target.closest("#vdesign")) { setDesign(V.root.dataset.design !== "on"); return; }
+    if (e.target.closest("#vnon")) { setX(!xMode); return; }
+    if (e.target.closest("#vauto")) { setAuto(!autoNext); return; }
+    if (e.target.closest("#vdrawp")) { if (vKind === "design") { setStatus("在候选审核或整板视图里画", true); return; } setPartDraw(partDraw === "part" ? null : "part"); return; }
+    if (e.target.closest("#vdrawb")) { if (vKind !== "cand") { setStatus("改元件框只在候选审核里用", true); return; } setPartDraw(partDraw === "box" ? null : "box"); return; }
+    if (e.target.closest("#vdraw")) { if (vKind === "cand") setDraw(!drawMode); else setStatus("画文字框只在候选审核里用", true); return; }
+    if (e.target.closest("#vundo")) { undoLast(); return; }
+    const hu = e.target.closest("[data-hundo]"); if (hu) { const x = history.find(y => y.id === hu.dataset.hundo); if (x) undoEntry(x); return; }
+    const ho = e.target.closest("[data-hopen]");
+    if (ho) { const x = history.find(y => y.id === ho.dataset.hopen); if (!x) return;
+      if (x.t === "label") openViewer("cand", x.cand); else if (x.t === "vote") openViewer("design", x.item || `D_${x.image}_${x.part}`); else openViewer("board", x.image); return; }
+    const co = e.target.closest("[data-copen]"); if (co) { openViewer("cand", co.dataset.copen); return; }
+    const pc = e.target.closest(".pchip"); if (pc) { vk = +pc.dataset.k; pending = null; info(""); refreshViewer(); return; }
+    if (e.target.closest("[data-undolast]")) { undoLast(); return; }
+    const vb = e.target.closest("#vacts [data-vote]"); if (vb) { vVote(vb.dataset.vote); return; }
+    const va = e.target.closest("#vacts button"); if (va) { act(va.dataset.act); return; }
+    const bd = e.target.closest("[data-board]"); if (bd) { openViewer("board", bd.dataset.board); return; }
+    const card = e.target.closest(".card");
+    if (card) {
+      const kind = card.dataset.kind, id = card.dataset.id, b = e.target.closest("button");
+      if (kind === "design") {
+        const it = dItems.find(x => x.id === id);
+        if (b && b.dataset.vote) { setVote(it, b.dataset.vote); return; }
+        if ((b && b.dataset.act === "open") || e.target.closest(".card img")) { openViewer("design", id); return; }
+        return;
+      }
+      const c = cands.find(x => x.id === id);
+      if (b && b.dataset.act === "sugg") { setAns(c, c.parts[0], {kind: "text", text: c.labels[0], str: c.printed}); return; }
+      if (b && b.dataset.act === "tfix") { setAns(c, c.parts[0], {kind: "text", text: c.labels[0], str: c.printed, fix: c.designator}); return; }
+      if (b && b.dataset.act === "pfix") { setAns(c, c.parts[0], {kind: "text", text: c.labels[0], str: c.printed, pfix: c.printed}); return; }
+      if (b && b.dataset.act === "same") { const grp = mergeSet(c, c.parts.find(q => !got(c, q)) ?? c.parts[0]); if (grp.length < 2) { setStatus("至少要两个框才能合并", true); return; }
+        const base = grp.map(q => got(c, q)).find(x => x && (x.kind !== "same" || x.text >= 0 || x.nid || x.none));
+        const ga = base ? groupAns(base) : (grp.length === c.parts.length ? sameAns(c) : groupAns(null)); curGrp = uid(); grp.forEach(q => setAns(c, q, ga)); curGrp = null; return; }
+      if ((b && b.dataset.act === "open") || e.target.closest(".card img")) { openViewer("cand", id); return; }
+      return;
+    }
+    const ch = e.target.closest(".chip"); if (ch) { if (mode === "cand") filter = ch.dataset.f; else dfilter = ch.dataset.f; render(); }
   });
   document.addEventListener("focusin", e => { const c = e.target.closest(".card"); if (c) { focusId = c.dataset.id; document.querySelectorAll(".card.focus").forEach(x => x.classList.remove("focus")); c.classList.add("focus"); } });
   document.addEventListener("keydown", e => {
-    if (e.target.closest("input,textarea") || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.target.id === "vpcls") { if (e.key === "Enter") { act("pok"); e.preventDefault(); } else if (e.key === "Escape") { act("pcancel"); e.preventDefault(); } return; }
+    if (e.target.id === "vnew") {
+      if (e.key === "Enter") { act("newok"); e.preventDefault(); } else if (e.key === "Escape") { act("newcancel"); e.preventDefault(); }
+      return;
+    }
+    if (e.target.id === "vfix") {
+      if (e.key === "Enter") { act("confirm"); e.preventDefault(); } else if (e.key === "Escape") { act("cancel"); e.preventDefault(); }
+      return;
+    }
+    if (e.target.closest("input,textarea")) return;
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") { undoLast(); e.preventDefault(); return; }
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const k = e.key.toLowerCase();
+    if (!V.root.hidden) {
+      const it = cur();
+      if (k === "escape") { if (pendingPart) act("pcancel"); else if (pendingBox) act("boxcancel"); else if (partDraw) setPartDraw(null); else if (pendingNew) act("newcancel"); else if (drawMode) setDraw(false); else if (pending != null) act("cancel"); else closeViewer(); }
+      else if (k === "j" || e.key === "ArrowRight" || e.key === "ArrowDown") vStep(1);
+      else if (k === "k" || e.key === "ArrowLeft" || e.key === "ArrowUp") vStep(-1);
+      else if (k === "b") cycleBoxes();
+      else if (k === "x") setX(!xMode);
+      else if (k === "t" && vKind === "cand") setDraw(!drawMode);
+      else if (k === "p" && vKind !== "design") setPartDraw(partDraw === "part" ? null : "part");
+      else if (k === "e" && vKind === "cand") setPartDraw(partDraw === "box" ? null : "box");
+      else if (k === "enter" && pendingPart) act("pok");
+      else if (k === "enter" && pendingBox) act("boxok");
+      else if (k === "d" && design[it.image]) setDesign(V.root.dataset.design !== "on");
+      else if (k === "+" || k === "=") zoomMid(1.5);
+      else if (k === "-" || k === "_") zoomMid(1 / 1.5);
+      else if (k === "f") fit();
+      else if (k === "h" || k === "0") home();
+      else if (vKind === "design" && (k === "a" || k === "r" || k === "u")) vVote({a: "agree", r: "disagree", u: "unsure"}[k]);
+      else if (vKind === "cand" && k === "enter" && !pendingPart && !pendingBox) act("confirm");
+      else if (vKind === "cand" && k === "n") act("none");
+      else if (vKind === "cand" && k === "s") act("same");
+      else if (vKind === "cand" && k === "r") act("delete");
+      else if (vKind === "cand" && k === "u") act("unsure");
+      else if (vKind === "cand" && (k === "delete" || k === "backspace")) act("clear");
+      else if (vKind === "cand" && k === "tab") { vk = (vk + (e.shiftKey ? it.parts.length - 1 : 1)) % it.parts.length; pending = null; info(""); refreshViewer(); }
+      else return;
+      e.preventDefault(); return;
+    }
     const cards = [...document.querySelectorAll(".card")]; if (!cards.length) return;
     let i = cards.findIndex(c => c.dataset.id === focusId);
-    const k = e.key.toLowerCase();
     if (k === "j" || e.key === "ArrowDown") { i = Math.min(cards.length - 1, i + 1); cards[i].focus(); cards[i].scrollIntoView({block: "nearest"}); e.preventDefault(); }
     else if (k === "k" || e.key === "ArrowUp") { i = Math.max(0, i - 1); cards[i].focus(); cards[i].scrollIntoView({block: "nearest"}); e.preventDefault(); }
-    else if (i >= 0 && (k === "a" || k === "r" || k === "u")) { decide(cards[i].dataset.id, {a: "accept", r: "reject", u: "unsure"}[k]); e.preventDefault(); }
+    else if (i >= 0 && (e.key === " " || k === "z") && !e.target.closest("button")) { openViewer(cards[i].dataset.kind, cards[i].dataset.id); e.preventDefault(); }
+    else if (i >= 0 && mode === "design" && (k === "a" || k === "r" || k === "u")) { setVote(dItems.find(x => x.id === cards[i].dataset.id), {a: "agree", r: "disagree", u: "unsure"}[k]); e.preventDefault(); }
   });
 
-  fetch("cands.json").then(r => r.json()).then(c => { cands = c; render(); }).catch(() => { $("#list").innerHTML = '<p class="empty">候选列表载入失败，请刷新页面。</p>'; });
+  fetch("cands.json").then(r => r.json()).then(c => {
+    cands = c.filter(x => !x.by_design && !x.dropped);
+    const bd = [...new Set(c.filter(x => x.by_design && !x.dropped).map(x => x.image))], dr = c.filter(x => x.dropped);
+    $("#bydesign").innerHTML = (bd.length ? `${c.filter(x => x.by_design && !x.dropped).length} 个候选已经由官方设计文件给出答案（${esc(bd.join("、"))}），不在这里，在「设计文件核对」页签里可以对照。` : "")
+      + (dr.length ? ` ${esc([...new Set(dr.map(x => x.image))].join("、"))} 已按你的决定从数据集里去掉（没有设计文件），它的 ${dr.length} 个候选不再显示。` : "");
+    render();
+  }).catch(() => { $("#list").innerHTML = '<p class="empty">候选列表载入失败，请刷新页面。</p>'; });
 
   (async () => {
     try { db = await window.claude?.use?.("db"); } catch (_) { db = null; }
     if (!db) { setStatus("无法保存", true); const n = $("#notice"); n.hidden = false; n.textContent = "这个视图没有存储权限，选择不会被保存。请在 claude.ai 里登录后打开这个页面。"; render(); return; }
-    coll = db.collection("decisions"); setStatus("已连接");
-    coll.onSnapshot(snap => { const m = {}; snap.docs.forEach(d => { const v = d.data(); if (v && v.decision) m[d.id] = v.decision; }); dec = m; render(); },
+    coll = db.collection("labels"); vcoll = db.collection("design_votes"); ncoll = db.collection("nontext"); hcoll = db.collection("history"); tcoll = db.collection("newtexts"); pcoll = db.collection("newparts"); bcoll = db.collection("partboxes"); setStatus("已连接");
+    pcoll.onSnapshot(snap => { const m = {}; snap.docs.forEach(d => { const v = d.data(); if (v && v.box) m[d.id] = {image: v.image, box: v.box, cls: v.cls, text: v.text, str: v.str}; }); newParts = m; render(); },
+                     err => { setStatus("存储连接中断（" + (err && err.code) + "），请刷新", true); });
+    bcoll.onSnapshot(snap => { const m = {}; snap.docs.forEach(d => { const v = d.data(); if (v && v.box) m[d.id] = {image: v.image, part: v.part, box: v.box}; }); partBoxes = m; render(); },
+                     err => { setStatus("存储连接中断（" + (err && err.code) + "），请刷新", true); });
+    tcoll.onSnapshot(snap => { const m = {}; snap.docs.forEach(d => { const v = d.data(); if (v && v.box) m[d.id] = {image: v.image, box: v.box, str: v.str}; }); newTexts = m; render(); },
+                     err => { setStatus("存储连接中断（" + (err && err.code) + "），请刷新", true); });
+    hcoll.onSnapshot(snap => { history = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((x, y) => (y.at || "").localeCompare(x.at || "")); if (mode === "history") render(); },
+                     err => { setStatus("存储连接中断（" + (err && err.code) + "），请刷新", true); });
+    ncoll.onSnapshot(snap => { const m = {}; snap.docs.forEach(d => { m[d.id] = true; }); nonText = m; render(); },
+                     err => { setStatus("存储连接中断（" + (err && err.code) + "），请刷新", true); });
+    coll.onSnapshot(snap => { const m = {}; snap.docs.forEach(d => { const v = d.data(); if (v && v.kind) m[d.id] = {kind: v.kind, text: v.text, str: v.str, ...(v.nid ? {nid: v.nid} : {}), ...(v.fix ? {fix: v.fix} : {}), ...(v.pfix ? {pfix: v.pfix} : {}), ...(v.by ? {by: v.by} : {}), ...(v.cfix ? {cfix: v.cfix} : {}), ...(v.none ? {none: true} : {}), ...(v.unsure ? {unsure: true} : {})}; }); ans = m; render(); },
                     err => { setStatus("存储连接中断（" + (err && err.code) + "），请刷新", true); });
+    vcoll.onSnapshot(snap => { const m = {}; snap.docs.forEach(d => { const v = d.data(); if (v && v.vote) m[d.id] = v.vote; }); votes = m; render(); },
+                     err => { setStatus("存储连接中断（" + (err && err.code) + "），请刷新", true); });
     render();
   })();
 })();

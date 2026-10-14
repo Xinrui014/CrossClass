@@ -8,6 +8,7 @@ strings; a link = a part and a text with the same string. Units: KiCad = mm, WAC
 |---|---|
 | `kicad.json` | 24,772 KiCad board sides (19,412 top, 5,360 bottom, mirrored in x), 21,578 layouts, 11,239 repo groups, 1,400,683 parts, 1,231,322 texts, 1,142,279 links. Per side: id, board (project), group (lower-case repo name), side, density (parts / cm² of the part extent), n_parts, n_links, smd_share, version |
 | `split.json` | fixed validation groups: md5(group) % 20 == 0 → val 577 groups, 1,369 sides, 63,137 links; train 10,662 groups, 23,403 sides, 1,079,142 links (WACV-like density 2.1–11.2: 4,420 sides, 235,623 links) |
+| `wacv_clean_v1.json` (added 2026-10-13) | WACV-clean v1 from the owner's review + design files (`tools/wacv_clean.py`): 44 images (ML365_Bottom dropped), explicit `link` per part, `ign` = left out of scoring, `src` = wacv / design / claude / owner; the review db export it was built from is `review_db_2026-10-13.json` |
 | `wacv.json`, `folds.json` | the 45 annotated WACV images (6,399 parts, 6,569 texts, 5,282 links) and the 3 board folds; 3 dev images ML450_Top1, RPI3B_Top, DuetWIFI_Top; report on the other 42 |
 | `stats.json`, `kicad_build_stats.json` | counts above; build status (21,578 ok, 3,609 no side with ≥ 10 links, 456 unreadable by KiCad 9, 108 excluded, 4 crashed / hung) |
 

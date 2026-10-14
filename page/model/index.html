@@ -1,0 +1,595 @@
+<title>LinkFormer 模型图解</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; the pipeline diagram and the score-matrix examples break out to full width */
+:root {
+  --bg: #f6f7f4; --panel: #ffffff; --fg: #1b231e; --muted: #5d6a61; --line: #d9dfd8; --accent: #1f6b46; --accent-soft: #e3efe7;
+  --part: #0e7490; --text: #c2620c; --none: #6b7280; --warn: #b7791f; --soft: #eef1ec;
+  --f-display: "Archivo", "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", system-ui, sans-serif;
+  --f-body: system-ui, "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+  --f-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111613; --panel: #19201b; --fg: #e4ebe5; --muted: #98a59c; --line: #2c362f; --accent: #5cc48d; --accent-soft: #1d3326;
+  --part: #38bdf8; --text: #f59e4b; --none: #9ca3af; --warn: #e0a948; --soft: #1c241f; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #111613; --panel: #19201b; --fg: #e4ebe5; --muted: #98a59c; --line: #2c362f; --accent: #5cc48d; --accent-soft: #1d3326;
+  --part: #38bdf8; --text: #f59e4b; --none: #9ca3af; --warn: #e0a948; --soft: #1c241f; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.7 }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 64px }
+.col { max-width: 760px }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; line-height: 1.25; margin: 0 }
+h1 { font-size: 30px; font-weight: 700 }
+h2 { font-size: 21px; margin-top: 44px; padding-top: 18px; border-top: 1px solid var(--line) }
+h3 { font-size: 16px; margin-top: 22px }
+p { margin: 10px 0 }
+.lede { color: var(--muted) }
+.q { font-family: var(--f-data); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--accent) }
+code, .num { font-family: var(--f-data); font-variant-numeric: tabular-nums }
+code { font-size: 13px; background: var(--accent-soft); padding: 1px 5px; border-radius: 3px }
+a { color: var(--accent) }
+.math { font-family: var(--f-data); font-size: 14px; background: var(--soft); border-left: 3px solid var(--accent); padding: 10px 14px; margin: 12px 0; overflow-x: auto; white-space: pre; line-height: 1.8 }
+.fig { margin: 18px 0; overflow-x: auto }
+.fig svg { min-width: 860px; width: 100%; height: auto; display: block }
+.fig figcaption, .note { font-size: 13px; color: var(--muted) }
+.tbl { overflow-x: auto; margin: 12px 0 }
+table { border-collapse: collapse; font-size: 14px; min-width: 480px }
+th, td { text-align: left; padding: 6px 14px 6px 0; border-bottom: 1px solid var(--line); vertical-align: top }
+th { font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em }
+td.r, th.r { text-align: right; font-family: var(--f-data); font-variant-numeric: tabular-nums }
+tr.hl td { background: var(--accent-soft) }
+.ex { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; margin: 16px 0 }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 12px 14px; min-width: 0 }
+.card h4 { margin: 0 0 2px; font-family: var(--f-display); font-size: 14px }
+.card .meta { font-family: var(--f-data); font-size: 11px; color: var(--muted); margin-bottom: 8px; overflow-wrap: anywhere }
+.row { display: grid; grid-template-columns: 52px 1fr 50px; gap: 8px; align-items: center; font-size: 12.5px; margin: 3px 0 }
+.row .k { font-family: var(--f-data) }
+.row .v { font-family: var(--f-data); text-align: right; font-variant-numeric: tabular-nums }
+.trk { height: 12px; background: var(--soft); border-radius: 2px; position: relative }
+.bar { position: absolute; inset: 0 auto 0 0; border-radius: 2px; background: var(--text) }
+.bar.none { background: var(--none) } .bar.true { background: var(--accent) }
+.out { margin-top: 8px; font-size: 13px; padding-top: 7px; border-top: 1px dashed var(--line) }
+.ok { color: var(--accent); font-weight: 600 } .bad { color: var(--warn); font-weight: 600 }
+.key { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12.5px; color: var(--muted) }
+.key i { display: inline-block; width: 12px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px }
+</style>
+
+<div class="wrap">
+  <div class="col">
+    <div class="q">CrossClass · linker · dv1_E1_XXL_150k_lr1e-4</div>
+    <h1>LinkFormer 模型图解</h1>
+    <p class="lede">这是目前最好的 linker：XXL，1.16 亿参数，只在 KiCad 板子上训练过。下面说明它的输入、输出、置信度怎么来、loss 怎么算，以及漏连从哪来。
+      训练记录：<a href="https://wandb.ai/xinruiworkstation/crossclass/runs/n2p8rs83" target="_blank" rel="noopener">wandb · crossclass / n2p8rs83</a>（集群 job 200658）。</p>
+
+    <h2>一句话</h2>
+    <p>输入两组框：元件框和文字框。输出一张分数表：每个元件一行，每个文字框一列，再加一列 <b>none</b>（没印 label）。
+      每一行做 softmax 得到概率，最后用一对一分配（Hungarian）决定每个元件连哪个字，或者 none。下面先给全图，再用一块小板一步一步走。</p>
+  </div>
+
+  <figure class="fig">
+    <svg viewBox="0 0 1100 360" role="img" aria-label="LinkFormer 流程：板上的元件框和文字框变成 token，经过嵌入层和 16 层带二维旋转位置编码的 Transformer，得到元件向量和文字向量；打分头算出每个元件对每个文字的分数和一个 none 分数，按行 softmax；训练时算 loss，推理时一对一分配得到连线和置信度。">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="1.3" style="color:var(--fg)">
+        <!-- 1 board -->
+        <rect x="10" y="60" width="150" height="150" rx="3" fill="var(--panel)" stroke="var(--line)"/>
+        <rect x="30" y="85" width="34" height="16" fill="var(--soft)" stroke="var(--part)" stroke-width="2"/>
+        <rect x="30" y="68" width="22" height="11" stroke="var(--text)" stroke-width="2"/>
+        <rect x="95" y="80" width="16" height="34" fill="var(--soft)" stroke="var(--part)" stroke-width="2"/>
+        <rect x="116" y="88" width="22" height="11" stroke="var(--text)" stroke-width="2"/>
+        <rect x="40" y="135" width="60" height="45" fill="var(--soft)" stroke="var(--part)" stroke-width="2"/>
+        <rect x="108" y="150" width="26" height="11" stroke="var(--text)" stroke-width="2"/>
+        <rect x="35" y="188" width="22" height="11" stroke="var(--text)" stroke-width="2"/>
+        <!-- 2 tokens -->
+        <rect x="200" y="50" width="150" height="170" rx="3" fill="var(--panel)" stroke="var(--line)"/>
+        <rect x="214" y="70" width="122" height="20" fill="var(--soft)" stroke="var(--part)"/>
+        <rect x="214" y="96" width="122" height="20" fill="var(--soft)" stroke="var(--part)"/>
+        <rect x="214" y="122" width="122" height="20" fill="var(--soft)" stroke="var(--part)"/>
+        <rect x="214" y="152" width="122" height="20" stroke="var(--text)"/>
+        <rect x="214" y="178" width="122" height="20" stroke="var(--text)"/>
+        <!-- 3 embed -->
+        <rect x="385" y="95" width="90" height="80" rx="3" fill="var(--panel)" stroke="var(--line)"/>
+        <!-- 4 transformer -->
+        <rect x="510" y="40" width="170" height="190" rx="3" fill="var(--accent-soft)" stroke="var(--accent)"/>
+        <rect x="526" y="80" width="138" height="40" rx="2" fill="var(--panel)" stroke="var(--line)"/>
+        <rect x="526" y="130" width="138" height="34" rx="2" fill="var(--panel)" stroke="var(--line)"/>
+        <!-- 5 vectors -->
+        <rect x="715" y="70" width="95" height="60" rx="3" fill="var(--panel)" stroke="var(--part)"/>
+        <rect x="715" y="145" width="95" height="60" rx="3" fill="var(--panel)" stroke="var(--text)"/>
+        <!-- 6 score matrix -->
+        <rect x="850" y="55" width="160" height="160" rx="3" fill="var(--panel)" stroke="var(--line)"/>
+        <g stroke="var(--line)">
+          <line x1="870" y1="95" x2="1000" y2="95"/><line x1="870" y1="125" x2="1000" y2="125"/><line x1="870" y1="155" x2="1000" y2="155"/>
+          <line x1="900" y1="75" x2="900" y2="185"/><line x1="930" y1="75" x2="930" y2="185"/><line x1="960" y1="75" x2="960" y2="185"/>
+        </g>
+        <rect x="960" y="75" width="40" height="110" fill="var(--soft)" stroke="var(--none)"/>
+        <!-- arrows -->
+        <line x1="162" y1="135" x2="196" y2="135" marker-end="url(#ar)"/>
+        <line x1="352" y1="135" x2="381" y2="135" marker-end="url(#ar)"/>
+        <line x1="477" y1="135" x2="506" y2="135" marker-end="url(#ar)"/>
+        <line x1="682" y1="100" x2="711" y2="100" marker-end="url(#ar)"/>
+        <line x1="682" y1="175" x2="711" y2="175" marker-end="url(#ar)"/>
+        <line x1="812" y1="100" x2="846" y2="120" marker-end="url(#ar)"/>
+        <line x1="812" y1="175" x2="846" y2="150" marker-end="url(#ar)"/>
+        <path d="M930 218 L930 260 L700 260 L700 285" marker-end="url(#ar)"/>
+        <path d="M930 260 L1000 260 L1000 285" marker-end="url(#ar)"/>
+        <path d="M120 222 C 200 300, 420 300, 560 238" stroke-dasharray="5 4" marker-end="url(#ar)" style="color:var(--muted)"/>
+      </g>
+      <g font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--fg)">
+        <text x="85" y="40" text-anchor="middle" font-size="13" font-weight="600">一块板</text>
+        <text x="85" y="230" text-anchor="middle" fill="var(--muted)">元件框 n 个 · 文字框 m 个</text>
+        <text x="275" y="40" text-anchor="middle" font-size="13" font-weight="600">token</text>
+        <text x="275" y="84" text-anchor="middle">元件 1（4 个数）</text>
+        <text x="275" y="110" text-anchor="middle">元件 2</text>
+        <text x="275" y="136" text-anchor="middle">元件 3</text>
+        <text x="275" y="166" text-anchor="middle">文字 1（4 个数）</text>
+        <text x="275" y="192" text-anchor="middle">文字 2</text>
+        <text x="275" y="214" text-anchor="middle" fill="var(--muted)">不含字符串、不含类别</text>
+        <text x="430" y="85" text-anchor="middle" font-size="13" font-weight="600">嵌入</text>
+        <text x="430" y="130" text-anchor="middle">MLP</text>
+        <text x="430" y="148" text-anchor="middle">4 → 768</text>
+        <text x="595" y="30" text-anchor="middle" font-size="13" font-weight="600">Transformer × 16 层</text>
+        <text x="595" y="97" text-anchor="middle">自注意力（12 头）</text>
+        <text x="595" y="112" text-anchor="middle">2D RoPE：用框的中心</text>
+        <text x="595" y="151" text-anchor="middle">MLP 768 → 3072 → 768</text>
+        <text x="595" y="190" text-anchor="middle" fill="var(--muted)">所有元件和文字</text>
+        <text x="595" y="205" text-anchor="middle" fill="var(--muted)">互相看对方</text>
+        <text x="762" y="96" text-anchor="middle">元件向量</text><text x="762" y="112" text-anchor="middle">hᵢ</text>
+        <text x="762" y="171" text-anchor="middle">文字向量</text><text x="762" y="187" text-anchor="middle">hⱼ</text>
+        <text x="930" y="45" text-anchor="middle" font-size="13" font-weight="600">分数表 n × (m+1)</text>
+        <text x="885" y="72" text-anchor="middle" fill="var(--muted)">字1</text><text x="915" y="72" text-anchor="middle" fill="var(--muted)">字2</text>
+        <text x="945" y="72" text-anchor="middle" fill="var(--muted)">字3</text><text x="980" y="72" text-anchor="middle" fill="var(--none)">none</text>
+        <text x="930" y="205" text-anchor="middle" fill="var(--muted)">每行 softmax → 概率</text>
+        <text x="700" y="302" text-anchor="middle" font-size="13" font-weight="600">训练：loss</text>
+        <text x="700" y="320" text-anchor="middle">−log p(正确答案)</text>
+        <text x="1000" y="302" text-anchor="middle" font-size="13" font-weight="600">推理：一对一分配</text>
+        <text x="1000" y="320" text-anchor="middle">连线 + 置信度</text>
+        <text x="330" y="318" text-anchor="middle" fill="var(--muted)">位置（框中心，以板上元件中位尺寸为单位）只在注意力里用</text>
+      </g>
+    </svg>
+    <figcaption>每个元件、每个文字框都是一个 token。token 只带 4 个数：是不是文字、宽、高（取 log）、横还是竖。框在哪里不放进 token，而是在每层注意力里用二维旋转编码（RoPE）告诉模型两个框的相对位置。
+      这个模型（E1）看不到文字的内容，也看不到元件的类别，只看几何。</figcaption>
+  </figure>
+
+  <div class="col">
+    <h2>跟着一块小板，一步一步看</h2>
+    <p>下面这块板是我编的，只有 3 个元件、4 个文字框，单位是毫米。但所有输出数字都是真模型在这块板上跑出来的。
+      注意它本身就是 “元件和文字数量不一样” 的例子：3 个元件，4 个字，其中 TP1 是测试点，不属于任何元件。</p>
+
+    <h3>第 0 步：一块板</h3>
+  </div>
+  <figure class="fig">
+    <svg viewBox="0 0 690 390" role="img" aria-label="小板：元件 R1 横放，上方印着 R1；元件 C2 竖放，右边印着 C2；大芯片 U3，右边印着 U3；R1 和 U3 之间有一个测试点文字 TP1。" style="min-width:560px">
+      <g stroke="var(--line)" stroke-width="0.6">
+        <line x1="20" y1="20" x2="20" y2="356"/><line x1="48" y1="20" x2="48" y2="356"/><line x1="76" y1="20" x2="76" y2="356"/><line x1="104" y1="20" x2="104" y2="356"/><line x1="132" y1="20" x2="132" y2="356"/><line x1="160" y1="20" x2="160" y2="356"/><line x1="188" y1="20" x2="188" y2="356"/><line x1="216" y1="20" x2="216" y2="356"/><line x1="244" y1="20" x2="244" y2="356"/><line x1="272" y1="20" x2="272" y2="356"/><line x1="300" y1="20" x2="300" y2="356"/><line x1="328" y1="20" x2="328" y2="356"/>
+        <line x1="20" y1="20" x2="328" y2="20"/><line x1="20" y1="76" x2="328" y2="76"/><line x1="20" y1="132" x2="328" y2="132"/><line x1="20" y1="188" x2="328" y2="188"/><line x1="20" y1="244" x2="328" y2="244"/><line x1="20" y1="300" x2="328" y2="300"/><line x1="20" y1="356" x2="328" y2="356"/>
+      </g>
+      <g stroke-width="2.5">
+        <rect x="76" y="76" width="56" height="28" fill="var(--soft)" stroke="var(--part)"/>
+        <rect x="216" y="62" width="28" height="56" fill="var(--soft)" stroke="var(--part)"/>
+        <rect x="76" y="188" width="168" height="168" fill="var(--soft)" stroke="var(--part)"/>
+        <rect x="81.6" y="45.2" width="44.8" height="22.4" fill="none" stroke="var(--text)"/>
+        <rect x="255.2" y="67.6" width="22.4" height="44.8" fill="none" stroke="var(--text)"/>
+        <rect x="260.8" y="260.8" width="44.8" height="22.4" fill="none" stroke="var(--text)"/>
+        <rect x="148.8" y="137.6" width="56" height="22.4" fill="none" stroke="var(--text)"/>
+      </g>
+      <g font-family="IBM Plex Mono, monospace" font-size="12" text-anchor="middle">
+        <text x="104" y="94" fill="var(--part)">R1</text>
+        <text x="230" y="94" fill="var(--part)">C2</text>
+        <text x="160" y="276" fill="var(--part)" font-size="14">U3</text>
+        <text x="104" y="61" fill="var(--text)">R1</text>
+        <text x="266.4" y="94" fill="var(--text)" font-size="10">C2</text>
+        <text x="283.2" y="276" fill="var(--text)">U3</text>
+        <text x="176.8" y="153" fill="var(--text)">TP1</text>
+        <text x="20" y="372" fill="var(--muted)" font-size="10">0</text><text x="76" y="372" fill="var(--muted)" font-size="10">2</text><text x="132" y="372" fill="var(--muted)" font-size="10">4</text><text x="188" y="372" fill="var(--muted)" font-size="10">6</text><text x="244" y="372" fill="var(--muted)" font-size="10">8</text><text x="300" y="372" fill="var(--muted)" font-size="10">10 mm</text>
+      </g>
+      <g font-family="system-ui, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="13" fill="var(--fg)">
+        <rect x="370" y="60" width="14" height="10" fill="var(--soft)" stroke="var(--part)" stroke-width="2"/><text x="392" y="70">元件框：R1、C2、U3（n = 3）</text>
+        <rect x="370" y="88" width="14" height="10" fill="none" stroke="var(--text)" stroke-width="2"/><text x="392" y="98">文字框：R1、C2、U3、TP1（m = 4）</text>
+        <text x="370" y="140" fill="var(--muted)">框里写的字（R1、C2…）只是给你看的。</text>
+        <text x="370" y="160" fill="var(--muted)">这个模型看不到字的内容，</text>
+        <text x="370" y="180" fill="var(--muted)">也不知道元件是电阻还是芯片，</text>
+        <text x="370" y="200" fill="var(--muted)">它只知道每个框的大小和位置。</text>
+        <text x="370" y="240">正确答案：</text>
+        <text x="370" y="262" fill="var(--muted)">元件 R1 → 字 “R1”</text>
+        <text x="370" y="282" fill="var(--muted)">元件 C2 → 字 “C2”</text>
+        <text x="370" y="302" fill="var(--muted)">元件 U3 → 字 “U3”</text>
+        <text x="370" y="322" fill="var(--muted)">字 “TP1” 不属于任何元件</text>
+      </g>
+    </svg>
+  </figure>
+
+  <div class="col">
+    <h3>第 1 步：每个框变成 4 个数（token）</h3>
+    <p>先算这块板的 “尺子”：3 个元件长边分别是 2、2、6 mm，取中位数 <b>2 mm 当作 1 个单位</b>。这样大板小板都用同一把尺子。然后每个框（元件或文字）变成 4 个数：</p>
+    <div class="math">第 1 个数  是不是文字：元件 = 0，文字 = 1
+第 2 个数  ln(宽)，宽以 “单位” 计
+第 3 个数  ln(高)
+第 4 个数  宽 ≥ 高 吗：横着 = 1，竖着 = 0</div>
+    <p>框的中心位置另外存，不放进这 4 个数里（第 3 步会用到）。位置也用 “单位” 计，再减去所有框中心的平均值，让整块板的中心在 (0, 0)。</p>
+    <div class="tbl"><table>
+      <thead><tr><th>#</th><th>框</th><th class="r">宽 × 高（mm）</th><th class="r">宽 × 高（单位）</th><th>token：4 个数</th><th class="r">中心位置 (x, y)</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>元件 R1</td><td class="r">2 × 1</td><td class="r">1.0 × 0.5</td><td><code>[0, 0.00, −0.69, 1]</code></td><td class="r">(−1.52, −0.99)</td></tr>
+        <tr><td>2</td><td>元件 C2</td><td class="r">1 × 2</td><td class="r">0.5 × 1.0</td><td><code>[0, −0.69, 0.00, 0]</code></td><td class="r">(0.73, −0.99)</td></tr>
+        <tr><td>3</td><td>元件 U3</td><td class="r">6 × 6</td><td class="r">3.0 × 3.0</td><td><code>[0, 1.10, 1.10, 1]</code></td><td class="r">(−0.52, 2.26)</td></tr>
+        <tr><td>4</td><td>文字 “R1”</td><td class="r">1.6 × 0.8</td><td class="r">0.8 × 0.4</td><td><code>[1, −0.22, −0.92, 1]</code></td><td class="r">(−1.52, −1.59)</td></tr>
+        <tr><td>5</td><td>文字 “C2”</td><td class="r">0.8 × 1.6</td><td class="r">0.4 × 0.8</td><td><code>[1, −0.92, −0.22, 0]</code></td><td class="r">(1.38, −0.99)</td></tr>
+        <tr><td>6</td><td>文字 “U3”</td><td class="r">1.6 × 0.8</td><td class="r">0.8 × 0.4</td><td><code>[1, −0.22, −0.92, 1]</code></td><td class="r">(1.68, 2.26)</td></tr>
+        <tr><td>7</td><td>文字 “TP1”</td><td class="r">2.0 × 0.8</td><td class="r">1.0 × 0.4</td><td><code>[1, 0.00, −0.92, 1]</code></td><td class="r">(−0.22, 0.06)</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">注意 #4 文字 “R1” 和 #6 文字 “U3” 的 4 个数一模一样，模型分得开它们，只靠位置不同。</p>
+
+    <h3>第 2 步：4 个数变成 768 个数（嵌入）</h3>
+    <p>每个 token 的 4 个数，经过同一个小网络（两层全连接），变成 768 个数。7 个框就是 7 个长度 768 的向量。这一步每个框各算各的，互相还不知道对方。</p>
+
+    <h3>第 3 步：self-attention，框和框互相看</h3>
+    <p>是的，就是普通的 <b>self-attention</b>：7 个向量放在一起（元件和文字混在一起，不分开），每个向量都看所有 7 个向量，包括自己。没有任何屏蔽，元件看文字，也看别的元件，文字也看文字。</p>
+    <p>“看” 的意思是：每个向量算出一个 <b>权重</b>，决定从每个别的向量里拿多少信息，权重加起来是 1；然后把拿到的信息加到自己身上。</p>
+    <div class="math">a 对 b 的权重  ∝ exp( q_a · k_b / 8 )      q、k 由各自的向量算出来，每个 64 个数
+a 的新向量     = a 的旧向量 + Σ_b 权重_ab · v_b</div>
+    <p><b>位置怎么进来（2D RoPE）。</b>算 q_a · k_b 之前，把 q 和 k 按自己框的位置 “转一个角度”：一半的数按 x 转，一半按 y 转。两个转过的向量做点积时，剩下的只有两个框的<b>位置差</b>。
+      所以权重取决于 “b 在 a 的哪个方向、多远”，模型就能学到 “紧贴在我上方的小横框” 这种关系。</p>
+    <p>一层里有 12 组这样的 q、k、v（12 个 “头”），各自学不同的关系；一共叠 16 层。下面是第 1 层的<b>真实权重</b>（12 个头取平均），线越粗，看得越多：</p>
+  </div>
+  <figure class="fig">
+    <svg viewBox="0 0 720 340" role="img" aria-label="第 1 层注意力：元件 R1 把 0.44 的权重给自己，0.40 给上方的文字 R1，其余都在 0.04 以下；元件 U3 把 0.45 给自己，0.27 给右边的文字 U3，0.15 给上方的 TP1。" style="min-width:620px">
+      <g font-family="system-ui, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="13" font-weight="600" fill="var(--fg)" text-anchor="middle">
+        <text x="140" y="18">元件 R1 在看谁（第 1 层）</text><text x="490" y="18">元件 U3 在看谁（第 1 层）</text>
+      </g>
+      <g stroke-width="2">
+        <rect x="64" y="74" width="44" height="22" fill="var(--soft)" stroke="var(--part)"/><rect x="174" y="63" width="22" height="44" fill="var(--soft)" stroke="var(--part)"/><rect x="64" y="162" width="132" height="132" fill="var(--soft)" stroke="var(--part)"/>
+        <rect x="68.4" y="49.8" width="35.2" height="17.6" fill="none" stroke="var(--text)"/><rect x="204.8" y="67.4" width="17.6" height="35.2" fill="none" stroke="var(--text)"/><rect x="209.2" y="219.2" width="35.2" height="17.6" fill="none" stroke="var(--text)"/><rect x="121.2" y="122.4" width="44" height="17.6" fill="none" stroke="var(--text)"/>
+        <rect x="414" y="74" width="44" height="22" fill="var(--soft)" stroke="var(--part)"/><rect x="524" y="63" width="22" height="44" fill="var(--soft)" stroke="var(--part)"/><rect x="414" y="162" width="132" height="132" fill="var(--soft)" stroke="var(--part)"/>
+        <rect x="418.4" y="49.8" width="35.2" height="17.6" fill="none" stroke="var(--text)"/><rect x="554.8" y="67.4" width="17.6" height="35.2" fill="none" stroke="var(--text)"/><rect x="559.2" y="219.2" width="35.2" height="17.6" fill="none" stroke="var(--text)"/><rect x="471.2" y="122.4" width="44" height="17.6" fill="none" stroke="var(--text)"/>
+      </g>
+      <g stroke="var(--accent)" stroke-linecap="round" opacity="0.85">
+        <line x1="86" y1="85" x2="86" y2="58.6" stroke-width="7.4"/>
+        <line x1="86" y1="85" x2="185" y2="85" stroke-width="1.3"/>
+        <line x1="86" y1="85" x2="130" y2="228" stroke-width="1.6"/>
+        <line x1="86" y1="85" x2="213.6" y2="85" stroke-width="1.6"/>
+        <line x1="86" y1="85" x2="226.8" y2="228" stroke-width="1.5"/>
+        <line x1="86" y1="85" x2="143.2" y2="131.2" stroke-width="1.6"/>
+        <line x1="480" y1="228" x2="436" y2="85" stroke-width="1.4"/>
+        <line x1="480" y1="228" x2="535" y2="85" stroke-width="1.3"/>
+        <line x1="480" y1="228" x2="436" y2="58.6" stroke-width="2.0"/>
+        <line x1="480" y1="228" x2="563.6" y2="85" stroke-width="1.6"/>
+        <line x1="480" y1="228" x2="576.8" y2="228" stroke-width="5.3"/>
+        <line x1="480" y1="228" x2="493.2" y2="131.2" stroke-width="3.4"/>
+      </g>
+      <g font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--fg)">
+        <text x="40" y="45">字R1 0.40</text><text x="84" y="113" fill="var(--muted)">自己 0.44</text>
+        <text x="200" y="125" fill="var(--muted)">C2 0.02</text><text x="226" y="62" fill="var(--muted)">字C2 0.04</text>
+        <text x="168" y="118" fill="var(--muted)">TP1 0.04</text><text x="214" y="254" fill="var(--muted)">字U3 0.03</text><text x="96" y="312" fill="var(--muted)">U3 0.04</text>
+        <text x="395" y="45" fill="var(--muted)">字R1 0.06</text><text x="380" y="112" fill="var(--muted)">R1 0.02</text><text x="552" y="125" fill="var(--muted)">C2 0.02</text>
+        <text x="576" y="62" fill="var(--muted)">字C2 0.04</text><text x="520" y="118">TP1 0.15</text><text x="560" y="254">字U3 0.27</text><text x="446" y="312" fill="var(--muted)">自己 0.45</text>
+      </g>
+    </svg>
+    <figcaption>第 1 层就已经很清楚：R1 主要看它头顶的字，U3 主要看右边的 “U3” 和上方的 “TP1”。到后面的层，权重会更分散，因为每个向量已经带着周围的信息，模型在比较 “这个字离我近，还是离别人更近”。</figcaption>
+  </figure>
+
+  <div class="col">
+    <h3>第 4 步：分数表</h3>
+    <p>16 层之后，每个元件和每个文字都有一个 768 个数的向量。每个 “元件，文字” 配对算一个分数（两个向量的内积），每个元件再单独算一个 none 分数。每一行做 softmax，变成加起来等于 1 的概率。这块小板的真实输出：</p>
+    <div class="tbl"><table>
+      <thead><tr><th></th><th class="r">字 R1</th><th class="r">字 C2</th><th class="r">字 U3</th><th class="r">字 TP1</th><th class="r">none</th></tr></thead>
+      <tbody>
+        <tr><td>元件 R1</td><td class="r"><b>0.992</b></td><td class="r">0.000</td><td class="r">0.000</td><td class="r">0.001</td><td class="r">0.007</td></tr>
+        <tr><td>元件 C2</td><td class="r">0.000</td><td class="r"><b>1.000</b></td><td class="r">0.000</td><td class="r">0.000</td><td class="r">0.000</td></tr>
+        <tr><td>元件 U3</td><td class="r">0.000</td><td class="r">0.000</td><td class="r"><b>0.626</b></td><td class="r">0.369</td><td class="r">0.004</td></tr>
+      </tbody>
+    </table></div>
+    <p>表是 3 行 × 5 列：行数 = 元件数，列数 = 文字数 + 1。<b>元件和文字的数量不用一样</b>，这张表本来就是长方形。U3 有点犹豫：TP1 也在它旁边，拿到了 0.369。</p>
+
+    <h3>第 5 步：一对一分配（Hungarian）</h3>
+    <p><b>为什么需要。</b>如果每个元件各自挑概率最高的字，两个元件可能挑中同一个字。看这个例子（数字是举例用的）：</p>
+    <div class="tbl"><table>
+      <thead><tr><th></th><th class="r">字 T1</th><th class="r">字 T2</th><th class="r">none</th><th>各自挑最大</th></tr></thead>
+      <tbody>
+        <tr><td>元件 A</td><td class="r">0.70</td><td class="r">0.20</td><td class="r">0.10</td><td>T1</td></tr>
+        <tr><td>元件 B</td><td class="r">0.60</td><td class="r">0.10</td><td class="r">0.30</td><td>T1　← 撞了</td></tr>
+        <tr><td>元件 C</td><td class="r">0.05</td><td class="r">0.15</td><td class="r">0.80</td><td>none</td></tr>
+      </tbody>
+    </table></div>
+    <p><b>怎么做。</b>规则是：每个元件选且只选一项（一个字或 none），每个字最多给一个元件，在这个前提下让<b>三个概率乘起来最大</b>（等价于 −log 概率加起来最小，这就是程序里的 “代价”）。几种合法的分法：</p>
+    <div class="tbl"><table>
+      <thead><tr><th>A</th><th>B</th><th>C</th><th class="r">概率相乘</th><th class="r">代价 = −ln</th></tr></thead>
+      <tbody>
+        <tr class="hl"><td>T1</td><td>none</td><td>none</td><td class="r">0.70 × 0.30 × 0.80 = 0.168</td><td class="r">1.78</td></tr>
+        <tr><td>T2</td><td>T1</td><td>none</td><td class="r">0.20 × 0.60 × 0.80 = 0.096</td><td class="r">2.34</td></tr>
+        <tr><td>T1</td><td>T2</td><td>none</td><td class="r">0.70 × 0.10 × 0.80 = 0.056</td><td class="r">2.88</td></tr>
+        <tr><td>none</td><td>T1</td><td>none</td><td class="r">0.10 × 0.60 × 0.80 = 0.048</td><td class="r">3.04</td></tr>
+        <tr><td>T1</td><td>none</td><td>T2</td><td class="r">0.70 × 0.30 × 0.15 = 0.032</td><td class="r">3.46</td></tr>
+      </tbody>
+    </table></div>
+    <p>最好的是第一行：A 拿 T1，B 只好 none，T2 没人要。<b>B 这就是一个 “被分配挤掉” 的漏连。</b>
+      板子大的时候（几百个元件）不可能把所有分法都试一遍，Hungarian 算法（1955 年的老算法，程序里用 scipy 的 <code>linear_sum_assignment</code>）能直接找到最好的那一个。</p>
+    <p><b>元件和文字数量不一样怎么办。</b>做分配之前，给每个元件加一个它<b>自己专用的 none 列</b>，别的元件不能用。表就从 n × (m + 1) 变成 n × (m + n)：</p>
+    <div class="tbl"><table>
+      <thead><tr><th></th><th class="r">字 R1</th><th class="r">字 C2</th><th class="r">字 U3</th><th class="r">字 TP1</th><th class="r">R1 的 none</th><th class="r">C2 的 none</th><th class="r">U3 的 none</th></tr></thead>
+      <tbody>
+        <tr><td>元件 R1</td><td class="r"><b>0.992 ✓</b></td><td class="r">0.000</td><td class="r">0.000</td><td class="r">0.001</td><td class="r">0.007</td><td class="r">禁止</td><td class="r">禁止</td></tr>
+        <tr><td>元件 C2</td><td class="r">0.000</td><td class="r"><b>1.000 ✓</b></td><td class="r">0.000</td><td class="r">0.000</td><td class="r">禁止</td><td class="r">0.000</td><td class="r">禁止</td></tr>
+        <tr><td>元件 U3</td><td class="r">0.000</td><td class="r">0.000</td><td class="r"><b>0.626 ✓</b></td><td class="r">0.369</td><td class="r">禁止</td><td class="r">禁止</td><td class="r">0.004</td></tr>
+      </tbody>
+    </table></div>
+    <p>这样无论数量怎样都能分：</p>
+    <p>• <b>字比元件多</b>（这里 4 个字、3 个元件）：多出来的字没人要，TP1 就留空。这是允许的，板上本来就有不属于任何元件的字。</p>
+    <p>• <b>元件比字多</b>（上面 A、B、C 的例子，3 个元件、2 个字）：每个元件至少还有自己的 none 列，所以永远分得完，多出来的元件得 none。</p>
+    <p class="note">训练的时候不做这一步。训练的 loss 只看每一行自己的概率（见下面的 loss），一对一分配只在推理时用。</p>
+  </div>
+
+  <div class="col">
+    <h2>位置编码再说清楚：RoPE</h2>
+    <p><b>你说得一半对。</b>RoPE 输入的确是每个框自己的<b>绝对位置</b>：每个框按自己的 (x, y) 转一个角度。但注意力只用到 q·k 这个点积，两个都转过的向量做点积时，绝对角度消掉了，只剩<b>角度差</b>，也就是位置差。所以是 “绝对位置进去，相对位置出来”。</p>
+    <p>一维的例子（真模型里是二维，原理一样）：q 在位置 5，k 在位置 3，每个位置转 12°。</p>
+  </div>
+  <figure class="fig">
+    <svg viewBox="0 0 560 230" role="img" aria-label="RoPE 例子：q 在位置 5 转 60 度，k 在位置 3 转 36 度，夹角 24 度；整块板平移 10 之后 q 转 180 度，k 转 156 度，夹角还是 24 度，所以注意力不变。" style="min-width:480px">
+      <defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="var(--line)" stroke-width="1.2"><circle cx="110" cy="110" r="70"/><circle cx="390" cy="110" r="70"/><line x1="30" y1="110" x2="190" y2="110"/><line x1="310" y1="110" x2="470" y2="110"/></g>
+      <g stroke-width="2.5" fill="none">
+        <line x1="110" y1="110" x2="145" y2="49.4" stroke="var(--part)" marker-end="url(#ar2)" style="color:var(--part)"/>
+        <line x1="110" y1="110" x2="166.6" y2="68.9" stroke="var(--text)" marker-end="url(#ar2)" style="color:var(--text)"/>
+        <line x1="390" y1="110" x2="320" y2="110" stroke="var(--part)" marker-end="url(#ar2)" style="color:var(--part)"/>
+        <line x1="390" y1="110" x2="326.1" y2="81.5" stroke="var(--text)" marker-end="url(#ar2)" style="color:var(--text)"/>
+      </g>
+      <g font-family="IBM Plex Mono, monospace" font-size="12" fill="var(--fg)">
+        <text x="110" y="205" text-anchor="middle">位置 5 和 3</text><text x="390" y="205" text-anchor="middle">整体平移 +10：位置 15 和 13</text>
+        <text x="138" y="40" fill="var(--part)">q 转 5×12 = 60°</text><text x="170" y="74" fill="var(--text)">k 转 3×12 = 36°</text>
+        <text x="282" y="104" fill="var(--part)" text-anchor="end">q 转 180°</text><text x="296" y="74" fill="var(--text)" text-anchor="end">k 转 156°</text>
+        <text x="110" y="222" text-anchor="middle" fill="var(--muted)">夹角 24°</text><text x="390" y="222" text-anchor="middle" fill="var(--muted)">夹角还是 24°</text>
+      </g>
+    </svg>
+    <figcaption>点积 q·k = |q| |k| cos(夹角)。两种情况夹角都是 24°，所以注意力一样：模型只知道 “k 在 q 前面 2 格”，不知道它们在板上的绝对位置。整块板挪到哪里，结果都不变。</figcaption>
+  </figure>
+  <div class="col">
+    <p><b>我们的实际设置。</b>每个注意力头 64 个数，前 32 个按 x 转、后 32 个按 y 转，每边 16 对，每对一个转速。转速对应的波长从 0.5 到 512 个单位（对数均匀）：转得快的那几对对 “差半个元件” 很敏感，转得慢的对 “差几百个元件” 也有反应。
+      只有 q、k 被转，v（被拿走的信息）不转，所以每个框的向量里从来没有绝对位置。旋转、镜像整块板的不变性不靠 RoPE，靠训练时的数据增强。</p>
+
+    <h2>尺度（密度）和信息量</h2>
+    <p><b>密板和疏板。</b>现在的做法是每块板用自己的 “尺子”：元件长边的中位数 = 1 个单位，所有宽、高、位置都除以它。这样一块 0402 电阻满板的密板，和一块全是插件的疏板，在模型眼里尺度差不多。这一步对照片也很重要，因为照片没有毫米，只有像素。</p>
+    <p>它的弱点在<b>一块板上大小混在一起</b>的时候：中位数由小元件决定，大元件（接插件、IC）的 label 通常离得远，按 “小元件单位” 量就显得特别远。漏连里大元件的比例是正常的两倍（35 % 对 15 %），这可能是原因之一。
+      改进方法见下面的 “按每个框自己的大小量距离”。</p>
+    <p><b>4 个数变 768 个数，信息够不够。</b>嵌入这一步不会增加信息：4 个数进去，就只有 4 个数的信息。768 是模型的 “工作内存” 宽度，用来在 16 层里不断收集周围框的信息。
+      所以现在每个框自己带的信息确实很少（大小、方向、是不是文字），模型几乎全靠 “和谁挨着” 来判断。要提高，就是让每个框带更多信息：文字内容、元件类别、图像。</p>
+
+    <h2>按实际能拿到的信息来设计</h2>
+    <p>实际使用时，我们手上有：整张照片；检测器给的元件框（类别不准，不用）；所有文字框，每个文字框有一块图像，也有 OCR 读出来的字。逐项看值不值得放进 token：</p>
+    <div class="tbl"><table>
+      <thead><tr><th>信息</th><th>放在哪个 token</th><th>训练数据里有吗（KiCad / WACV）</th><th>建议</th><th>理由和风险</th></tr></thead>
+      <tbody>
+        <tr><td>框的大小、方向</td><td>元件、文字</td><td>有 / 有</td><td><b>用</b>（现在就在用）</td><td>基础，没有风险</td></tr>
+        <tr><td>框的位置</td><td>元件、文字</td><td>有 / 有</td><td><b>用</b>（RoPE，保留）</td><td>同上</td></tr>
+        <tr class="hl"><td>OCR 的字（前缀 + 数字）</td><td>文字</td><td>有，而且完全准确 / 有，会读错、截断</td><td><b>用，第一优先</b></td><td>告诉模型两件事：这个字是不是元件编号（TP1、GND、P2.3 不是），以及它该配哪类元件（J 配接插件）。风险：KiCad 的字太准，模型会过度相信，所以训练时要模仿 OCR 的错误</td></tr>
+        <tr><td>OCR 置信度、文字角度</td><td>文字</td><td>角度有，置信度要模拟 / 有</td><td>用</td><td>便宜；置信度让模型知道 “这个字可能读错了”</td></tr>
+        <tr><td>元件的图像块</td><td>元件</td><td><b>没有</b> / 有（只有 41 + 3 张）</td><td>第二阶段</td><td>能看出元件是电阻还是接插件，替代不准的检测类别。但 KiCad 没有照片，只能用 WACV 训练或用合成图，容易过拟合</td></tr>
+        <tr><td>文字的图像块</td><td>文字</td><td>没有 / 有</td><td>先不用</td><td>和 OCR 的字大部分重复；能补的信息（字体、引线）不多，训练数据同样是问题</td></tr>
+        <tr><td>检测类别</td><td>元件</td><td>有（来自编号前缀，等于答案）/ 有，但不准</td><td><b>不用</b></td><td>KiCad 里类别就是从编号前缀来的，模型会直接 “对答案”；照片上又不准。由元件图像块来替代</td></tr>
+      </tbody>
+    </table></div>
+
+    <h2>推荐方案：按 LightGlue 的思路改造</h2>
+    <p>我们的问题，和图像匹配里一个很成熟的问题几乎一样：<b>两组点，一部分能配对，一部分配不上</b>。图像匹配里是两张照片的特征点；我们这里是元件和文字。
+      这个方向最常用的方法是 <a href="https://arxiv.org/abs/1911.11763" target="_blank" rel="noopener">SuperGlue</a>（CVPR 2020）和它的后继 <a href="https://arxiv.org/abs/2306.13643" target="_blank" rel="noopener">LightGlue</a>（ICCV 2023），后者本身就用 RoPE。
+      我们现在的模型已经有一半是这个结构（Transformer + RoPE + 分数表 + 一对一分配），建议补上它的另一半，再加两个针对我们数据的设计：</p>
+  </div>
+  <figure class="fig">
+    <svg viewBox="0 0 1060 400" role="img" aria-label="推荐方案：元件 token 带几何（以后加图像块），文字 token 带几何和 OCR 字；经过带 2D RoPE 和几何偏置的 Transformer；输出三个头：相似度、元件可匹配度、文字可匹配度；三者相乘并做行列两个方向的 softmax 得到配对概率，最后一对一分配。" style="min-width:900px">
+      <defs><marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
+      <g stroke-width="1.5">
+        <rect x="10" y="40" width="230" height="130" rx="4" fill="var(--panel)" stroke="var(--part)"/>
+        <rect x="10" y="200" width="230" height="160" rx="4" fill="var(--panel)" stroke="var(--text)"/>
+        <rect x="290" y="60" width="250" height="280" rx="4" fill="var(--accent-soft)" stroke="var(--accent)"/>
+        <rect x="306" y="250" width="218" height="70" rx="3" fill="var(--panel)" stroke="var(--accent)" stroke-width="2.5"/>
+        <rect x="590" y="40" width="210" height="80" rx="4" fill="var(--panel)" stroke="var(--line)"/>
+        <rect x="590" y="160" width="210" height="80" rx="4" fill="var(--panel)" stroke="var(--accent)" stroke-width="2.5"/>
+        <rect x="590" y="280" width="210" height="80" rx="4" fill="var(--panel)" stroke="var(--accent)" stroke-width="2.5"/>
+        <rect x="845" y="150" width="205" height="100" rx="4" fill="var(--panel)" stroke="var(--accent)" stroke-width="2.5"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.4" style="color:var(--fg)">
+        <line x1="242" y1="105" x2="286" y2="150" marker-end="url(#ar3)"/><line x1="242" y1="280" x2="286" y2="230" marker-end="url(#ar3)"/>
+        <line x1="542" y1="140" x2="586" y2="80" marker-end="url(#ar3)"/><line x1="542" y1="200" x2="586" y2="200" marker-end="url(#ar3)"/><line x1="542" y1="260" x2="586" y2="320" marker-end="url(#ar3)"/>
+        <line x1="802" y1="80" x2="841" y2="180" marker-end="url(#ar3)"/><line x1="802" y1="200" x2="841" y2="200" marker-end="url(#ar3)"/><line x1="802" y1="320" x2="841" y2="222" marker-end="url(#ar3)"/>
+        <line x1="947" y1="252" x2="947" y2="300" marker-end="url(#ar3)"/>
+      </g>
+      <g font-family="system-ui, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="13" fill="var(--fg)">
+        <text x="125" y="30" text-anchor="middle" font-weight="700">输入：每个框一个 token</text>
+        <text x="24" y="64" font-weight="700" fill="var(--part)">元件 token</text>
+        <text x="24" y="88">• 几何：宽、高、横竖</text>
+        <text x="24" y="110" fill="var(--muted)">• 元件图像块（第二阶段）</text>
+        <text x="24" y="132" fill="var(--muted)">• 不用检测类别</text>
+        <text x="24" y="224" font-weight="700" fill="var(--text)">文字 token</text>
+        <text x="24" y="248">• 几何：宽、高、横竖、角度</text>
+        <text x="24" y="270" fill="var(--accent)" font-weight="700">• OCR 的字：前缀 + 数字（新增）</text>
+        <text x="24" y="292" fill="var(--accent)">• OCR 置信度（新增）</text>
+        <text x="24" y="314" fill="var(--muted)">• 训练时：模仿 OCR 读错、</text>
+        <text x="24" y="334" fill="var(--muted)">　随机去掉字</text>
+        <text x="415" y="50" text-anchor="middle" font-weight="700">Transformer（保留）</text>
+        <text x="306" y="90">• 元件和文字一起做 self-attention</text>
+        <text x="306" y="114">• 2D RoPE：相对位置（保留）</text>
+        <text x="306" y="138" fill="var(--muted)">• 16 层</text>
+        <text x="306" y="274" fill="var(--accent)" font-weight="700">几何偏置（新增）</text>
+        <text x="306" y="296">边缘距离 ÷ 元件自己的大小、</text>
+        <text x="306" y="314">在哪一边、大小比 → 一个分数</text>
+        <text x="604" y="66" font-weight="700">相似度 S_ij（已有）</text>
+        <text x="604" y="90">元件 i 和文字 j 有多配</text>
+        <text x="604" y="108" fill="var(--muted)">只决定 “是哪一个”</text>
+        <text x="604" y="186" font-weight="700" fill="var(--accent)">元件可匹配度 σ_i（新增）</text>
+        <text x="604" y="210">这个元件有没有印 label？</text>
+        <text x="604" y="228" fill="var(--muted)">0 到 1，单独训练</text>
+        <text x="604" y="306" font-weight="700" fill="var(--accent)">文字可匹配度 τ_j（新增）</text>
+        <text x="604" y="330">这个字是不是某个元件的编号？</text>
+        <text x="604" y="348" fill="var(--muted)">TP1、GND 应该接近 0</text>
+        <text x="859" y="176" font-weight="700" fill="var(--accent)">配对概率（新增）</text>
+        <text x="859" y="200">P_ij = σ_i · τ_j ·</text>
+        <text x="859" y="220">行 softmax · 列 softmax</text>
+        <text x="859" y="240" fill="var(--muted)">两个方向都竞争</text>
+        <text x="947" y="320" text-anchor="middle" font-weight="700">一对一分配（保留）</text>
+        <text x="947" y="342" text-anchor="middle">P 太小的元件 → none</text>
+      </g>
+    </svg>
+    <figcaption>绿色粗框是新增的部分，其余是现在已有的。</figcaption>
+  </figure>
+  <div class="col">
+    <p>下面逐个解释新增的四件事：做什么、用我们的例子说明、解决哪种错。</p>
+
+    <h3>1. 元件可匹配度 σ：把 “有没有 label” 单独拿出来问</h3>
+    <p><b>现在：</b>“没有 label” 是分数表里的一列，和每个字一起抢概率。模型拿不准是哪个字时，概率分到几个字上，每个字都比不过 none，于是漏连（上面说的 “票被分散”）。</p>
+    <p><b>改成：</b>拆成两个问题。σ<sub>i</sub> 只回答 “这个元件有没有印 label”（0 到 1）；相似度只回答 “如果有，是哪一个”。例如 ATTIOT_Bottom 的 R48：现在 R48 0.32、C60 0.09、none 0.50 → 选 none。
+      拆开以后，如果模型认为 “有 label” 的可能是 0.8，那么在几个字里选最好的 R48 就行，不会因为票被分散而放弃。</p>
+    <p><b>none 的权重就在这里调。</b>σ 用二分类的 loss 训练（有 label = 1，没有 = 0）。LightGlue 的做法是把正负两类的 loss <b>平衡</b>：两类各占一半权重，而不是按数量。我们训练时 none 占约 30 %，平衡之后 none 不会因为常见而被偏爱。这就是你问的 “降低 none 的权重”，而且是以干净的方式做。</p>
+    <p class="note">针对：漏连（WACV 157 个，占错误 41 %）。</p>
+
+    <h3>2. 文字可匹配度 τ：这个字是不是元件编号</h3>
+    <p><b>做什么：</b>每个字也有一个 0 到 1 的分数：它是不是某个元件的 label。TP1（测试点）、GND、P2.3（芯片引脚名）、XMIN（功能名）都应该接近 0。</p>
+    <p><b>例子：</b>上面那块小板上，元件 U3 给 TP1 分了 0.369。如果模型知道 TP1 不是元件编号（τ 接近 0），TP1 的配对概率就被压下去。这一项要靠 OCR 的字才学得好：光看几何，TP1 和 U3 长得一样。</p>
+    <p class="note">针对：连到空闲字（80 个）和多连（102 个，影响 precision）。</p>
+
+    <h3>3. 行、列两个方向的 softmax：训练时就让元件之间竞争</h3>
+    <p><b>现在：</b>训练时每个元件只在自己那一行里选（行 softmax）。两个元件都想要同一个字，训练时没人管，只有推理时的一对一分配才把它们分开。</p>
+    <p><b>改成：</b>每个字也在自己那一列里，对所有元件做一次 softmax：同一个字被两个元件争，列方向就要分出谁更像。两个方向乘起来，模型在训练时就学会 “这个字离我近，但离你更近，那就是你的”。</p>
+    <p><b>例子：</b>上面一对一分配那节的 A、B：行方向 A 对 T1 是 0.70，B 对 T1 是 0.60，都很高；列方向在 A、B 之间分 T1，比如 0.6 对 0.4。乘起来以后 B 对 T1 的分数明显降低，训练会推着模型把 B 的注意力转向别的字。</p>
+    <p class="note">针对：抢邻居（142 个，占错误 37 %，KiCad 里也是 37 %）。</p>
+
+    <h3>4. 几何偏置：按元件自己的大小量距离</h3>
+    <p><b>现在：</b>RoPE 用的是框的中心，单位是全板元件的中位尺寸。大元件的中心离它的 label 很远：一个 10 个单位宽的接插件，label 印在它右边缘外 2 个单位，中心到 label 有 7 个单位，在模型眼里 “很远”。</p>
+    <p><b>改成：</b>在注意力分数上加一项，由这一对框的几何直接算出来：边缘之间的距离 ÷ 元件自己的宽高（上面的例子是 2 ÷ 10 = 0.2，“很近”），label 在元件的哪一边，两个框的大小比。几个数经过一个小网络变成一个分数，加到注意力上（Relation Networks、LayoutLMv2 都是这样做的）。RoPE 保留，两者互补：RoPE 管 “方向和中心距离”，这一项管 “贴不贴边、按谁的尺子量”。</p>
+    <p class="note">针对：大元件漏连（漏连里大元件 35 %，正常 15 %），以及密度不同的板。</p>
+
+    <h3>文字怎么编码，怎么防止 “太相信字”</h3>
+    <p>每个 OCR 字拆成：前缀（R、C、J、U、TP…，查表成一个向量）+ 数字（每一位一个向量，右对齐）+ 置信度。这和以前试过的 E2 类似，但加三条防护：</p>
+    <p>• <b>模仿 OCR 读错</b>：训练时随机把 0↔O、1↔I、5↔S、8↔B 互换，截掉最后一位（WACV 里常见，比如 R17x 读成 “R17”），加一个多余的字符。</p>
+    <p>• <b>随机去掉字</b>：约 30 % 的文字 token 训练时不给字，只给几何，让模型缺了字也能连。</p>
+    <p>• <b>不让模型背编号</b>：KiCad 里元件编号就是答案，模型看不到元件的编号（元件 token 不带字），只能从文字这边看。</p>
+
+    <h3>这几个方法各是什么（一句话）</h3>
+    <div class="tbl"><table>
+      <thead><tr><th>方法</th><th>它在做什么</th><th>我们借什么</th></tr></thead>
+      <tbody>
+        <tr><td><a href="https://arxiv.org/abs/2306.13643" target="_blank" rel="noopener">LightGlue</a>（ICCV 2023）</td><td>给两张照片的特征点配对。每个点回答两件事：“我有没有对象”（可匹配度）和 “对象是谁”（相似度）；位置用 RoPE；有/没有对象两类 loss 平衡</td><td>第 1、2、3 条，整个框架</td></tr>
+        <tr><td><a href="https://arxiv.org/abs/1911.11763" target="_blank" rel="noopener">SuperGlue</a>（CVPR 2020）</td><td>LightGlue 的前身。用一个额外的 “垃圾桶” 行和列装配不上的点，用迭代的行列归一化（Sinkhorn）在训练时就逼近一对一</td><td>第 3 条的另一种做法</td></tr>
+        <tr><td><a href="https://arxiv.org/abs/1711.11575" target="_blank" rel="noopener">Relation Networks</a>（CVPR 2018）</td><td>检测里让物体之间互相看。注意力权重乘上一个由两个框的几何算出来的数，距离除以框自己的宽高</td><td>第 4 条</td></tr>
+        <tr><td><a href="https://arxiv.org/abs/2012.14740" target="_blank" rel="noopener">LayoutLMv2</a>（ACL 2021）</td><td>文档理解。注意力分数上加一个由两个文字框位置差决定的数</td><td>第 4 条</td></tr>
+        <tr><td><a href="https://arxiv.org/abs/2304.10759" target="_blank" rel="noopener">GeoLayoutLM</a>（CVPR 2023）</td><td>表单里把 “问题” 框连到 “答案” 框。证明显式的几何关系对 “连线” 任务特别重要（FUNSD 连线 F1 80.35 → 89.45）</td><td>支持第 4 条的思路</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>实验顺序</h3>
+    <p>每一步只加一样东西，才知道是哪样起作用。每一步在集群上训练一次（XXL 约 4–5 小时；先用小一点的 XL 做对比也可以，约 3.5 小时）：</p>
+    <div class="tbl"><table>
+      <thead><tr><th>实验</th><th>加什么</th><th>要什么数据</th></tr></thead>
+      <tbody>
+        <tr><td>A</td><td>可匹配度 σ、τ + 行列 softmax + 平衡的 loss（只用几何）</td><td>KiCad，现成</td></tr>
+        <tr><td>B</td><td>A + 几何偏置</td><td>KiCad，现成</td></tr>
+        <tr><td>C</td><td>B + OCR 字（带噪声和随机去掉）</td><td>KiCad 的字；测 WACV 时用标注的字和 OCR 的字各测一次</td></tr>
+        <tr><td>D</td><td>C + 元件图像块</td><td>需要先决定：合成图，还是只用 WACV</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="col">
+    <h2>真实照片上的输出</h2>
+    <p>下面是模型在 WACV 照片上的真实输出。每张卡是分数表的一行，只列概率最高的几个文字和 none。</p>
+    <div class="key"><span><i style="background:var(--accent)"></i>真 label</span><span><i style="background:var(--text)"></i>别的文字</span><span><i style="background:var(--none)"></i>none</span></div>
+  </div>
+  <div class="ex" id="ex"></div>
+
+  <div class="col">
+    <p><b>置信度（页面上的 “模型把握”）</b>就是这一行 softmax 里，最后被选中的那一列的概率。它是一对一分配之前的数。如果模型最想要的字被分给了别的元件，它会退到第二选择，这时显示的把握就比较低。</p>
+
+    <h2>每一步的数学</h2>
+    <h3>打分</h3>
+    <div class="math">文字分数   s_ij = ⟨W_q h_i , W_k h_j⟩ / √768        （元件 i 对文字 j）
+none 分数  s_i∅ = w · h_i + b                     （只看元件自己的向量）
+概率       p_ij = exp(s_ij) / ( Σ_k exp(s_ik) + exp(s_i∅) )
+           p_i∅ = exp(s_i∅) / ( Σ_k exp(s_ik) + exp(s_i∅) )</div>
+    <p>文字分数是元件向量和文字向量的内积。none 分数只由元件自己的向量算出来，不和某一个文字比较（这个向量经过 16 层注意力，已经带着周围的信息）。每一行一共 m+1 个概率，加起来是 1。</p>
+
+    <h3>训练的 loss</h3>
+    <div class="math">正确答案  T_i = 和元件编号相同的文字框（通常 1 个）；没有就是 {none}
+单个元件  L_i = −log Σ_(j∈T_i) p_ij
+一块板    L = 所有元件的 L_i 取平均；每步 4 块板</div>
+    <p><b>没有给 none 加权，也没有减权</b>：答案是 none 的元件和答案是文字的元件，每个都算一份。但训练数据里答案是 none 的元件不少：</p>
+    <div class="tbl"><table>
+      <thead><tr><th>来源</th><th class="r">占训练元件</th></tr></thead>
+      <tbody>
+        <tr><td>KiCad 里本来就没有可见 label 的元件（132 万个元件，108 万条连线）</td><td class="r">18 %</td></tr>
+        <tr><td>数据增强随机丢掉 15 % 的文字框，被丢 label 的元件答案变成 none</td><td class="r">约 +12 %</td></tr>
+        <tr class="hl"><td>训练时答案是 none 的元件，合计</td><td class="r">约 30 %</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">其它增强：整板随机转 90° 的倍数和镜像、框的边缘抖动 10 %、加 5 % 的假文字（不属于任何元件的字）。</p>
+
+    <h3>推理</h3>
+    <p>一对一分配，见上面第 5 步。</p>
+
+    <h2>为什么会漏连</h2>
+    <p>漏连里 83 %（WACV）到 95 %（KiCad）是模型第一选择就是 none，不是分配造成的。原因有四个，前两个来自训练：</p>
+    <p><b>1. 训练里 none 很常见。</b>约 30 % 的训练元件答案是 none，其中丢 label 那部分正好教模型：“自己的 label 不在附近，附近的字都属于别人，就答 none”。这和 WACV 里 label 印得远的情况长得很像。</p>
+    <p><b>2. KiCad 的 label 都贴着元件。</b>KiCad 里连对的 label，到元件的边缘距离中位数是 0.05 个元件大小。WACV 漏连的 label 中位数是 0.55，44 % 超过 1 个元件大小。模型没见过多少 “远 label”。</p>
+    <p><b>3. 票被分散。</b>none 只有一列，文字有很多列。模型拿不准是哪个字时，概率分到两三个字上，每个字单独都比不过 none。上面 ATTIOT_Bottom #76 就是这样：所有文字加起来 0.50，比 none 0.499 还多，但最好的 R48 只有 0.32。WACV 131 个 “想要 none” 的漏连里有 42 个属于这种。</p>
+    <p><b>4. 模型看不到字和类别。</b>E1 只看几何，不知道 “J10” 和接插件配、“R48” 和电阻配。ATTIOT_Bottom 的接插件 J10，模型把概率分给了 TP99、两个 J10、C15，最后选了 none。</p>
+
+    <h3>训练时降低 none 的权重，会怎样</h3>
+    <p>如果把答案是 none 的元件的 loss 乘一个权重 w（w &lt; 1），对 softmax 来说，效果大致等于推理时给 none 分数加一个偏置 log w。这个偏置我们已经试过（不用重训）：</p>
+    <div class="tbl"><table>
+      <thead><tr><th>做法</th><th class="r">相当于 w</th><th class="r">WACV 准确率</th><th class="r">WACV precision</th><th class="r">WACV F1</th></tr></thead>
+      <tbody>
+        <tr><td>现在</td><td class="r">1</td><td class="r">90.9 %</td><td class="r">92.2 %</td><td class="r">0.916</td></tr>
+        <tr><td>none 偏置 −0.5</td><td class="r">0.61</td><td class="r">91.7 %</td><td class="r">91.8 %</td><td class="r">0.917</td></tr>
+        <tr class="hl"><td>none 偏置 −1.5（KiCad val 上 F1 最好）</td><td class="r">0.22</td><td class="r">92.3 %</td><td class="r">90.6 %</td><td class="r">0.915</td></tr>
+        <tr><td>文字概率加起来 &gt; 0.5 就强制连（针对第 3 条）</td><td class="r">–</td><td class="r">91.8 %</td><td class="r">90.6 %</td><td class="r">0.912</td></tr>
+      </tbody>
+    </table></div>
+    <p>都是准确率换 precision：漏连少了，但没印 label 的元件被连上字的情况多了，F1 基本不变。所以单纯降低 none 的权重，预计也是这个交换。</p>
+    <p>真正可能同时减少漏连、又不掉 precision 的训练改动：</p>
+    <p>• <b>少丢 label</b>：数据增强从丢 15 % 改成 5 %，训练里 none 从约 30 % 降到约 22 %（针对第 1 条）。</p>
+    <p>• <b>给模型看字的前缀和元件的类别</b>（E2 / E3 token），让它知道 J 配接插件、R 配电阻（针对第 4 条）。以前在旧数据上试过字符串，照片上变差了，CrossClass_data_v1 上还没试。</p>
+    <p>• <b>训练数据里多一些远 label</b>：label 表、大元件（针对第 2 条）。</p>
+
+    <h2>训练记录</h2>
+    <p><a href="https://wandb.ai/xinruiworkstation/crossclass/runs/n2p8rs83" target="_blank" rel="noopener">https://wandb.ai/xinruiworkstation/crossclass/runs/n2p8rs83</a>　名字 <code>dv1_E1_XXL_150k_lr1e-4</code>，group <code>dv1</code>，2026-10-12 结束。</p>
+    <div class="tbl"><table>
+      <thead><tr><th>设置</th><th>值</th></tr></thead>
+      <tbody>
+        <tr><td>模型</td><td>XXL：768 宽 × 16 层，12 头，1.162 亿参数；token = E1（只有几何）</td></tr>
+        <tr><td>数据</td><td>CrossClass_data_v1 的 KiCad 训练集：23,403 个板面，108 万条连线；没有 WACV</td></tr>
+        <tr><td>步数</td><td>150,000 步，每步 4 块板（2 张卡 × 每张 2 块）</td></tr>
+        <tr><td>学习率</td><td>1e-4，前 2,000 步 warmup，之后 cosine 降到 0</td></tr>
+        <tr><td>正则</td><td>dropout 0.1，weight decay 0.01，数据增强（上面那些）</td></tr>
+        <tr><td>硬件</td><td>集群 job 200658，2 × RTX 6000 Ada，DDP，bf16，4.4 小时</td></tr>
+      </tbody>
+    </table></div>
+    <div class="tbl"><table>
+      <thead><tr><th>wandb 里的曲线</th><th>意思</th></tr></thead>
+      <tbody>
+        <tr><td><code>loss</code></td><td>训练 loss，就是上面的 L（每个元件的 −log p 取平均）</td></tr>
+        <tr><td><code>lr</code></td><td>学习率曲线</td></tr>
+        <tr><td><code>kvalsub/acc · prec · f1</code></td><td>每 5,000 步在约 1/4 的 KiCad val（约 340 个板面）上测一次</td></tr>
+        <tr><td><code>dev3/acc · prec · f1</code></td><td>每 5,000 步在 3 张 dev 照片上测一次（旧标签）</td></tr>
+        <tr><td><code>final/kval/*</code></td><td>训练结束后在全部 1,369 个 KiCad val 板面上测：准确率 96.4 %</td></tr>
+        <tr><td><code>final/all45/*</code></td><td>训练结束后在全部 45 张 WACV 照片上测（旧标签）</td></tr>
+        <tr><td><code>steps_per_s</code></td><td>训练速度</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const EX = [
+    {t: "连对：C10", m: "ML450_Top2 · 元件 #87 · 电容 · 真 label C10", rows: [["C10", .990, 1], ["IC3", .005], ["R4", .003], ["C11", .001], ["none", .001, 0, 1]], out: '一对一分配选 <span class="ok">C10</span>，把握 99 %'},
+    {t: "连对，但没那么肯定", m: "ML450_Top2 · 元件 #108 · 电容 · 真 label C10", rows: [["C10", .835, 1], ["none", .088, 0, 1], ["TP2", .074], ["R100", .002]], out: '选 <span class="ok">C10</span>，把握 84 %'},
+    {t: "没印 label，答 none", m: "Zedboard · 元件 #296 · 接插件 · 真答案 none", rows: [["none", .997, 1, 1], ["J19", .001], ["J15", 0], ["J7", 0]], out: '选 <span class="ok">none</span>，把握 99.7 %'},
+    {t: "漏连：票被分散", m: "ATTIOT_Bottom · 元件 #76 · 电阻 · 真 label R48", rows: [["none", .499, 0, 1], ["R48", .319, 1], ["C60", .089], ["C31", .030], ["C29", .009]], out: '选 <span class="bad">none</span>（把握 50 %）。文字加起来 0.50，但没有一个字单独比 none 高'},
+  ];
+  const el = document.getElementById("ex");
+  el.innerHTML = EX.map(e => `<div class="card"><h4>${e.t}</h4><div class="meta">${e.m}</div>` +
+    e.rows.map(([k, p, tr, nn]) => `<div class="row"><span class="k">${k}</span><div class="trk"><div class="bar${nn ? " none" : ""}${tr ? " true" : ""}" style="width:${(100 * p).toFixed(1)}%"></div></div><span class="v">${p.toFixed(3)}</span></div>`).join("") +
+    `<div class="out">${e.out}</div></div>`).join("");
+})();
+</script>

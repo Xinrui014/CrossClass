@@ -94,3 +94,16 @@ Curves (kvalsub / dev3 / loss): lr1e-4 is ahead of every other run from the firs
 0.61) and ends highest on KiCad validation. Lower lr is monotonically better for XXL (3e-4 → 2e-4 → 1e-4: 86.6 → 88.8 → 89.9 %), so
 the earlier "bigger is worse" was the learning rate. Tuned, XXL beats XL by 0.6 points on test and 0.2 on KiCad val — a small size gain.
 Open: XL was never run at a lower lr, so the size effect at matched tuning is still unmeasured; the trend also leaves room below 1e-4.
+
+# Rescored on WACV-clean v1 (2026-10-13, `tools/wacv_clean_score.py`, L40 GPU 0, fp32)
+Same checkpoints, no training. clean41 = 41 test images of `wacv_clean_v1.json` (explicit links, ML365_Bottom dropped, 6 unreadable parts
+left out); old41 = the old labels on the same 41 images. Details and B7 / B8: `LINKING.md` §10, `results/linking/wacv_clean_v1_scores.md`.
+| run | old42 | old41 | clean41 | clean41 precision | clean41 F1 | clean41 wrong |
+|---|---|---|---|---|---|---|
+| dv1_E1_XL_150k | 89.4 % | 89.0 % | 90.5 % | 91.6 % | 0.911 | 397 |
+| dv1_E1_XXL_150k | 86.5 % | 86.2 % | 87.8 % | 89.6 % | 0.887 | 510 |
+| dv1_E1_XXL_150k_lr2e-4 | 88.8 % | 88.2 % | 90.0 % | 91.3 % | 0.906 | 419 |
+| **dv1_E1_XXL_150k_lr1e-4** | **89.7 %** | **89.3 %** | **90.9 %** | **92.2 %** | **0.916** | **379** |
+fp32 here vs bf16 in the training jobs: old42 counts differ by 4–8 parts from the tables above (465 → 473 wrong for lr1e-4).
+`linkformer.py` now reads `link` / `ign` when a board has them (loss and scores); `--data CrossClass_data_v1` adds clean_dev3 / clean_test41 /
+clean_all44.
