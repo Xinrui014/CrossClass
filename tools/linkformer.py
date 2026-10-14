@@ -7,7 +7,12 @@ target = every text whose string equals the part's designator (or none; WACV-cle
 parts marked 'ign' are left out of loss and scores). Decoding: Hungarian on -log p, own none column per part.
 Training options: --aug (90-degree rotations + mirror, box jitter, dropped labels, fake labels), --dropout, --accum (boards per
 optimizer step), cosine schedule, --save / --init checkpoints (fine-tuning), --workers (background board preparation),
-multi-GPU data parallel when launched with torchrun (--accum boards per step are split across the ranks). Results JSON keeps per-image counts so any image subset
+multi-GPU data parallel when launched with torchrun (--accum boards per step are split across the ranks).
+v2 options (2026-10-14, LightGlue-style matcher): --head lg = similarity S_ij plus a matchability score per part (sigma_i: has a printed
+label) and per text (tau_j: names some part); P_ij = sigma_i tau_j softmax_row(S)_ij softmax_col(S)_ij; loss = -log P on true pairs
++ balanced -log(1 - sigma) / -log(1 - tau) on parts / texts without a partner (LightGlue, ICCV 2023). --geobias = attention bias from
+each token pair's box geometry measured in the query box's own size (edge gap, offsets, size ratios; Relation Networks). --strnoise =
+OCR-like corruption and 30 % dropout of text strings during training (use with --tokens E2). Results JSON keeps per-image counts so any image subset
 (e.g. the 42 test images) can be scored afterwards (tools/linkformer_report.py). --wandb <project> logs loss, lr, eval and final scores.
 Usage: linkformer.py --train dev3 --eval dev3 --size L --tokens E1 --steps 1000 [--device cuda] [--tag name]
   board sets: dev3, test42, all45, fold<k>train, fold<k>test, kicad199, kicadtrain, kicadval, kicad300, kicad1000;
@@ -22,6 +27,19 @@ DEV = ["ML450_Top1", "RPI3B_Top", "DuetWIFI_Top"]
 SIZES = {"S": (128, 4), "M": (256, 6), "L": (384, 8), "XL": (512, 12), "XXL": (768, 16), "3XL": (1024, 24)}
 PFX = re.compile(r"^([A-Z]+)(\d+)([A-Z]?)$")
 FAKE_PFX = ["TP", "R", "C", "U", "J", "D", "Q", "L", "FB", "SW", "Y", "P"]
+STRNOISE = (0.0, 0.0)                                 # (p string dropped, p string corrupted) per text in augment(); set by --strnoise
+CONFUSE = {"0": "O", "O": "0", "1": "I", "I": "1", "5": "S", "S": "5", "8": "B", "B": "8", "2": "Z", "Z": "2", "6": "G", "G": "6"}
+
+def corrupt(s, rng):
+    """One OCR-like error: last character cut off, a look-alike swap, a character lost or a stray one added."""
+    if not s: return s
+    r = rng.random()
+    if r < 0.35 and len(s) >= 3: return s[:-1]
+    if r < 0.7:
+        idx = [k for k, c in enumerate(s) if c in CONFUSE]
+        if idx: k = rng.choice(idx); return s[:k] + CONFUSE[s[k]] + s[k+1:]
+    if r < 0.85 and len(s) >= 2: k = rng.randrange(len(s)); return s[:k] + s[k+1:]
+    k = rng.randrange(len(s)+1); return s[:k] + rng.choice("0123456789ABCDEFGHJKLMNPRSTUVWXYZ") + s[k:]
 
 def load_sets(data=""):
     if data:   # a frozen dataset folder, e.g. linkdata/CrossClass_data_v1 (kicad.json + split.json + wacv.json + folds.json)
@@ -72,6 +90,11 @@ def augment(b, rng, p_drop=0.15, p_fake=0.05, jitter=0.1):
         return [x0+rng.uniform(-jitter, jitter)*w, y0+rng.uniform(-jitter, jitter)*h, x1+rng.uniform(-jitter, jitter)*w, y1+rng.uniform(-jitter, jitter)*h]
     parts = [dict(p, box=tf(p["box"])) for p in b["parts"]]
     texts = [dict(t, box=tf(t["box"])) for t in b["texts"] if rng.random() >= p_drop]
+    if STRNOISE[0] or STRNOISE[1]:
+        for t in texts:
+            u = rng.random()
+            if u < STRNOISE[0]: t["ocr"] = ""
+            elif u < STRNOISE[0] + STRNOISE[1]: t["ocr"] = corrupt(t["text"], rng)
     if texts and parts:
         used = {t["text"] for t in b["texts"]} | {p["des"] for p in b["parts"]}
         allb = np.array([o["box"] for o in parts+texts]); lo, hi = allb[:, :2].min(0), allb[:, 2:].max(0)
@@ -92,10 +115,11 @@ def encode(b, vocab, as_numpy=False):
     n, m = len(P), len(T); is_text = np.r_[np.zeros(n), np.ones(m)]
     feats = np.stack([is_text, np.log(w), np.log(h), (w >= h).astype(float)], 1)
     pos = np.stack([(B[:, 0]+B[:, 2])/2, (B[:, 1]+B[:, 3])/2], 1); pos -= pos.mean(0)
-    pref = np.r_[np.zeros(n, int), [vocab(t["text"]) for t in b["texts"]]]
+    ocr = [t.get("ocr", t["text"]) for t in b["texts"]]          # what the token sees (noisy in training with --strnoise)
+    pref = np.r_[np.zeros(n, int), [vocab(s) for s in ocr]]
     dig = np.full((n+m, 4), 10, int)   # right-aligned digits, 10 = pad
-    for j, t in enumerate(b["texts"]):
-        mm = PFX.match(t["text"])
+    for j, s in enumerate(ocr):
+        mm = PFX.match(s)
         if mm:
             ds = mm.group(2)[-4:]; dig[n+j, 4-len(ds):] = [int(c) for c in ds]
     strs = [t["text"] for t in b["texts"]]
@@ -107,15 +131,16 @@ def encode(b, vocab, as_numpy=False):
     tmask[np.array(ign, bool)] = True                # unknown label: every cell is a target -> no loss
     if as_numpy:
         return dict(id=b["id"], n=n, m=m, feats=feats.astype(np.float32), pos=pos.astype(np.float32), pref=pref.astype(np.int64), dig=dig.astype(np.int64),
-                    tmask=tmask, tgt=tgt, ign=ign, strs=strs, des=[p["des"] for p in b["parts"]])
+                    box=B.astype(np.float32), tmask=tmask, tgt=tgt, ign=ign, strs=strs, des=[p["des"] for p in b["parts"]])
     f = lambda a, dt=torch.float32: torch.tensor(np.asarray(a), dtype=dt)
-    return dict(id=b["id"], n=n, m=m, feats=f(feats), pos=f(pos), pref=f(pref, torch.long), dig=f(dig, torch.long), tmask=torch.from_numpy(tmask),
+    return dict(id=b["id"], n=n, m=m, feats=f(feats), pos=f(pos), pref=f(pref, torch.long), dig=f(dig, torch.long), box=f(B), tmask=torch.from_numpy(tmask),
                 tgt=tgt, ign=ign, strs=strs, des=[p["des"] for p in b["parts"]])
 
 def load_model(path, dev):
     """A saved checkpoint -> (model in eval mode, vocab, its training args)."""
     ck = torch.load(path, map_location="cpu"); A = ck["args"]; vocab = Vocab(ck["vocab"]); d, L = SIZES[A["size"]]
-    m = LinkFormer(d, L, len(vocab.idx)+2, A["tokens"] == "E2"); m.load_state_dict(ck["model"]); return m.to(dev).eval(), vocab, A
+    m = LinkFormer(d, L, len(vocab.idx)+2, A["tokens"] == "E2", 0.0, A.get("head", "dot"), A.get("geobias", False))
+    m.load_state_dict(ck["model"]); return m.to(dev).eval(), vocab, A
 
 def from_numpy(e): return {k: (torch.from_numpy(v) if isinstance(v, np.ndarray) else v) for k, v in e.items()}
 
@@ -143,37 +168,74 @@ class Block(nn.Module):
     def __init__(self, d, heads, dropout=0.0):
         super().__init__(); self.h = heads; self.n1 = nn.LayerNorm(d); self.n2 = nn.LayerNorm(d); self.p = dropout; self.drop = nn.Dropout(dropout)
         self.qkv = nn.Linear(d, 3*d); self.o = nn.Linear(d, d); self.mlp = nn.Sequential(nn.Linear(d, 4*d), nn.GELU(), nn.Linear(4*d, d))
-    def forward(self, x, pos, freqs):
+    def forward(self, x, pos, freqs, bias=None):
         N, d = x.shape; q, k, v = self.qkv(self.n1(x)).view(N, 3, self.h, d//self.h).permute(1, 2, 0, 3)
         q, k = rope_2d(q, pos, freqs), rope_2d(k, pos, freqs)
-        a = F.scaled_dot_product_attention(q[None], k[None], v[None], dropout_p=self.p if self.training else 0.0)[0].permute(1, 0, 2).reshape(N, d)
+        am = bias[None].to(q.dtype) if bias is not None else None                  # (1, heads, N, N), added to the attention scores
+        a = F.scaled_dot_product_attention(q[None], k[None], v[None], attn_mask=am, dropout_p=self.p if self.training else 0.0)[0].permute(1, 0, 2).reshape(N, d)
         x = x + self.drop(self.o(a)); return x + self.drop(self.mlp(self.n2(x)))
 
+def pair_geometry(box, is_text):
+    """(N, N, 10) features of every token pair (query a, key b), boxes in median-part units; offsets and gaps are measured in the
+    query box's own width / height (Relation Networks style), plus the plain gap in units and the two token types."""
+    x0, y0, x1, y1 = box.unbind(1); w = (x1-x0).clamp_min(1e-3); h = (y1-y0).clamp_min(1e-3); cx, cy = (x0+x1)/2, (y0+y1)/2
+    dx = cx[None, :]-cx[:, None]; dy = cy[None, :]-cy[:, None]
+    gx = torch.maximum(x0[None, :]-x1[:, None], x0[:, None]-x1[None, :]).clamp_min(0); gy = torch.maximum(y0[None, :]-y1[:, None], y0[:, None]-y1[None, :]).clamp_min(0)
+    wa, ha = w[:, None], h[:, None]; g = torch.hypot(gx, gy); N = box.shape[0]
+    return torch.stack([torch.sign(dx)*torch.log1p(dx.abs()/wa), torch.sign(dy)*torch.log1p(dy.abs()/ha), torch.log1p(gx/wa), torch.log1p(gy/ha),
+                        torch.log1p(g/torch.maximum(wa, ha)), torch.log(w[None, :]/wa), torch.log(h[None, :]/ha), torch.log1p(g),
+                        is_text[:, None].expand(N, N), is_text[None, :].expand(N, N)], -1)
+
 class LinkFormer(nn.Module):
-    def __init__(self, d, layers, n_prefix, use_string, dropout=0.0):
-        super().__init__(); self.use_string = use_string; hd = 64; heads = d // hd
+    def __init__(self, d, layers, n_prefix, use_string, dropout=0.0, head="dot", geobias=False):
+        super().__init__(); self.use_string = use_string; hd = 64; heads = d // hd; self.head = head; self.geobias = geobias
         self.inp = nn.Sequential(nn.Linear(4, d), nn.GELU(), nn.Linear(d, d))
         self.pref = nn.Embedding(n_prefix, d); self.dig = nn.ModuleList([nn.Embedding(11, d) for _ in range(4)])
         self.blocks = nn.ModuleList([Block(d, heads, dropout) for _ in range(layers)]); self.nf = nn.LayerNorm(d)
-        self.wq = nn.Linear(d, d); self.wk = nn.Linear(d, d); self.none = nn.Linear(d, 1)
+        self.wq = nn.Linear(d, d); self.wk = nn.Linear(d, d)
+        if head == "lg": self.ms = nn.Linear(d, 1); self.mt = nn.Linear(d, 1)          # matchability of parts / texts
+        else: self.none = nn.Linear(d, 1)
+        if geobias: self.gb = nn.Sequential(nn.Linear(10, 32), nn.GELU(), nn.Linear(32, heads))
         lam = torch.logspace(math.log10(0.5), math.log10(512), hd // 4)   # wavelengths from half a part to 512 parts
         self.register_buffer("freqs", 2*math.pi/lam)
     def forward(self, e):
         x = self.inp(e["feats"])
         if self.use_string: x = x + self.pref(e["pref"]) + sum(emb(e["dig"][:, k]) for k, emb in enumerate(self.dig))
-        for blk in self.blocks: x = blk(x, e["pos"], self.freqs)
+        bias = self.gb(pair_geometry(e["box"], e["feats"][:, 0])).permute(2, 0, 1) if self.geobias else None   # (heads, N, N)
+        for blk in self.blocks: x = blk(x, e["pos"], self.freqs, bias)
         x = self.nf(x); hp, ht = x[:e["n"]], x[e["n"]:]
         S = self.wq(hp) @ self.wk(ht).T / math.sqrt(x.shape[1])
+        if self.head == "lg": return S, self.ms(hp).squeeze(1), self.mt(ht).squeeze(1)
         return torch.cat([S, self.none(hp)], 1)                     # (n, m+1), last column = none
 
 def loss_fn(logits, tmask):
     """Per-part softmax over texts + none; -log of the probability mass on the target cells (same math as the old per-part loop)."""
     return (torch.logsumexp(logits, 1) - torch.logsumexp(logits.masked_fill(~tmask, float("-inf")), 1)).mean()
 
+def lg_logp(out):
+    """log P_ij = log sigma_i + log tau_j + log softmax_row(S)_ij + log softmax_col(S)_ij; and log(1 - sigma_i)."""
+    S, ls, lt = (o.float() for o in out)
+    return F.logsigmoid(ls)[:, None] + F.logsigmoid(lt)[None, :] + F.log_softmax(S, 1) + F.log_softmax(S, 0), F.logsigmoid(-ls)
+
+def loss_lg(out, tmask, ign):
+    """-log P on true pairs (several same-string texts: their sum), plus -log(1 - sigma) on parts without a label and -log(1 - tau)
+    on texts that name no part, each half-weighted and averaged over its own count (balanced, as LightGlue). 'ign' parts are skipped."""
+    lp, lnone = lg_logp(out); m = lp.shape[1]; tm = tmask[:, :m]; ign = torch.as_tensor(ign, dtype=torch.bool, device=lp.device)
+    has = tm.any(1) & ~ign; nolab = ~tm.any(1) & ~ign; named = (tm & ~ign[:, None]).any(0)
+    mean = lambda t: t.mean() if t.numel() else lp.new_zeros(())
+    pos = -torch.logsumexp(lp[has].masked_fill(~tm[has], float("-inf")), 1)      # rows selected first: no all -inf row in the graph
+    return mean(pos) + 0.5*mean(-lnone[nolab]) + 0.5*mean(-F.logsigmoid(-out[2].float())[~named])
+
 @torch.no_grad()
-def decode(logits):
-    """Hungarian on -log p; each part has its own none column."""
-    lp = F.log_softmax(logits, 1).cpu().numpy(); n, m1 = lp.shape; m = m1-1
+def decode(logits, mode="hung"):
+    """Hungarian on -log p; each part has its own none column. lg head: cost -log P_ij, none cost -log(1 - sigma_i) ('hung'),
+    or 'sig': parts with sigma_i >= 0.5 must take a text when one is free, the others take none."""
+    if isinstance(logits, tuple):
+        lp, lnone = lg_logp(logits); lp, lnone = lp.cpu().numpy(), lnone.cpu().numpy(); n, m = lp.shape
+        C = np.full((n, m+n), 1e6); C[:, :m] = -lp
+        C[np.arange(n), m+np.arange(n)] = -lnone if mode == "hung" else np.where(lnone < math.log(0.5), 1e3, 0.0)
+        r, c = linear_sum_assignment(C); return {int(i): (int(j) if j < m else None) for i, j in zip(r, c)}
+    lp = F.log_softmax(logits.float(), 1).cpu().numpy(); n, m1 = lp.shape; m = m1-1
     C = np.full((n, m+n), 1e6); C[:, :m] = -lp[:, :m]; C[np.arange(n), m+np.arange(n)] = -lp[:, m]
     r, c = linear_sum_assignment(C); return {int(i): (int(j) if j < m else None) for i, j in zip(r, c)}
 
@@ -194,11 +256,11 @@ def summarize(per):
 def to_dev(e, dev): return {k: (v.to(dev) if torch.is_tensor(v) else v) for k, v in e.items()}
 
 AMP = False
-def evaluate(model, encs, dev):
+def evaluate(model, encs, dev, mode="hung"):
     model.eval(); per = {}
     for e in encs:
         with torch.autocast("cuda", dtype=torch.bfloat16, enabled=AMP and dev.type == "cuda"):
-            per[e["id"]] = count(e, decode(model(to_dev(e, dev)).float()) if e["n"] and e["m"] else {})
+            per[e["id"]] = count(e, decode(model(to_dev(e, dev)), mode) if e["n"] and e["m"] else {})
     model.train(); return summarize(per), per
 
 if __name__ == "__main__":
@@ -217,7 +279,11 @@ if __name__ == "__main__":
     ap.add_argument("--amp", action="store_true", help="bf16 autocast on CUDA"); ap.add_argument("--ckpt_every", type=int, default=0)
     ap.add_argument("--mix", default="", help="second training set sampled with probability --mix_p (e.g. ktrain)"); ap.add_argument("--mix_p", type=float, default=0.5)
     ap.add_argument("--workers", type=int, default=0, help="DataLoader worker processes for augmentation / encoding")
+    ap.add_argument("--head", default="dot", choices=["dot", "lg"], help="dot = softmax over texts + none column; lg = LightGlue-style matchability")
+    ap.add_argument("--geobias", action="store_true", help="attention bias from pair box geometry in the query box's own size")
+    ap.add_argument("--strnoise", action="store_true", help="training: 30 %% of text strings dropped, 15 %% corrupted like OCR (with --tokens E2)")
     a = ap.parse_args(); torch.set_num_threads(a.threads)
+    if a.strnoise: STRNOISE = (0.30, 0.15)
     world, rank, local = int(os.environ.get("WORLD_SIZE", 1)), int(os.environ.get("RANK", 0)), int(os.environ.get("LOCAL_RANK", 0)); is_main = rank == 0
     torch.manual_seed(a.seed); np.random.seed(a.seed)
     sets = load_sets(a.data); AMP = a.amp
@@ -238,7 +304,7 @@ if __name__ == "__main__":
     else:
         dev = torch.device(a.device)
     d, L = SIZES[a.size]
-    model = LinkFormer(d, L, len(vocab.idx)+2, a.tokens == "E2", a.dropout).to(dev)
+    model = LinkFormer(d, L, len(vocab.idx)+2, a.tokens == "E2", a.dropout, a.head, a.geobias).to(dev)
     if a.init: model.load_state_dict(ck["model"])
     net = torch.nn.parallel.DistributedDataParallel(model, device_ids=[local], find_unused_parameters=True) if world > 1 else model
     acc = max(1, a.accum // world)                    # boards per rank per optimizer step; total = acc * world (= --accum)
@@ -266,7 +332,8 @@ if __name__ == "__main__":
             with (net.no_sync() if world > 1 and micro < acc-1 else nullcontext()):
                 with torch.autocast("cuda", dtype=torch.bfloat16, enabled=a.amp and dev.type == "cuda"):
                     logits = net(to_dev(e, dev))
-                loss = loss_fn(logits.float(), e["tmask"].to(dev)) / acc; loss.backward(); tot += loss.item()
+                loss = (loss_lg(logits, e["tmask"].to(dev), e["ign"]) if a.head == "lg" else loss_fn(logits.float(), e["tmask"].to(dev))) / acc
+                loss.backward(); tot += loss.item()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0); opt.step(); sched.step()
         run = tot if run is None else 0.98*run + 0.02*tot
         if not is_main: continue
@@ -283,9 +350,11 @@ if __name__ == "__main__":
         if not is_main: dist.destroy_process_group(); sys.exit(0)
     final = {}
     for s in [x for x in a.final_eval.split(",") if x]:
-        es = [encode(b, vocab) for b in sets[s] if b["parts"] and b["texts"]]; summ, per = evaluate(model, es, dev); final[s] = dict(summary=summ, per_image=per)
-        print(f"[{tag}] final {s}: acc {summ['acc']:.4f} prec {summ['prec']:.4f} f1 {summ['f1']:.4f}", flush=True)
-        if wb: wb.summary.update({f"final/{s}/{m}": summ[m] for m in ("acc", "prec", "f1")})
+        es = [encode(b, vocab) for b in sets[s] if b["parts"] and b["texts"]]
+        for mode in (("hung", "sig") if a.head == "lg" else ("hung",)):
+            key = s if mode == "hung" else f"{s}@{mode}"; summ, per = evaluate(model, es, dev, mode); final[key] = dict(summary=summ, per_image=per)
+            print(f"[{tag}] final {key}: acc {summ['acc']:.4f} prec {summ['prec']:.4f} f1 {summ['f1']:.4f}", flush=True)
+            if wb: wb.summary.update({f"final/{key}/{m}": summ[m] for m in ("acc", "prec", "f1")})
     if a.save:
         Path(a.save).parent.mkdir(parents=True, exist_ok=True); torch.save(dict(model=model.state_dict(), vocab=vocab.prefixes, args=vars(a)), a.save)
     out = ROOT/"results/linkformer"; out.mkdir(parents=True, exist_ok=True)
