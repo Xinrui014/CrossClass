@@ -19,7 +19,9 @@ where data and checkpoints live: `VERSIONS.md`.
 
 ## In progress
 - **v2 on branch `linker-v2`** (`VERSIONS.md`): three one-change experiments on v1, same recipe as the v1 best (XXL, lr 1e-4, 150k steps):
-  A `--head lg` (jobs 203520 l40 / 203521 pro6000), G `--geobias` (203524 l40 / 203526 pro6000), S `--tokens E2 --strnoise` (203527 l40);
+  done on the cluster: A `--head lg` 89.7 % (@sig) < v1; S `--tokens E2 --strnoise` 88.8 % (prefix gap in data v1 → CrossClass_data_v2 built);
+  **G `--geobias` 92.2 %** (prec 92.8) > v1 90.9 %. Round 1 on data v2 + fast recipe (--bps 16, token budget only, lr 2e-4) on intern02 GPUs 6/7: v2d2_G vs v2d2_GS (G + strings);
+  auto-started by launch_round1.sh once the data copy finishes;
   sibling guard keeps one copy per run; queue limit 5 jobs per user. Compare on clean41 against v1 90.9 %. Logs `~/xrssd/crossclass/logs/
   linkformer/v2_*.log`, wandb group v2. Smoke tests: lg head trails v1 at small scale; strings promising.
 
@@ -28,6 +30,7 @@ where data and checkpoints live: `VERSIONS.md`.
   (its text 107 = #156's R180); 5 "看不清" parts left out; Claude's ML450 card fixes (Top2 C11/C12 swap, Top1 C22 box).
 
 ## Next (owner to choose)
+- Paper direction (parked by owner until A/G/S results): CAD→photo transfer + structure-aware matching (silkscreen conventions) as the method novelty for CVPR; WACV-clean as benchmark.
 - Linking (report on clean41): v2 D (+ part image patches; needs a decision: rendered KiCad images or WACV-only) · none bias −1.5 at
   inference (+1.4 acc, −1.5 precision) · label dropout 0.15 → 0.05 · ignore messy KiCad labels in training · end-to-end track (detector +
   OCR) with the new linker · XL lr1e-4 · test-time augmentation.

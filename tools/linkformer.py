@@ -12,7 +12,10 @@ v2 options (2026-10-14, LightGlue-style matcher): --head lg = similarity S_ij pl
 label) and per text (tau_j: names some part); P_ij = sigma_i tau_j softmax_row(S)_ij softmax_col(S)_ij; loss = -log P on true pairs
 + balanced -log(1 - sigma) / -log(1 - tau) on parts / texts without a partner (LightGlue, ICCV 2023). --geobias = attention bias from
 each token pair's box geometry measured in the query box's own size (edge gap, offsets, size ratios; Relation Networks). --strnoise =
-OCR-like corruption and 30 % dropout of text strings during training (use with --tokens E2). Results JSON keeps per-image counts so any image subset
+OCR-like corruption and 30 % dropout of text strings during training (use with --tokens E2). --batched = the boards of a step in one
+padded forward (identical math, ~3x faster); --bps N = N boards per step, sorted by size and cut into padded groups (sizes within
+--size_ratio, <= --tok_budget padded tokens), gradients accumulated so every board weighs 1 / N; evaluation then also runs in groups.
+Results JSON keeps per-image counts so any image subset
 (e.g. the 42 test images) can be scored afterwards (tools/linkformer_report.py). --wandb <project> logs loss, lr, eval and final scores.
 Usage: linkformer.py --train dev3 --eval dev3 --size L --tokens E1 --steps 1000 [--device cuda] [--tag name]
   board sets: dev3, test42, all45, fold<k>train, fold<k>test, kicad199, kicadtrain, kicadval, kicad300, kicad1000;
@@ -155,11 +158,12 @@ class BoardStream(torch.utils.data.IterableDataset):
             if e["n"] and e["m"]: yield e
 
 def rope_2d(x, pos, freqs):
-    """x: (heads, N, hd); first half of hd rotated by x-position, second half by y-position, one frequency per pair."""
+    """x: (heads, N, hd) with pos (N, 2), or (B, heads, N, hd) with pos (B, N, 2); first half of hd rotated by x-position, second
+    half by y-position, one frequency per pair."""
     hd = x.shape[-1]; q = hd // 4
     out = []
     for a, half in enumerate((x[..., :hd//2], x[..., hd//2:])):
-        ang = pos[:, a:a+1] * freqs[None, :q]                      # (N, q)
+        ang = (pos[..., a:a+1] * freqs[:q]).unsqueeze(-3)          # (1, N, q) or (B, 1, N, q)
         c, s = torch.cos(ang), torch.sin(ang); x1, x2 = half[..., 0::2], half[..., 1::2]
         out += [torch.stack([x1*c - x2*s, x1*s + x2*c], -1).flatten(-2)]
     return torch.cat(out, -1)
@@ -173,6 +177,12 @@ class Block(nn.Module):
         q, k = rope_2d(q, pos, freqs), rope_2d(k, pos, freqs)
         am = bias[None].to(q.dtype) if bias is not None else None                  # (1, heads, N, N), added to the attention scores
         a = F.scaled_dot_product_attention(q[None], k[None], v[None], attn_mask=am, dropout_p=self.p if self.training else 0.0)[0].permute(1, 0, 2).reshape(N, d)
+        x = x + self.drop(self.o(a)); return x + self.drop(self.mlp(self.n2(x)))
+    def forward_b(self, x, pos, freqs, am):
+        """Padded batch: x (B, N, d), pos (B, N, 2), am (B, heads or 1, 1 or N, N) additive mask / bias (-inf on padded keys)."""
+        B, N, d = x.shape; q, k, v = self.qkv(self.n1(x)).view(B, N, 3, self.h, d//self.h).permute(2, 0, 3, 1, 4)
+        q, k = rope_2d(q, pos, freqs), rope_2d(k, pos, freqs)
+        a = F.scaled_dot_product_attention(q, k, v, attn_mask=am.to(q.dtype), dropout_p=self.p if self.training else 0.0).transpose(1, 2).reshape(B, N, d)
         x = x + self.drop(self.o(a)); return x + self.drop(self.mlp(self.n2(x)))
 
 def pair_geometry(box, is_text):
@@ -199,11 +209,30 @@ class LinkFormer(nn.Module):
         lam = torch.logspace(math.log10(0.5), math.log10(512), hd // 4)   # wavelengths from half a part to 512 parts
         self.register_buffer("freqs", 2*math.pi/lam)
     def forward(self, e):
+        if isinstance(e, list): return self.forward_batch(e)
         x = self.inp(e["feats"])
         if self.use_string: x = x + self.pref(e["pref"]) + sum(emb(e["dig"][:, k]) for k, emb in enumerate(self.dig))
         bias = self.gb(pair_geometry(e["box"], e["feats"][:, 0])).permute(2, 0, 1) if self.geobias else None   # (heads, N, N)
         for blk in self.blocks: x = blk(x, e["pos"], self.freqs, bias)
-        x = self.nf(x); hp, ht = x[:e["n"]], x[e["n"]:]
+        return self.head_out(self.nf(x), e["n"])
+    def forward_batch(self, es):
+        """Several boards in one padded batch (same math as one forward per board; padded tokens are masked out as keys)."""
+        Ns = [e["feats"].shape[0] for e in es]; N = max(Ns); B = len(es)
+        pad = lambda t, v=0: F.pad(t, (0, 0)*(t.dim()-1) + (0, N-t.shape[0]), value=v)
+        valid = torch.zeros(B, N, dtype=torch.bool, device=es[0]["feats"].device)
+        for b, n in enumerate(Ns): valid[b, :n] = True
+        x = self.inp(torch.stack([pad(e["feats"]) for e in es])); pos = torch.stack([pad(e["pos"]) for e in es])
+        if self.use_string:
+            dig = torch.stack([pad(e["dig"], 10) for e in es])
+            x = x + self.pref(torch.stack([pad(e["pref"]) for e in es])) + sum(emb(dig[..., k]) for k, emb in enumerate(self.dig))
+        am = torch.zeros(B, 1, 1, N, device=x.device).masked_fill(~valid[:, None, None, :], float("-inf"))
+        if self.geobias:
+            am = am + torch.stack([F.pad(self.gb(pair_geometry(e["box"], e["feats"][:, 0])).permute(2, 0, 1), (0, N-n, 0, N-n)) for e, n in zip(es, Ns)])
+        for blk in self.blocks: x = blk.forward_b(x, pos, self.freqs, am)
+        x = self.nf(x)
+        return [self.head_out(x[b, :n], e["n"]) for b, (e, n) in enumerate(zip(es, Ns))]
+    def head_out(self, x, n):
+        hp, ht = x[:n], x[n:]
         S = self.wq(hp) @ self.wk(ht).T / math.sqrt(x.shape[1])
         if self.head == "lg": return S, self.ms(hp).squeeze(1), self.mt(ht).squeeze(1)
         return torch.cat([S, self.none(hp)], 1)                     # (n, m+1), last column = none
@@ -256,8 +285,27 @@ def summarize(per):
 def to_dev(e, dev): return {k: (v.to(dev) if torch.is_tensor(v) else v) for k, v in e.items()}
 
 AMP = False
+def size_groups(es, ratio=2.0, budget=16384, cap=None):
+    """Boards sorted by token count, cut into groups whose sizes differ <= ratio x and whose padded size (boards x largest) <= budget
+    (and <= cap boards); each group is one padded forward."""
+    out, cur = [], []
+    for e in sorted(es, key=lambda e: e["n"]+e["m"]):
+        N = e["n"]+e["m"]
+        if cur and (N > ratio*(cur[0]["n"]+cur[0]["m"]) or (len(cur)+1)*N > budget or (cap and len(cur) >= cap)): out.append(cur); cur = []
+        cur.append(e)
+    return out + ([cur] if cur else [])
+
+BATCH_EVAL = False                                    # set by --bps / --batched: evaluate size groups in padded forwards (same results)
 def evaluate(model, encs, dev, mode="hung"):
     model.eval(); per = {}
+    if BATCH_EVAL:
+        for g in size_groups([e for e in encs if e["n"] and e["m"]], cap=64):
+            with torch.no_grad(), torch.autocast("cuda", dtype=torch.bfloat16, enabled=AMP and dev.type == "cuda"):
+                outs = model([to_dev(e, dev) for e in g])
+            for e, o in zip(g, outs): per[e["id"]] = count(e, decode(o, mode))
+        for e in encs:
+            if not (e["n"] and e["m"]): per[e["id"]] = count(e, {})
+        model.train(); return summarize(per), per
     for e in encs:
         with torch.autocast("cuda", dtype=torch.bfloat16, enabled=AMP and dev.type == "cuda"):
             per[e["id"]] = count(e, decode(model(to_dev(e, dev)), mode) if e["n"] and e["m"] else {})
@@ -281,9 +329,15 @@ if __name__ == "__main__":
     ap.add_argument("--workers", type=int, default=0, help="DataLoader worker processes for augmentation / encoding")
     ap.add_argument("--head", default="dot", choices=["dot", "lg"], help="dot = softmax over texts + none column; lg = LightGlue-style matchability")
     ap.add_argument("--geobias", action="store_true", help="attention bias from pair box geometry in the query box's own size")
+    ap.add_argument("--batched", action="store_true", help="the boards of one optimizer step in one padded forward (same math, faster)")
+    ap.add_argument("--bps", type=int, default=0, help="boards per optimizer step (overrides --accum; implies --batched): sorted by size, "
+                    "cut into padded groups with sizes within --size_ratio and at most --tok_budget padded tokens, gradients accumulated")
+    ap.add_argument("--size_ratio", type=float, default=2.0); ap.add_argument("--tok_budget", type=int, default=16384)
     ap.add_argument("--strnoise", action="store_true", help="training: 30 %% of text strings dropped, 15 %% corrupted like OCR (with --tokens E2)")
     a = ap.parse_args(); torch.set_num_threads(a.threads)
     if a.strnoise: STRNOISE = (0.30, 0.15)
+    if a.bps: a.accum, a.batched = a.bps, True
+    if a.batched: BATCH_EVAL = True
     world, rank, local = int(os.environ.get("WORLD_SIZE", 1)), int(os.environ.get("RANK", 0)), int(os.environ.get("LOCAL_RANK", 0)); is_main = rank == 0
     torch.manual_seed(a.seed); np.random.seed(a.seed)
     sets = load_sets(a.data); AMP = a.amp
@@ -327,7 +381,16 @@ if __name__ == "__main__":
     log = []; t0 = time.time(); run = None
     for step in range(1, a.steps+1):
         opt.zero_grad(); tot = 0.0
-        for micro in range(acc):
+        if a.batched:
+            es = [from_numpy(next(stream)) for _ in range(acc)]
+            groups = size_groups(es, a.size_ratio, a.tok_budget) if a.bps else [es]
+            for gi, g in enumerate(groups):
+                with (net.no_sync() if world > 1 and gi < len(groups)-1 else nullcontext()):
+                    with torch.autocast("cuda", dtype=torch.bfloat16, enabled=a.amp and dev.type == "cuda"):
+                        outs = net([to_dev(e, dev) for e in g])
+                    loss = sum((loss_lg(o, e["tmask"].to(dev), e["ign"]) if a.head == "lg" else loss_fn(o.float(), e["tmask"].to(dev))) for o, e in zip(outs, g)) / acc
+                    loss.backward(); tot += loss.item()
+        for micro in (range(0) if a.batched else range(acc)):
             e = from_numpy(next(stream))
             with (net.no_sync() if world > 1 and micro < acc-1 else nullcontext()):
                 with torch.autocast("cuda", dtype=torch.bfloat16, enabled=a.amp and dev.type == "cuda"):

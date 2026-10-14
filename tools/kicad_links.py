@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 """Stage 2 of the KiCad link set: .kicad_pcb -> boards in the linking format of linkdata/wacv.json, one record per board side.
-- Parts: footprints on the side whose designator prefix maps to one of the 9 classes (table of kicad_render/render_all.py). Box = the
-  physical body: bounding box of the pads and the Fab-layer shapes (fallback: footprint box without text). Footprints with no class
-  (test points, holes, fiducials, logos) are not parts; their visible labels stay as texts that name no part, like WACV's test points.
+- Parts (v2, 2026-10-14): every footprint on the side that is a real component, whatever its designator prefix. Not components:
+  footprints without pads, board-only or do-not-populate footprints, footprint names of mounting holes / fiducials / test points / net
+  ties / solder jumpers / logos, and the prefixes in NONCOMP_PFX (TP, H, MH, FID, NT, SJ, GND, ...); their visible labels stay as texts
+  that name no part. Class from the extended prefix table PFX (WACV conventions, e.g. JP / CN -> connector, LD / DS -> diode,
+  K / BTN -> switch, RV / RP -> resistor, T -> transistor, F -> inductor); unknown prefix -> class 9 'other'.
+  (v1, CrossClass_data_v1: only footprints whose prefix is one of R RN FB L C LED D SW S Q IC U Y X J P were parts, so jumpers,
+  Japanese-style CN connectors, LD LEDs, buttons ... were texts naming no part.) Box = the physical body: bounding box of the pads and
+  the Fab-layer shapes (fallback: footprint box without text).
 - Texts: visible Reference fields on the side's silkscreen whose string looks like a designator, minus labels a photo would not show:
   >= 50 % of the label box inside any footprint body (printed under a component).
 - Excluded projects: possible recreations of / close relatives to WACV boards (EXCLUDE below).
@@ -20,9 +25,21 @@ DES = re.compile(r"^[A-Z]{1,4}\d{1,4}[A-Z]?$")
 EXCLUDE = re.compile(r"^(OLIMEX/|Duet3D/|BehrensG/ARTY_Z7|boobalakrishnan08/Arty100T|antmicro/arty-expansion-board|muhardianab/ArduinoMega2560|"
                      r"ISLOWIsmaeli/arduino-mega-design|AlanFord/ArduinoMega6axis|Moddler/CCD-Arduino-Mega|Villabaal/ArduinoMega-Autoclave|"
                      r"gggmmm/pcb-spartan-3|Fabeltranm/SPARTAN6|jonthomasson/SpartanMini|tcfh2003/Virtex-6|viktor-nikolov/MicroZed)", re.I)
-PFX = [("RN", 0), ("R", 0), ("FB", 2), ("L", 2), ("C", 1), ("LED", 4), ("D", 4), ("SW", 5), ("S", 5), ("Q", 6), ("IC", 7), ("U", 7), ("Y", 8), ("X", 8), ("J", 3), ("P", 3)]
-def pcls(ref):
-    m = re.match(r"([A-Z]+)\d", ref); return next((c for p, c in PFX if m and m.group(1) == p), -1)
+# class ids: 0 resistor, 1 capacitor, 2 inductor, 3 connector, 4 diode, 5 switch, 6 transistor, 7 IC, 8 oscillator, 9 other (v2)
+PFX = {"R": 0, "RN": 0, "RV": 0, "VR": 0, "RP": 0, "RA": 0, "RM": 0, "TH": 0, "C": 1, "L": 2, "FB": 2, "F": 2, "FL": 2, "FIL": 2,
+       "J": 3, "P": 3, "JP": 3, "CN": 3, "CON": 3, "USB": 3, "D": 4, "LED": 4, "LD": 4, "DS": 4, "CR": 4, "RGB": 4,
+       "SW": 5, "S": 5, "K": 5, "BTN": 5, "RL": 5, "Q": 6, "T": 6, "TR": 6, "U": 7, "IC": 7, "M": 7, "Y": 8, "X": 8, "XL": 8}
+NONCOMP_PFX = {"TP", "H", "MH", "FID", "NT", "SJ", "GND", "LOGO", "G", "REF", "KIBUZZARD"}
+NONCOMP_NAME = re.compile(r"mounting.?hole|fiducial|test.?point|net.?tie|solder.?jumper|logo|kibuzzard|mouse.?bite", re.I)
+V1_PFX = {"R", "RN", "FB", "L", "C", "LED", "D", "SW", "S", "Q", "IC", "U", "Y", "X", "J", "P"}        # parts in CrossClass_data_v1
+def prefix(ref): m = re.match(r"([A-Z]+)\d", ref); return m.group(1) if m else ""
+def pcls(ref): return PFX.get(prefix(ref), 9)
+def is_component(fp, ref):
+    """A real, populated component (any prefix): has pads, not board-only / DNP, not a hole / fiducial / test point / net tie / logo."""
+    if prefix(ref) in NONCOMP_PFX or len(fp.Pads()) == 0 or NONCOMP_NAME.search(str(fp.GetFPID().GetLibItemName())): return False
+    for f in ("IsBoardOnly", "IsDNP"):
+        if hasattr(fp, f) and getattr(fp, f)(): return False
+    return True
 def box_mm(bb): return [bb.GetX()/1e6, bb.GetY()/1e6, (bb.GetX()+bb.GetWidth())/1e6, (bb.GetY()+bb.GetHeight())/1e6]
 def union(bs): return [min(b[0] for b in bs), min(b[1] for b in bs), max(b[2] for b in bs), max(b[3] for b in bs)]
 def inside_frac(t, b):
@@ -44,7 +61,7 @@ def extract(entry, indir):
             bs += [box_mm(g.GetBoundingBox()) for g in fp.GraphicalItems() if g.GetLayer() == fab and g.Type() == pcbnew.PCB_SHAPE_T]
             body = union(bs) if bs else box_mm(fp.GetBoundingBox(False, False)); bodies.append(body)
             ref = fp.GetReference(); r = fp.Reference()
-            if DES.match(ref) and pcls(ref) >= 0: parts.append(dict(box=body, des=ref, cls=pcls(ref)))
+            if DES.match(ref) and is_component(fp, ref): parts.append(dict(box=body, des=ref, cls=pcls(ref)))
             if DES.match(ref) and r.IsVisible() and r.GetLayer() == silk:
                 texts.append(dict(box=box_mm(r.GetBoundingBox()), text=ref, angle=round(r.GetTextAngleDegrees(), 1)))
         texts = [t for t in texts if max((inside_frac(t["box"], b) for b in bodies), default=0) < 0.5]
