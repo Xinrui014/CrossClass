@@ -31,6 +31,9 @@ SIZES = {"S": (128, 4), "M": (256, 6), "L": (384, 8), "XL": (512, 12), "XXL": (7
 PFX = re.compile(r"^([A-Z]+)(\d+)([A-Z]?)$")
 FAKE_PFX = ["TP", "R", "C", "U", "J", "D", "Q", "L", "FB", "SW", "Y", "P"]
 STRNOISE = (0.0, 0.0)                                 # (p string dropped, p string corrupted) per text in augment(); set by --strnoise
+AUGP = (0.15, 0.05)                                   # (p label dropped, fake labels per text) in augment(); set by --label_drop / --fake
+NONE_W = 1.0                                          # loss weight of parts whose target is none (batched dot head); set by --none_w
+IGN_MESSY = False                                     # training: no loss on parts whose label is printed nearer another part; --ign_messy
 CONFUSE = {"0": "O", "O": "0", "1": "I", "I": "1", "5": "S", "S": "5", "8": "B", "B": "8", "2": "Z", "Z": "2", "6": "G", "G": "6"}
 
 def corrupt(s, rng):
@@ -145,6 +148,23 @@ def load_model(path, dev):
     m = LinkFormer(d, L, len(vocab.idx)+2, A["tokens"] == "E2", 0.0, A.get("head", "dot"), A.get("geobias", False))
     m.load_state_dict(ck["model"]); return m.to(dev).eval(), vocab, A
 
+def messy(b, margin=0.5):
+    """Per part: True when its label (first text with the part's designator) is printed >= margin median part sizes nearer, by edge gap,
+    to another part than to its own (the 'misplaced' rule of tools/label_placement_check.py)."""
+    P = np.array([p["box"] for p in b["parts"]], float).reshape(-1, 4); T = np.array([t["box"] for t in b["texts"]], float).reshape(-1, 4)
+    if len(P) < 2 or not len(T): return [False]*len(P)
+    unit = max(float(np.median(np.maximum(P[:, 2]-P[:, 0], P[:, 3]-P[:, 1]))), 1e-6)
+    gx = np.maximum(0, np.maximum(T[:, None, 0]-P[None, :, 2], P[None, :, 0]-T[:, None, 2]))
+    gy = np.maximum(0, np.maximum(T[:, None, 1]-P[None, :, 3], P[None, :, 1]-T[:, None, 3])); G = np.hypot(gx, gy)/unit
+    first = {}
+    for j, t in enumerate(b["texts"]): first.setdefault(t["text"], j)
+    out = []
+    for i, p in enumerate(b["parts"]):
+        j = first.get(p["des"]) if p["des"] else None
+        if j is None: out.append(False); continue
+        g = G[j].copy(); own = g[i]; g[i] = np.inf; out.append(bool(own - g.min() >= margin))
+    return out
+
 def from_numpy(e): return {k: (torch.from_numpy(v) if isinstance(v, np.ndarray) else v) for k, v in e.items()}
 
 class BoardStream(torch.utils.data.IterableDataset):
@@ -154,7 +174,8 @@ class BoardStream(torch.utils.data.IterableDataset):
         wi = torch.utils.data.get_worker_info(); rng = random.Random(self.seed*1000 + (wi.id if wi else 0))
         while True:
             mix = bool(self.mixb) and rng.random() < self.mix_p; b = rng.choice(self.mixb if mix else self.trb)
-            e = encode(augment(b, rng) if (self.aug or mix) else b, self.vocab, as_numpy=True)
+            if IGN_MESSY and not mix: b = dict(b, parts=[dict(p, ign=True) if m else p for p, m in zip(b["parts"], messy(b))])
+            e = encode(augment(b, rng, *AUGP) if (self.aug or mix) else b, self.vocab, as_numpy=True)
             if e["n"] and e["m"]: yield e
 
 def dense_batch(es, dev, targets=False):
@@ -173,6 +194,11 @@ def dense_batch(es, dev, targets=False):
         for b, e in enumerate(es):
             n, m = e["n"], e["m"]; tm[b, :n] = False; tm[b, :n, n:n+m] = e["tmask"][:, :m]; tm[b, :n, N] = e["tmask"][:, m]
         out["tm"] = tm
+        if NONE_W != 1.0:                                 # rows whose only target is the none column (not 'ign') get weight NONE_W
+            w = np.ones((B, P), np.float32)
+            for b, e in enumerate(es):
+                t = e["tmask"]; w[b, :e["n"]][t[:, -1] & ~t[:, :-1].any(1) & ~np.array(e["ign"], bool)] = NONE_W
+            out["w"] = w
     return {k: torch.from_numpy(v).to(dev, non_blocking=True) for k, v in out.items()}
 
 def rope_cs(pos, freqs):
@@ -281,6 +307,7 @@ class LinkFormer(nn.Module):
         col = torch.cat([(torch.arange(N, device=x.device)[None] >= n) & d["valid"], d["valid"].new_ones(B, 1)], 1)   # text tokens + none
         L = L.masked_fill(~col[:, None, :], float("-inf"))
         per = torch.logsumexp(L, 2) - torch.logsumexp(L.masked_fill(~d["tm"], float("-inf")), 2)                # padded part rows: 0
+        if "w" in d: per = per * d["w"]
         return (per.sum(1) / d["n"]).sum()
     def head_out(self, x, n):
         hp, ht = x[:n], x[n:]
@@ -385,12 +412,17 @@ if __name__ == "__main__":
                     "cut into padded groups with sizes within --size_ratio and at most --tok_budget padded tokens, gradients accumulated")
     ap.add_argument("--size_ratio", type=float, default=2.0); ap.add_argument("--tok_budget", type=int, default=16384)
     ap.add_argument("--strnoise", action="store_true", help="training: 30 %% of text strings dropped, 15 %% corrupted like OCR (with --tokens E2)")
+    ap.add_argument("--label_drop", type=float, default=0.15, help="augment: share of labels dropped (their parts become none)")
+    ap.add_argument("--fake", type=float, default=0.05, help="augment: fake designator-like labels per text (name no part)")
+    ap.add_argument("--none_w", type=float, default=1.0, help="loss weight of parts whose target is none (batched dot head)")
+    ap.add_argument("--ign_messy", action="store_true", help="no loss on parts whose label is printed nearer another part (KiCad train)")
     ap.add_argument("--compile", action="store_true", help="torch.compile the padded training forward + loss (dynamic shapes; single GPU)")
     ap.add_argument("--fused_adam", action="store_true", help="fused AdamW kernel (same update rule)")
     ap.add_argument("--profile", default="", help="'A:B': NVTX ranges per phase and a CUDA profiler range (nsys --capture-range=cudaProfilerApi) "
                     "over steps A..B-1, print s/step, then exit")
     a = ap.parse_args(); torch.set_num_threads(a.threads)
     if a.strnoise: STRNOISE = (0.30, 0.15)
+    AUGP, NONE_W, IGN_MESSY = (a.label_drop, a.fake), a.none_w, a.ign_messy
     if a.bps: a.accum, a.batched = a.bps, True
     if a.batched: BATCH_EVAL = True
     world, rank, local = int(os.environ.get("WORLD_SIZE", 1)), int(os.environ.get("RANK", 0)), int(os.environ.get("LOCAL_RANK", 0)); is_main = rank == 0

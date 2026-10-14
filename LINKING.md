@@ -189,3 +189,8 @@ B8 here is 0.568 vs 0.570 in CrossClass.md: same method, retrained after the 202
   Cleaning moves every linker up 1.2–1.7 points on the same 41 images and keeps the ranking; best precision 88.3 → 92.2 %. With the
   ceiling at 100 %, 98 % means ≤ 84 wrong of 4,185 — the remaining ~295-part gap is the linker, not the labels. Transformer numbers are
   fp32 on the L40 and differ by 4–8 parts from the bf16 numbers logged on the cluster (e.g. XXL lr1e-4 473 vs 465 wrong on old42).
+- **2026-10-14 error analysis and v2** (pages Ffx2RnK2NbxmsKCxnqrAj3 errors, 41WS71ciNk2ovCsLuhSueY model; details `VERSIONS.md`,
+  `memory/2026-10-14.md`): KiCad val 96.4 % → clean41 90.9 % (≈ 2.6 density + 2.9 photo vs layout); 45 % of errors on labels printed nearer
+  another part; none errors = the model's own "no label" choice (far labels, big parts). v2 one-change experiments on v1's recipe: geometry
+  bias in each box's own size **92.2 %** (best), LightGlue-style matchability head 89.7 %, OCR strings 88.8 % — strings were hurt by data v1
+  making only 16 designator prefixes parts → CrossClass_data_v2 (any real component is a part). Round 1 on data v2 running.

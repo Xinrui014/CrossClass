@@ -18,12 +18,17 @@ where data and checkpoints live: `VERSIONS.md`.
   https://claude.ai/artifact/41WS71ciNk2ovCsLuhSueY (model explainer + v2 design).
 
 ## In progress
-- **v2 on branch `linker-v2`** (`VERSIONS.md`): three one-change experiments on v1, same recipe as the v1 best (XXL, lr 1e-4, 150k steps):
-  done on the cluster: A `--head lg` 89.7 % (@sig) < v1; S `--tokens E2 --strnoise` 88.8 % (prefix gap in data v1 → CrossClass_data_v2 built);
-  **G `--geobias` 92.2 %** (prec 92.8) > v1 90.9 %. Round 1 on data v2 + fast recipe (--bps 16, token budget only, lr 2e-4) on intern02 GPUs 6/7: v2d2_G vs v2d2_GS (G + strings);
-  auto-started by launch_round1.sh once the data copy finishes;
-  sibling guard keeps one copy per run; queue limit 5 jobs per user. Compare on clean41 against v1 90.9 %. Logs `~/xrssd/crossclass/logs/
-  linkformer/v2_*.log`, wandb group v2. Smoke tests: lg head trails v1 at small scale; strings promising.
+- **v2 on branch `linker-v2`** (`VERSIONS.md`). Cluster results (data v1, v1 recipe), clean41 vs v1 90.9 %: A `--head lg` 89.7 % (@sig),
+  S `--tokens E2 --strnoise` 88.8 % (data gap: JP/CN/LD/… never parts in data v1), **G `--geobias` 92.2 %** (prec 92.8) = best so far.
+- **CrossClass_data_v2** built (prefix-independent KiCad parts; `tools/kicad_links.py` v2 + `tools/make_data_v2.py`).
+- Round 1 done (data v2, fast recipe, lr 2e-4): v2d2_G clean41 90.3 %, **v2d2_GS 91.6 %** (strings help now); both < v2_G 92.2 %.
+- Training step optimized for the A800 (tag `linker-v2-a800-optimize`, 1.4–1.5× faster, same math; `VERSIONS.md`).
+- **Overnight queue on intern02 GPUs 6/7** (owner OK 2026-10-15 00:30 SGT, until ~11:00–12:00 SGT): `/dev_vepfs/xiyu/crossclass/queue.txt`
+  run by `queue_runner.sh 6|7` (log `logs/queue_log.txt`); `gpu_guard.sh` keeps a small holder on a GPU only while it has no job.
+  Phase A = one change each against v2d2_GS: v1d_G (data v1, fast recipe: data or recipe behind G's drop?), lr 1e-4 / 3e-4, seed 1,
+  `--label_drop 0.05`, `--none_w 0.5`, `--fake 0.15`, `--ign_messy`, `--size XL`, `--bps 32`. Choose winners on dev sets only (KiCad val +
+  clean_dev3, against the seed-to-seed difference); clean41 is reported, not used to choose. Phase B = the best combination at 1.2M
+  boards, 2 seeds (queued fallback: GS at 1.2M boards). Morning, no training: none bias and test-time augmentation on the checkpoints.
 
 ## Waiting on the owner
 - Confirm provisional WACV-clean choices: M_Spartan6Redux_Top_52 kept as answered (text "Q1"; silkscreen says U5); ML365_Top #155 left out
@@ -31,7 +36,7 @@ where data and checkpoints live: `VERSIONS.md`.
 
 ## Next (owner to choose)
 - Paper direction (parked by owner until A/G/S results): CAD→photo transfer + structure-aware matching (silkscreen conventions) as the method novelty for CVPR; WACV-clean as benchmark.
-- Linking (report on clean41): v2 D (+ part image patches; needs a decision: rendered KiCad images or WACV-only) · none bias −1.5 at
+- Linking (report on clean41): combine winners after round 1/2 · v2 D (+ part image patches; needs a decision: rendered KiCad images or WACV-only) · none bias −1.5 at
   inference (+1.4 acc, −1.5 precision) · label dropout 0.15 → 0.05 · ignore messy KiCad labels in training · end-to-end track (detector +
   OCR) with the new linker · XL lr1e-4 · test-time augmentation.
 - CrossClass (older list): V1 (VLM told to ignore printed text) · capacitor-cue test · Qwen3-VL-8B · FPIC transfer · clean gated hybrid.
