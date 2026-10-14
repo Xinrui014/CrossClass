@@ -18,8 +18,10 @@ where data and checkpoints live: `VERSIONS.md`.
   https://claude.ai/artifact/41WS71ciNk2ovCsLuhSueY (model explainer + v2 design).
 
 ## In progress
-- **v2 on branch `linker-v2`** (LightGlue-style matcher, `VERSIONS.md`): experiments A (`--head lg`), B (+ `--geobias`), C (+ `--tokens E2
-  --strnoise`) on the cluster, same recipe as the v1 best (XXL, lr 1e-4, 150k steps); compare on clean41 against v1 90.9 %.
+- **v2 on branch `linker-v2`** (`VERSIONS.md`): three one-change experiments on v1, same recipe as the v1 best (XXL, lr 1e-4, 150k steps):
+  A `--head lg` (jobs 203520 l40 / 203521 pro6000), G `--geobias` (203524 l40 / 203526 pro6000), S `--tokens E2 --strnoise` (203527 l40);
+  sibling guard keeps one copy per run; queue limit 5 jobs per user. Compare on clean41 against v1 90.9 %. Logs `~/xrssd/crossclass/logs/
+  linkformer/v2_*.log`, wandb group v2. Smoke tests: lg head trails v1 at small scale; strings promising.
 
 ## Waiting on the owner
 - Confirm provisional WACV-clean choices: M_Spartan6Redux_Top_52 kept as answered (text "Q1"; silkscreen says U5); ML365_Top #155 left out

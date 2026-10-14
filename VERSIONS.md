@@ -7,7 +7,12 @@ and live on the L40 and the cluster (paths below). Report on WACV-clean v1, 41 t
 |---|---|---|---|---|---|
 | v0 baselines | `main` (commits up to `faab23e`) | 2026-10-10 | rules B1–B6, learned pair scorers B7 (geometry) / B8 (+ detector class, = ③) | WACV 3 board folds | old42: B7 82.5 %, B8 85.7 % · clean41: B7 84.0 %, B8 86.9 % |
 | **v1** LinkFormer E1 | tag **`linker-v1`** on `main` | 2026-10-10 → 10-14 | whole-board transformer; token = [is_text, ln w, ln h, w ≥ h] (geometry only); 2D RoPE on box centres in median-part units; score = dot product + a none column; per-part softmax loss; Hungarian decoding | CrossClass_data_v1 KiCad train (23,403 sides), no WACV | best `dv1_E1_XXL_150k_lr1e-4`: old42 89.9 % (cluster, bf16) / 89.7 % (fp32 rescore), **clean41 90.9 %** (379 wrong, precision 92.2 %); KiCad val 96.4 % |
-| **v2** LightGlue-style matcher | branch **`linker-v2`** | 2026-10-14 → | v1 + matchability per part (σ: has a label) and per text (τ: names a part), P = σ·τ·row-softmax·column-softmax, balanced loss (`--head lg`); attention bias from pair geometry in each box's own size (`--geobias`); OCR-string tokens with OCR-like noise and 30 % dropout (`--tokens E2 --strnoise`) | same KiCad train | experiments A (`--head lg`), B (+ `--geobias`), C (+ strings): running |
+| **v2** LightGlue-style matcher | branch **`linker-v2`** | 2026-10-14 → | v1 + matchability per part (σ: has a label) and per text (τ: names a part), P = σ·τ·row-softmax·column-softmax, balanced loss (`--head lg`); attention bias from pair geometry in each box's own size (`--geobias`); OCR-string tokens with OCR-like noise and 30 % dropout (`--tokens E2 --strnoise`) | same KiCad train | experiments, each = v1 + one change: A (`--head lg`), G (`--geobias`), S (`--tokens E2 --strnoise`); queued on the cluster 2026-10-14 (jobs 203520/203521, 203524/203526, 203527) |
+
+v2 smoke tests (L40, size S, `tools/v2_decode_check.py`): at 15k steps the lg head trails the v1 head (KiCad val subset 88.4 % with its
+best decoding vs 90.7 %; clean41 79.7 vs 81.2 %; the gap shrinks with training: −17 points at 2.5k steps, −8.5 at 15k with the default
+decoding), while strings help early (lg + geobias + strings at 3k steps ≈ v1 at 3k). So the planned A → B → C chain was changed to three
+separate one-change experiments A / G / S, to avoid mixing the lg head's handicap with the strings' gain.
 
 Why v2: error analysis of v1 on clean41 (`page/errors/`, artifact Ffx2RnK2NbxmsKCxnqrAj3): 45 % of errors are on labels printed nearer
 another part; none-errors come from the model's own "no label" choice (far labels, big parts, votes split over several texts); 37 % are
