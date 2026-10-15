@@ -32,6 +32,18 @@ original code (16 augmented boards × 3): fp32 loss / gradients agree to ~1e-6; 
 run ≈ 65 min instead of ≈ 100). Options added: `--profile A:B` (NVTX ranges + CUDA profiler range), `--compile` (torch.compile of the
 training forward; ~0.085 s/step after compiling but recompiles cost ~2 min each, not used), `--fused_adam`.
 
+**Overnight 2026-10-14/15** (intern02 A800 GPUs 6/7, data v2, 16 boards/step, lr 2e-4; clean41 acc / precision; per-image bootstrap CI):
+- G's drop explained: `v1d_G_b16_lr2e-4` (data v1, 37.5k steps) 90.7 % vs v2_G (data v1, 150k steps × 4 boards) 92.2 % → the fast
+  recipe's 4× fewer updates cause most of it (−1.6), data v2 ≈ −0.4. lr 1e-4 ≈ 2e-4 (GS 91.8 vs 91.6).
+- 2×2 ablation at 100k updates (1.6M boards, ~2.8 h each): base (v1 model) 91.5 / 92.0, G 91.6 / 91.9, S 92.7 / 92.4, **GS 93.1 / 92.7
+  (best; KiCad val 98.1)**. Strings: +1.2 [+0.1, +2.3] over base, +1.5 [+0.4, +2.5] over G. Geometry bias: +0.1 [−0.7, +1.0] alone,
+  +0.4 [−0.4, +1.2] with strings — its +1.3 under the short recipe mostly disappears with longer training.
+- Structure options (one change on GS): `--strrel` (string relations of text pairs in the pair bias) 37.5k +0.6, 100k 93.2 (+0.15,
+  [−0.8, +1.1]); `--glayers` (own bias head per layer) 37.5k ±0, 40 % slower; `--local 8` (attention only within 8 part sizes) 100k
+  92.5 (−0.6, [−1.5, +0.5]): far labels (> 8 sizes) 53.8 → 15.4 %, dense areas worse; no speed gain (mask on full attention).
+- Lesson: early gains shrink with longer training; test changes at full length; differences < ~1 point need seeds.
+- Queue tooling: `queue_runner.sh` / `gpu_guard.sh` on intern02; runs uploaded to wandb from their logs (`replay-<tag>`).
+
 v2 smoke tests (L40, size S, `tools/v2_decode_check.py`): at 15k steps the lg head trails the v1 head (KiCad val subset 88.4 % with its
 best decoding vs 90.7 %; clean41 79.7 vs 81.2 %; the gap shrinks with training: −17 points at 2.5k steps, −8.5 at 15k with the default
 decoding), while strings help early (lg + geobias + strings at 3k steps ≈ v1 at 3k). So the planned A → B → C chain was changed to three

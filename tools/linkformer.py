@@ -145,7 +145,7 @@ def encode(b, vocab, as_numpy=False):
 def load_model(path, dev):
     """A saved checkpoint -> (model in eval mode, vocab, its training args)."""
     ck = torch.load(path, map_location="cpu"); A = ck["args"]; vocab = Vocab(ck["vocab"]); d, L = SIZES[A["size"]]
-    m = LinkFormer(d, L, len(vocab.idx)+2, A["tokens"] == "E2", 0.0, A.get("head", "dot"), A.get("geobias", False))
+    m = LinkFormer(d, L, len(vocab.idx)+2, A["tokens"] == "E2", 0.0, A.get("head", "dot"), A.get("geobias", False), A.get("strrel", False), A.get("glayers", False), A.get("local", 0.0))
     m.load_state_dict(ck["model"]); return m.to(dev).eval(), vocab, A
 
 def messy(b, margin=0.5):
@@ -253,21 +253,34 @@ def pair_geometry(box, is_text):
                         torch.log1p(g/torch.maximum(wa, ha)), torch.log(K(w)/wa), torch.log(K(h)/ha), torch.log1p(g),
                         A(is_text).expand(sh), K(is_text).expand(sh)], -1)
 
+def pair_strings(pref, dig, is_text):
+    """(..., N, N, 3) string relations of token pairs (query a, key b) when both are texts with a known prefix: same prefix; signed log of the
+    designator number difference (b - a) when both have digits; consecutive numbers (|difference| = 1). Zero for every other pair."""
+    known = (pref > 1) & (is_text > 0.5); has = (dig < 10).any(-1)
+    num = ((dig < 10) * dig.clamp(max=9) * torch.tensor([1000, 100, 10, 1], device=dig.device)).sum(-1).float()   # right-aligned digits, 10 = pad
+    A = lambda t: t[..., :, None]; K = lambda t: t[..., None, :]
+    same = A(known) & K(known) & (A(pref) == K(pref)); both = same & A(has) & K(has); dn = K(num) - A(num)
+    return torch.stack([same.float(), torch.where(both, torch.sign(dn)*torch.log1p(dn.abs()), torch.zeros_like(dn)), (both & (dn.abs() == 1)).float()], -1)
+
 class LinkFormer(nn.Module):
-    def __init__(self, d, layers, n_prefix, use_string, dropout=0.0, head="dot", geobias=False):
+    def __init__(self, d, layers, n_prefix, use_string, dropout=0.0, head="dot", geobias=False, strrel=False, glayers=False, local=0.0):
         super().__init__(); self.use_string = use_string; hd = 64; heads = d // hd; self.head = head; self.geobias = geobias
+        self.strrel, self.glayers, self.heads, self.local = strrel, glayers, heads, local
         self.inp = nn.Sequential(nn.Linear(4, d), nn.GELU(), nn.Linear(d, d))
         self.pref = nn.Embedding(n_prefix, d); self.dig = nn.ModuleList([nn.Embedding(11, d) for _ in range(4)])
         self.blocks = nn.ModuleList([Block(d, heads, dropout) for _ in range(layers)]); self.nf = nn.LayerNorm(d)
         self.wq = nn.Linear(d, d); self.wk = nn.Linear(d, d)
         if head == "lg": self.ms = nn.Linear(d, 1); self.mt = nn.Linear(d, 1)          # matchability of parts / texts
         else: self.none = nn.Linear(d, 1)
-        if geobias: self.gb = nn.Sequential(nn.Linear(10, 32), nn.GELU(), nn.Linear(32, heads))
+        nf = 10 + 3*strrel                                                       # pair features: geometry (+ string relations)
+        if geobias and glayers: self.gb = nn.Sequential(nn.Linear(nf, 32), nn.GELU()); self.gbl = nn.Linear(32, heads*layers)   # own bias per layer
+        elif geobias: self.gb = nn.Sequential(nn.Linear(nf, 32), nn.GELU(), nn.Linear(32, heads))
         lam = torch.logspace(math.log10(0.5), math.log10(512), hd // 4)   # wavelengths from half a part to 512 parts
         self.register_buffer("freqs", 2*math.pi/lam)
     def forward(self, e):
         if isinstance(e, list): return self.forward_batch(e)
         if "tm" in e: return self.train_loss(e)
+        if self.strrel or self.glayers or self.local: return self.forward_batch([e])[0]   # the new options are implemented in dense() only
         x = self.inp(e["feats"])
         if self.use_string: x = x + self.pref(e["pref"]) + sum(emb(e["dig"][:, k]) for k, emb in enumerate(self.dig))
         bias = self.gb(pair_geometry(e["box"], e["feats"][:, 0])).permute(2, 0, 1) if self.geobias else None   # (heads, N, N)
@@ -276,6 +289,12 @@ class LinkFormer(nn.Module):
     def forward_batch(self, es):
         """Several boards in one padded batch (same math as one forward per board; padded tokens are masked out as keys)."""
         Ns = [e["feats"].shape[0] for e in es]; N = max(Ns); B = len(es)
+        if self.strrel or self.glayers or self.local:                            # through dense(): pad the boards as dense_batch does
+            pad = lambda t, v=0: F.pad(t, (0, 0)*(t.dim()-1) + (0, N-t.shape[0]), value=v)
+            d = dict(feats=torch.stack([pad(e["feats"]) for e in es]), pos=torch.stack([pad(e["pos"]) for e in es]), box=torch.stack([pad(e["box"]) for e in es]),
+                     pref=torch.stack([pad(e["pref"]) for e in es]), dig=torch.stack([pad(e["dig"], 10) for e in es]),
+                     valid=torch.stack([torch.arange(N, device=es[0]["feats"].device) < n for n in Ns]))
+            x = self.dense(d); return [self.head_out(x[b, :n], e["n"]) for b, (e, n) in enumerate(zip(es, Ns))]
         pad = lambda t, v=0: F.pad(t, (0, 0)*(t.dim()-1) + (0, N-t.shape[0]), value=v)
         valid = torch.zeros(B, N, dtype=torch.bool, device=es[0]["feats"].device)
         for b, n in enumerate(Ns): valid[b, :n] = True
@@ -296,8 +315,21 @@ class LinkFormer(nn.Module):
         B, N = d["valid"].shape; x = self.inp(d["feats"])
         if self.use_string: x = x + self.pref(d["pref"]) + sum(emb(d["dig"][..., k]) for k, emb in enumerate(self.dig))
         am = torch.zeros(B, 1, 1, N, device=x.device).masked_fill(~d["valid"][:, None, None, :], float("-inf"))
-        if self.geobias: am = am + self.gb(pair_geometry(d["box"], d["feats"][..., 0])).permute(0, 3, 1, 2)
-        am = am.to(torch.get_autocast_dtype("cuda") if torch.is_autocast_enabled("cuda") else x.dtype).contiguous(); cs = rope_cs(d["pos"], self.freqs)
+        if self.local:   # local attention: a real token sees only tokens whose centre is within `local` median part sizes (padded rows: all)
+            far = (torch.cdist(d["pos"], d["pos"]) > self.local) & d["valid"][:, :, None]
+            am = am.masked_fill(far[:, None], float("-inf"))
+        dt = torch.get_autocast_dtype("cuda") if torch.is_autocast_enabled("cuda") else x.dtype; cs = rope_cs(d["pos"], self.freqs)
+        if self.geobias:
+            pf = pair_geometry(d["box"], d["feats"][..., 0])
+            if self.strrel: pf = torch.cat([pf, pair_strings(d["pref"], d["dig"], d["feats"][..., 0])], -1)
+            if self.glayers:                                                     # shared hidden layer, one output head per layer
+                H = self.gb(pf); h = self.heads
+                for l, blk in enumerate(self.blocks):
+                    bl = F.linear(H, self.gbl.weight[l*h:(l+1)*h], self.gbl.bias[l*h:(l+1)*h]).permute(0, 3, 1, 2)
+                    x = blk.forward_b(x, cs, (am + bl).to(dt).contiguous())
+                return self.nf(x)
+            am = am + self.gb(pf).permute(0, 3, 1, 2)
+        am = am.to(dt).contiguous()
         for blk in self.blocks: x = blk.forward_b(x, cs, am)
         return self.nf(x)
     def train_loss(self, d):
@@ -407,6 +439,9 @@ if __name__ == "__main__":
     ap.add_argument("--workers", type=int, default=0, help="DataLoader worker processes for augmentation / encoding")
     ap.add_argument("--head", default="dot", choices=["dot", "lg"], help="dot = softmax over texts + none column; lg = LightGlue-style matchability")
     ap.add_argument("--geobias", action="store_true", help="attention bias from pair box geometry in the query box's own size")
+    ap.add_argument("--strrel", action="store_true", help="geometry bias also sees string relations of text pairs: same prefix, number difference, consecutive")
+    ap.add_argument("--glayers", action="store_true", help="geometry bias with its own output head per layer (shared hidden layer)")
+    ap.add_argument("--local", type=float, default=0.0, help="local attention: each token sees only tokens within this many median part sizes (0 = whole board)")
     ap.add_argument("--batched", action="store_true", help="the boards of one optimizer step in one padded forward (same math, faster)")
     ap.add_argument("--bps", type=int, default=0, help="boards per optimizer step (overrides --accum; implies --batched): sorted by size, "
                     "cut into padded groups with sizes within --size_ratio and at most --tok_budget padded tokens, gradients accumulated")
@@ -445,7 +480,8 @@ if __name__ == "__main__":
     else:
         dev = torch.device(a.device)
     d, L = SIZES[a.size]
-    model = LinkFormer(d, L, len(vocab.idx)+2, a.tokens == "E2", a.dropout, a.head, a.geobias).to(dev)
+    assert not a.strrel or (a.tokens == "E2" and a.geobias), "--strrel needs --tokens E2 and --geobias"; assert not a.glayers or a.geobias
+    model = LinkFormer(d, L, len(vocab.idx)+2, a.tokens == "E2", a.dropout, a.head, a.geobias, a.strrel, a.glayers, a.local).to(dev)
     if a.init: model.load_state_dict(ck["model"])
     net = torch.nn.parallel.DistributedDataParallel(model, device_ids=[local], find_unused_parameters=True) if world > 1 else model
     if a.compile and world == 1 and a.batched and a.head == "dot": model.train_loss = torch.compile(model.train_loss, dynamic=True)
@@ -496,6 +532,7 @@ if __name__ == "__main__":
         with ph("optim"): torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0); opt.step(); sched.step()
         run = tot if run is None else 0.98*run + 0.02*tot                                             # a GPU tensor when batched
         if not is_main: continue
+        if not wb and step % 250 == 0: print(f"[{tag}] step {step} train_loss {float(run):.4f}", flush=True)   # finer loss curve in the log
         if wb and step % 50 == 0: wb.log(dict(loss=float(run), lr=sched.get_last_lr()[0], steps_per_s=step/(time.time()-t0)), step=step)
         if a.ckpt_every and a.save and step % a.ckpt_every == 0 and step < a.steps:
             Path(a.save).parent.mkdir(parents=True, exist_ok=True); torch.save(dict(model=model.state_dict(), vocab=vocab.prefixes, args=vars(a), step=step), a.save.replace(".pt", f"_step{step}.pt"))
