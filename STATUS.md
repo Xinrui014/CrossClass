@@ -18,8 +18,7 @@ branches, data and checkpoint locations: `VERSIONS.md`. Review base page: Pipeli
 - Nothing running. intern02 GPUs 4-7 free for CrossClass (6 / 7 hold gpu_guard holders); GPUs 0-3: owner unsure, other users on them —
   do not use. L40: GPU 0 not to be used. VLM server off.
 - Checkpoints of the 2026-10-15..17 runs are only on intern02 `/dev_vepfs/xiyu/crossclass/ckpt/` (move to the L40 when the link is fast).
-- Code since commit 2a8b193 on `linker-v2` is NOT committed (tools/linkformer.py options --noise / --rankrel / --detscore / --det_drop /
-  --fptype / loss parts, the new tools, tools/e2e/ copied from the scratchpad) — ask the owner before committing.
+- Code, notes and result JSONs committed on `linker-v2` as 6833335 (2026-10-17, owner OK); not pushed yet (ask before pushing).
 
 ## Open / waiting on the owner
 - Next experiments to propose: (a) B (head + C) combined with the LLM per-board prefix mapping; (b) seed 1 of the drop03 run;
