@@ -1,0 +1,418 @@
+<title>CrossClass Pipeline Map</title>
+<style>
+/* layout: one column; each section = one diagram + its numbers; neutral greys, blue = trained, amber = not trained yet */
+:root { --bg: #fbfbfa; --panel: #ffffff; --fg: #1d1f21; --muted: #62676d; --line: #d9dcdf; --accent: #2a62c9; --amber: #b7791f; --good: #2f855a; --soft: #eef3fc; --softamber: #fdf4e3; --softgood: #e8f5ee; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #141618; --panel: #1b1e21; --fg: #e6e8ea; --muted: #9ba1a8; --line: #33383d; --accent: #7aa7ff; --amber: #e3b25a; --good: #68c08f; --soft: #1d2a40; --softamber: #3a2f1b; --softgood: #1c3326; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #141618; --panel: #1b1e21; --fg: #e6e8ea; --muted: #9ba1a8; --line: #33383d; --accent: #7aa7ff; --amber: #e3b25a; --good: #68c08f; --soft: #1d2a40; --softamber: #3a2f1b; --softgood: #1c3326; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 1080px; margin: 0 auto; padding-inline: 18px; padding-block: 24px 60px; display: grid; gap: 34px; }
+h1 { font-size: 1.6rem; margin: 0; } h2 { font-size: 1.2rem; margin: 0 0 10px; } p { margin: 0 0 8px; max-width: 78ch; }
+ul { margin: 4px 0 8px; padding-left: 20px; max-width: 78ch; } li { margin-bottom: 3px; }
+.note { color: var(--muted); font-size: .9rem; }
+.key { background: var(--softamber); border: 1px solid var(--amber); border-radius: 6px; padding: 12px 14px; max-width: 78ch; }
+.scroll { overflow-x: auto; }
+svg { display: block; width: 100%; height: auto; min-width: 780px; }
+svg text { fill: currentColor; font: 13px system-ui, sans-serif; }
+svg .small { font-size: 11.5px; fill: var(--muted); }
+svg .bold { font-weight: 600; }
+svg .box { fill: var(--panel); stroke: var(--line); stroke-width: 1.4; }
+svg .stage { fill: var(--soft); stroke: var(--accent); stroke-width: 1.4; }
+svg .rule { fill: var(--softgood); stroke: var(--good); stroke-width: 1.4; }
+svg .data { fill: var(--bg); stroke: var(--muted); stroke-width: 1; stroke-dasharray: 4 3; }
+svg .todo { fill: var(--softamber); stroke: var(--amber); stroke-width: 1.6; stroke-dasharray: 5 3; }
+svg .arrow { stroke: var(--muted); stroke-width: 1.5; fill: none; marker-end: url(#ah); }
+svg .arrowtodo { stroke: var(--amber); stroke-width: 1.5; fill: none; stroke-dasharray: 5 3; marker-end: url(#ah); }
+svg .bar { fill: var(--accent); } svg .bar2 { fill: var(--good); } svg .bar3 { fill: var(--line); }
+table { border-collapse: collapse; width: 100%; background: var(--panel); font-size: .92rem; }
+th, td { border-bottom: 1px solid var(--line); padding: 7px 9px; text-align: left; vertical-align: top; }
+thead th { color: var(--muted); font-weight: 600; font-size: .82rem; }
+td.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.best td { background: var(--soft); } tr.todo td { background: var(--softamber); }
+.new { display: inline-block; font-size: .72rem; font-weight: 600; color: var(--good); border: 1px solid var(--good); border-radius: 4px; padding: 0 5px; margin-left: 4px; vertical-align: 1px; }
+tr.v7 td { background: var(--softgood); }
+svg .noise { fill: var(--softgood); stroke: var(--good); stroke-width: 1.6; }
+a { color: var(--accent); }
+</style>
+<svg width="0" height="0" style="position:absolute"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs></svg>
+<main>
+<header>
+  <h1>CrossClass pipeline map</h1>
+  <p class="note">WACV, 42 test photos. All linkers trained on KiCad designs only. v7, 2026-10-17 (v6: 2026-10-16).</p>
+</header>
+
+<div class="key" id="changed">
+<p><b>Changed since v6</b> (night 2026-10-16/17). Sections 0-4 are kept as they were; new numbers are marked <span class="new">v7</span>.</p>
+<ul>
+<li><a href="#v7-noise">5. Noise boxes</a>: the linker now also sees non-label boxes from the design file (vias, print, test pads) with target "none". End-to-end link accuracy 52 % -> 75 %.</li>
+<li><a href="#v7-score">6. How mAP50 uses the box score</a>: giving each box its top-3 classes lifts every method by ~0.06. Fair numbers: detector 0.602, our best 0.670.</li>
+<li><a href="#v7-errors">7. Where the class errors come from</a>: link problems 204, reading / naming 70, no label 69 wrong classes.</li>
+<li><a href="#v7-night">8. Night experiments</a>: 200k steps overfit; distance rank features and a board offset prior do not help.</li>
+<li>2c: mix and pool are trained now (final numbers in the table).</li>
+<li><a href="#v8-ladder">9. One table</a> (v8, 2026-10-17): soft cascade C 0.682 = perfect OCR 0.677; perfect text -> class would give 0.761.</li>
+</ul>
+</div>
+
+<section>
+<h2>0. Names used on this page</h2>
+<ul>
+<li><b>linker</b>: the transformer. Tokens = part boxes and text boxes. Output: which text belongs to each part (or none).</li>
+<li><b>geometry</b>: box size, shape and position. Every model has it.</li>
+<li><b>G (geometry bias)</b>: extra attention bias from each pair of boxes (distance and size ratio measured in the box's own size).</li>
+<li><b>S (string)</b>: the text token also gets the characters of the text, e.g. "C12" -> prefix "C" + digits "1", "2".</li>
+<li><b>I (image)</b>: the text token gets a <b>text-image feature</b> instead: the crop of the text box goes through the PARSeq text reader, and its internal output (688 numbers) is added to the token. No OCR string.</li>
+<li><b>class head</b>: a trainable layer on each part token after the linker that outputs the part's class (9 classes).</li>
+<li><b>prefix rule</b>: no training. Take the linked text's letters and look them up: R -> resistor, C -> capacitor, ...</li>
+</ul>
+</section>
+
+<section>
+<h2>1. Model A: the best result so far (0.642 mAP50, needs perfect strings)</h2>
+<div class="scroll"><svg viewBox="0 0 1060 430" role="img" aria-label="Model A: part boxes and text boxes with their strings become tokens; positions go to RoPE; pair geometry becomes an attention bias; a 16-layer transformer; a link head scores each part against each text and none; Hungarian picks one text per part; the prefix rule turns the linked text into a class, otherwise the detector class.">
+<text x="20" y="22" class="small">INPUTS (one photo)</text><text x="330" y="22" class="small">TOKENS</text><text x="560" y="22" class="small">LINKER (trained on KiCad)</text><text x="860" y="22" class="small">CLASS (not trained)</text>
+<rect class="data" x="20" y="40" width="250" height="70" rx="6"/><text x="35" y="62" class="bold">part box</text><text x="35" y="80" class="small">from the detector</text><text x="35" y="97" class="small">[is_text=0, log w, log h, w >= h]</text>
+<rect class="data" x="20" y="130" width="250" height="70" rx="6"/><text x="35" y="152" class="bold">text box</text><text x="35" y="170" class="small">annotated (perfect OCR box)</text><text x="35" y="187" class="small">[is_text=1, log w, log h, w >= h]</text>
+<rect class="data" x="20" y="220" width="250" height="60" rx="6"/><text x="35" y="242" class="bold">string "C12"</text><text x="35" y="260" class="small">annotated (perfect OCR string)</text>
+<rect class="data" x="20" y="300" width="250" height="50" rx="6"/><text x="35" y="322" class="bold">box centres</text><text x="35" y="338" class="small">position</text>
+<rect class="data" x="20" y="365" width="250" height="50" rx="6"/><text x="35" y="387" class="bold">every box pair</text><text x="35" y="403" class="small">dx, dy, gaps in own box size, size ratio</text>
+<rect class="stage" x="320" y="50" width="190" height="50" rx="6"/><text x="415" y="80" text-anchor="middle">part token (MLP)</text>
+<rect class="stage" x="320" y="150" width="190" height="90" rx="6"/><text x="415" y="175" text-anchor="middle">text token</text><text x="415" y="195" text-anchor="middle" class="small">MLP(geometry)</text><text x="415" y="211" text-anchor="middle" class="small">+ prefix embedding "C"</text><text x="415" y="227" text-anchor="middle" class="small">+ digit embeddings "1","2"</text>
+<rect class="stage" x="320" y="300" width="190" height="50" rx="6"/><text x="415" y="322" text-anchor="middle">RoPE</text><text x="415" y="338" text-anchor="middle" class="small">relative position in attention</text>
+<rect class="stage" x="320" y="365" width="190" height="50" rx="6"/><text x="415" y="387" text-anchor="middle">G: small MLP</text><text x="415" y="403" text-anchor="middle" class="small">-> attention bias per head</text>
+<path class="arrow" d="M270 75 L318 75"/><path class="arrow" d="M270 165 L318 180"/><path class="arrow" d="M270 250 L318 215"/><path class="arrow" d="M270 325 L318 325"/><path class="arrow" d="M270 390 L318 390"/>
+<rect class="stage" x="560" y="60" width="200" height="250" rx="6"/><text x="660" y="160" text-anchor="middle" class="bold">transformer</text><text x="660" y="180" text-anchor="middle" class="small">16 layers, 768-d, 12 heads</text><text x="660" y="196" text-anchor="middle" class="small">self-attention over ALL</text><text x="660" y="212" text-anchor="middle" class="small">part and text tokens</text>
+<path class="arrow" d="M510 75 L558 110"/><path class="arrow" d="M510 195 L558 195"/><path class="arrow" d="M510 325 L558 280"/><path class="arrow" d="M510 390 L558 295"/>
+<rect class="stage" x="560" y="335" width="200" height="80" rx="6"/><text x="660" y="358" text-anchor="middle">link head</text><text x="660" y="376" text-anchor="middle" class="small">score(part, text) = q·k</text><text x="660" y="392" text-anchor="middle" class="small">+ a "none" score per part</text><text x="660" y="408" text-anchor="middle" class="small">softmax -> Hungarian</text>
+<path class="arrow" d="M660 310 L660 333"/>
+<rect class="data" x="810" y="350" width="40" height="50" rx="6"/><text x="830" y="380" text-anchor="middle" class="small">link</text>
+<path class="arrow" d="M760 375 L808 375"/>
+<rect class="rule" x="860" y="60" width="185" height="110" rx="6"/><text x="952" y="85" text-anchor="middle" class="bold">prefix rule</text><text x="952" y="105" text-anchor="middle" class="small">linked to "C12" (prob >= 0.5)</text><text x="952" y="121" text-anchor="middle" class="small">-> letters "C"</text><text x="952" y="137" text-anchor="middle" class="small">-> capacitor</text><text x="952" y="157" text-anchor="middle" class="small">no link -> detector class</text>
+<path class="arrow" d="M850 365 L930 172"/>
+<rect class="box" x="860" y="210" width="185" height="50" rx="6"/><text x="952" y="232" text-anchor="middle">final class</text><text x="952" y="249" text-anchor="middle" class="small">-> F1, mAP50</text>
+<path class="arrow" d="M952 170 L952 208"/>
+</svg></div>
+<p class="note">Model A = "GS" (G + S). The class is NOT learned: a fixed table does it. 0.642 needs the annotated strings; with real OCR strings the same model gives 0.58.</p>
+</section>
+
+<section>
+<h2>1b. Model I: image, link only (0.606 with annotated text boxes, 0.571 with OCR text boxes)</h2>
+<div class="scroll"><svg viewBox="0 0 1060 430" role="img" aria-label="Model I: the same linker as Model A, but the text token carries the PARSeq text-image feature of the text crop instead of the string; the link head links parts to texts; the class comes from the prefix rule applied to PARSeq's own reading of the linked text, otherwise the detector class.">
+<text x="20" y="22" class="small">INPUTS (one photo)</text><text x="330" y="22" class="small">TOKENS</text><text x="560" y="22" class="small">LINKER (trained on KiCad renders)</text><text x="860" y="22" class="small">CLASS (not trained)</text>
+<rect class="data" x="20" y="40" width="250" height="70" rx="6"/><text x="35" y="62" class="bold">part box</text><text x="35" y="80" class="small">from the detector</text><text x="35" y="97" class="small">[is_text=0, log w, log h, w >= h]</text>
+<rect class="data" x="20" y="130" width="250" height="70" rx="6"/><text x="35" y="152" class="bold">text box</text><text x="35" y="170" class="small">annotated box (this row) or OCR box</text><text x="35" y="187" class="small">[is_text=1, log w, log h, w >= h]</text>
+<rect class="data" x="20" y="215" width="250" height="75" rx="6"/><text x="35" y="237" class="bold">text crop -> PARSeq</text><text x="35" y="255" class="small">the photo pixels inside the text box</text><text x="35" y="271" class="small">-> 688 numbers: letter probabilities</text><text x="35" y="285" class="small">for 8 positions + image summary</text>
+<rect class="data" x="20" y="300" width="250" height="50" rx="6"/><text x="35" y="322" class="bold">box centres</text><text x="35" y="338" class="small">position</text>
+<rect class="data" x="20" y="365" width="250" height="50" rx="6"/><text x="35" y="387" class="bold">every box pair</text><text x="35" y="403" class="small">dx, dy, gaps in own box size, size ratio</text>
+<rect class="stage" x="320" y="50" width="190" height="50" rx="6"/><text x="415" y="80" text-anchor="middle">part token (MLP)</text>
+<rect class="stage" x="320" y="150" width="190" height="90" rx="6"/><text x="415" y="175" text-anchor="middle">text token</text><text x="415" y="195" text-anchor="middle" class="small">MLP(geometry)</text><text x="415" y="211" text-anchor="middle" class="small">+ MLP(text-image feature)</text><text x="415" y="227" text-anchor="middle" class="small">NO string</text>
+<rect class="stage" x="320" y="300" width="190" height="50" rx="6"/><text x="415" y="322" text-anchor="middle">RoPE</text><text x="415" y="338" text-anchor="middle" class="small">relative position in attention</text>
+<rect class="stage" x="320" y="365" width="190" height="50" rx="6"/><text x="415" y="387" text-anchor="middle">G: small MLP</text><text x="415" y="403" text-anchor="middle" class="small">-> attention bias per head</text>
+<path class="arrow" d="M270 75 L318 75"/><path class="arrow" d="M270 165 L318 180"/><path class="arrow" d="M270 252 L318 215"/><path class="arrow" d="M270 325 L318 325"/><path class="arrow" d="M270 390 L318 390"/>
+<rect class="stage" x="560" y="60" width="200" height="250" rx="6"/><text x="660" y="160" text-anchor="middle" class="bold">transformer</text><text x="660" y="180" text-anchor="middle" class="small">same as Model A</text><text x="660" y="196" text-anchor="middle" class="small">(16 layers, 768-d)</text>
+<path class="arrow" d="M510 75 L558 110"/><path class="arrow" d="M510 195 L558 195"/><path class="arrow" d="M510 325 L558 280"/><path class="arrow" d="M510 390 L558 295"/>
+<rect class="stage" x="560" y="335" width="200" height="80" rx="6"/><text x="660" y="358" text-anchor="middle">link head</text><text x="660" y="376" text-anchor="middle" class="small">score(part, text) + none</text><text x="660" y="392" text-anchor="middle" class="small">softmax -> Hungarian</text><text x="660" y="408" text-anchor="middle" class="small">(no class head)</text>
+<path class="arrow" d="M660 310 L660 333"/>
+<rect class="data" x="810" y="350" width="40" height="50" rx="6"/><text x="830" y="380" text-anchor="middle" class="small">link</text>
+<path class="arrow" d="M760 375 L808 375"/>
+<rect class="rule" x="860" y="50" width="185" height="135" rx="6"/><text x="952" y="74" text-anchor="middle" class="bold">prefix rule</text><text x="952" y="94" text-anchor="middle" class="small">linked text (prob >= 0.5)</text><text x="952" y="110" text-anchor="middle" class="small">-> PARSeq's reading, e.g. "C12"</text><text x="952" y="126" text-anchor="middle" class="small">(argmax of the letter part</text><text x="952" y="140" text-anchor="middle" class="small">of the same 688 numbers)</text><text x="952" y="156" text-anchor="middle" class="small">-> "C" -> capacitor</text><text x="952" y="174" text-anchor="middle" class="small">no link -> detector class</text>
+<path class="arrow" d="M850 365 L930 187"/>
+<rect class="box" x="860" y="220" width="185" height="50" rx="6"/><text x="952" y="242" text-anchor="middle">final class</text><text x="952" y="259" text-anchor="middle" class="small">-> F1, mAP50</text>
+<path class="arrow" d="M952 185 L952 218"/>
+</svg></div>
+<p class="note">Model I differs from Model A in one place: the text token gets the image of the text instead of its string. The linker
+links with the image, but the class still comes from a reading of letters (here PARSeq's reading) through the same fixed table. So a
+misread letter still gives a wrong class; that is why Model I ends near Model A end to end (0.571 vs 0.582 with OCR text boxes).
+With annotated text boxes (the box drawn by a human, the pixels and reading still real): 0.606.</p>
+</section>
+
+<section>
+<h2>2. Model B: what you describe (a trainable class head after the linker)</h2>
+<div class="scroll"><svg viewBox="0 0 1060 380" role="img" aria-label="Model B: the same linker; text tokens carry a text-image feature from PARSeq (and optionally the string); part tokens can optionally carry the detector class; a trainable class head on each part token outputs the class directly; the link head stays for training.">
+<text x="20" y="22" class="small">INPUTS (one photo)</text><text x="330" y="22" class="small">TOKENS</text><text x="560" y="22" class="small">LINKER (trained on KiCad)</text><text x="860" y="22" class="small">OUTPUTS (both trained)</text>
+<rect class="data" x="20" y="40" width="250" height="60" rx="6"/><text x="35" y="62" class="bold">part box</text><text x="35" y="80" class="small">from the detector, geometry</text>
+<rect class="todo" x="20" y="112" width="250" height="50" rx="6"/><text x="35" y="134" class="bold">detector class (optional)</text><text x="35" y="151" class="small">not decided; not used so far</text>
+<rect class="data" x="20" y="180" width="250" height="60" rx="6"/><text x="35" y="202" class="bold">text box</text><text x="35" y="220" class="small">from OCR text detection, geometry</text>
+<rect class="data" x="20" y="255" width="250" height="60" rx="6"/><text x="35" y="277" class="bold">text crop -> PARSeq</text><text x="35" y="295" class="small">text-image feature (688 numbers)</text>
+<rect class="data" x="20" y="325" width="250" height="45" rx="6"/><text x="35" y="352" class="small">positions (RoPE), box pairs (G): as in A</text>
+<rect class="stage" x="320" y="55" width="190" height="80" rx="6"/><text x="415" y="85" text-anchor="middle">part token</text><text x="415" y="104" text-anchor="middle" class="small">MLP(geometry)</text><text x="415" y="120" text-anchor="middle" class="small">(+ detector class embedding?)</text>
+<rect class="stage" x="320" y="195" width="190" height="90" rx="6"/><text x="415" y="222" text-anchor="middle">text token</text><text x="415" y="242" text-anchor="middle" class="small">MLP(geometry)</text><text x="415" y="258" text-anchor="middle" class="small">+ MLP(text-image feature)</text><text x="415" y="274" text-anchor="middle" class="small">(no OCR string needed)</text>
+<path class="arrow" d="M270 70 L318 85"/><path class="arrowtodo" d="M270 137 L318 118"/><path class="arrow" d="M270 210 L318 225"/><path class="arrow" d="M270 285 L318 260"/>
+<rect class="stage" x="560" y="60" width="200" height="240" rx="6"/><text x="660" y="170" text-anchor="middle" class="bold">transformer</text><text x="660" y="190" text-anchor="middle" class="small">same as Model A</text>
+<path class="arrow" d="M510 95 L558 110"/><path class="arrow" d="M510 240 L558 240"/><path class="arrow" d="M270 347 L558 290"/>
+<rect class="stage" x="820" y="60" width="225" height="90" rx="6"/><text x="932" y="88" text-anchor="middle" class="bold">class head (trainable)</text><text x="932" y="108" text-anchor="middle" class="small">linear layer on each part token</text><text x="932" y="124" text-anchor="middle" class="small">-> 9 class scores = final class</text><text x="932" y="140" text-anchor="middle" class="small">trained with KiCad part classes</text>
+<rect class="stage" x="820" y="200" width="225" height="70" rx="6"/><text x="932" y="228" text-anchor="middle">link head</text><text x="932" y="246" text-anchor="middle" class="small">as in A; trains the linker,</text><text x="932" y="262" text-anchor="middle" class="small">shows which text was used</text>
+<path class="arrow" d="M760 120 L818 105"/><path class="arrow" d="M760 235 L818 235"/>
+<rect class="box" x="820" y="300" width="225" height="50" rx="6"/><text x="932" y="322" text-anchor="middle">final class (no rule)</text><text x="932" y="339" text-anchor="middle" class="small">-> F1, mAP50</text>
+<path class="arrow" d="M1040 150 C 1058 220, 1058 260, 1040 318"/>
+</svg></div>
+<p><b>Which versions of Model B exist:</b></p>
+<div class="scroll"><table>
+<thead><tr><th>Model B version</th><th>text token carries</th><th>detector class in?</th><th>status</th><th>result</th></tr></thead>
+<tbody>
+<tr><td>B1 = "GS + class head"</td><td>OCR string (not image)</td><td>no</td><td>trained yesterday</td><td>oracle class acc 91.7 %; end-to-end class head on all boxes: mAP50 0.490 (detector 0.541)</td></tr>
+<tr class="todo"><td>B2 = "I + class head"</td><td>text-image feature</td><td>no</td><td>not trained</td><td>-</td></tr>
+<tr class="todo"><td>B3 = B2 + detector class</td><td>text-image feature</td><td>yes</td><td>not trained</td><td>needs detector-like classes for KiCad training (no detector runs on KiCad)</td></tr>
+</tbody></table></div>
+<p class="note">Why B1 loses to the detector: a part with no usable text has only geometry in the linker, while the detector sees the part itself. Of the 420 parts the detector classes wrongly, 69 have no printed label and 163 more have a label that OCR misses or misreads. B3 lets the head learn when to trust the text and when to trust the detector.</p>
+</section>
+
+<section>
+<h2>2b. Proposed: link first, then classify (class through the link)</h2>
+<p>Treat the link as a hidden choice. With link probabilities a<sub>ij</sub> = p(part i -> text j) and a<sub>i,none</sub>:</p>
+<p style="font-size:1.05rem; text-align:center; max-width:none"><b>p(class c of part i) = &Sigma;<sub>j</sub> a<sub>ij</sub> &middot; q<sub>j</sub>(c) + a<sub>i,none</sub> &middot; r<sub>i</sub>(c)</b></p>
+<ul>
+<li>q<sub>j</sub>(c): which class text j names (its letters), from the text-image feature; 9 classes + "not a designator".</li>
+<li>r<sub>i</sub>(c): fallback class of a part with no text, from the part token (geometry; later detector class or part image).</li>
+<li>Why the link head is "stricter": a link is right only for the exact text; the class is also right when the link goes to a
+same-class neighbour (C10 &harr; C11). So with right reading, class accuracy &ge; link accuracy, and the class must pass through the link.</li>
+</ul>
+<div class="scroll"><svg viewBox="0 0 1060 300" role="img" aria-label="Link then classify: the transformer gives part and text tokens; the link head gives link probabilities; a text-class head gives a class distribution per text; a fallback head gives a class per part; the part class is the link-weighted sum of text classes plus the none probability times the fallback class.">
+<rect class="stage" x="20" y="60" width="170" height="190" rx="6"/><text x="105" y="145" text-anchor="middle" class="bold">transformer</text><text x="105" y="165" text-anchor="middle" class="small">part tokens h_i</text><text x="105" y="181" text-anchor="middle" class="small">text tokens h_j</text><text x="105" y="197" text-anchor="middle" class="small">(text-image feature)</text>
+<rect class="stage" x="250" y="30" width="230" height="70" rx="6"/><text x="365" y="58" text-anchor="middle">link head (exists)</text><text x="365" y="78" text-anchor="middle" class="small">a_ij = softmax_j over texts + none</text>
+<rect class="todo" x="250" y="120" width="230" height="70" rx="6"/><text x="365" y="148" text-anchor="middle">text-class head (new)</text><text x="365" y="168" text-anchor="middle" class="small">q_j(c) from each text token</text>
+<rect class="todo" x="250" y="210" width="230" height="70" rx="6"/><text x="365" y="238" text-anchor="middle">fallback head (new)</text><text x="365" y="258" text-anchor="middle" class="small">r_i(c) from each part token</text>
+<path class="arrow" d="M190 100 L248 65"/><path class="arrow" d="M190 155 L248 155"/><path class="arrow" d="M190 215 L248 240"/>
+<rect class="rule" x="560" y="100" width="260" height="110" rx="6"/><text x="690" y="130" text-anchor="middle" class="bold">combine (no parameters)</text><text x="690" y="152" text-anchor="middle" class="small">p_i(c) = &#931;_j a_ij q_j(c)</text><text x="690" y="170" text-anchor="middle" class="small">+ a_i,none r_i(c)</text><text x="690" y="190" text-anchor="middle" class="small">differentiable end to end</text>
+<path class="arrow" d="M480 65 L558 125"/><path class="arrow" d="M480 155 L558 155"/><path class="arrow" d="M480 245 L558 190"/>
+<rect class="box" x="880" y="125" width="160" height="60" rx="6"/><text x="960" y="150" text-anchor="middle">part class p_i(c)</text><text x="960" y="168" text-anchor="middle" class="small">class + score -> mAP</text>
+<path class="arrow" d="M820 155 L878 155"/>
+</svg></div>
+<p class="note">Losses, all labels from KiCad: link loss (as now) + text-class loss on q_j (class of each text's prefix) + class loss on p_i (part
+class). At test: use p_i(c) directly (soft), or Hungarian link then argmax q of the linked text (hard). No fixed prefix table, no OCR string.</p>
+</section>
+
+<section>
+<h2>2c. Three class heads compared (parallel, mix, pool: all trained) <span class="new">v7</span></h2>
+<p><b>Final results</b> (I = text-image feature, 100k steps, clean41 oracle) <span class="new">v7</span>:</p>
+<div class="scroll"><table>
+<thead><tr><th>head</th><th>link acc</th><th>class head</th><th>prefix rule</th></tr></thead>
+<tbody>
+<tr class="best"><td>I + parallel</td><td class="n">92.8 %</td><td class="n">91.0 %</td><td class="n">81.1 %</td></tr>
+<tr><td>I + mix</td><td class="n">93.1 %</td><td class="n">89.7 %</td><td class="n">81.5 %</td></tr>
+<tr><td>I + pool</td><td class="n">92.1 %</td><td class="n">89.2 %</td><td class="n">80.9 %</td></tr>
+<tr><td>GS + parallel (OCR string, B1)</td><td class="n">92.9 %</td><td class="n">91.7 %</td><td class="n">80.5 %</td></tr>
+</tbody></table></div>
+<p class="note">Class through the link (mix, pool) gives nothing over parallel; differences of 1-2 points are within the dev3 / test noise
+(on dev3 pool is best, on test parallel). The prefix rule tops out near 86 %: 678 of the 4,869 clean41 parts have no label. The heads
+can guess those from context, which is where their +10 points come from.</p>
+<div class="scroll"><svg viewBox="0 0 1060 300" role="img" aria-label="Three class heads: parallel reads only the part token; mix weights each text's own class prediction by the link probability and adds a fallback; pool weights the text tokens by the link probability, concatenates them with the part token and the none probability, and classifies with one MLP.">
+<text x="20" y="22" class="bold">parallel (B1, yesterday)</text><text x="370" y="22" class="bold">mix (way 1)</text><text x="720" y="22" class="bold">pool (way 2)</text>
+<rect class="stage" x="20" y="40" width="300" height="50" rx="6"/><text x="170" y="70" text-anchor="middle">part token h_i (after transformer)</text>
+<rect class="stage" x="20" y="130" width="300" height="50" rx="6"/><text x="170" y="153" text-anchor="middle">linear -> 9 class scores</text><text x="170" y="170" text-anchor="middle" class="small">does NOT use the link</text>
+<path class="arrow" d="M170 90 L170 128"/>
+<rect class="box" x="20" y="220" width="300" height="60" rx="6"/><text x="170" y="245" text-anchor="middle">class of part i</text><text x="170" y="263" text-anchor="middle" class="small">link head trained beside it, not used</text>
+<path class="arrow" d="M170 180 L170 218"/>
+<rect class="stage" x="370" y="40" width="140" height="50" rx="6"/><text x="440" y="62" text-anchor="middle">link probs a_ij</text><text x="440" y="79" text-anchor="middle" class="small">+ a_i,none</text>
+<rect class="todo" x="530" y="40" width="160" height="50" rx="6"/><text x="610" y="62" text-anchor="middle">per text: q_j(c)</text><text x="610" y="79" text-anchor="middle" class="small">class the text names</text>
+<rect class="todo" x="370" y="110" width="320" height="40" rx="6"/><text x="530" y="135" text-anchor="middle">fallback r_i(c) from part token</text>
+<rect class="rule" x="370" y="170" width="320" height="50" rx="6"/><text x="530" y="192" text-anchor="middle">p_i = &#931;_j a_ij q_j + a_i,none r_i</text><text x="530" y="209" text-anchor="middle" class="small">weighted sum of PREDICTIONS</text>
+<path class="arrow" d="M440 90 L470 168"/><path class="arrow" d="M610 90 L590 168"/><path class="arrow" d="M530 150 L530 168"/>
+<rect class="box" x="370" y="235" width="320" height="45" rx="6"/><text x="530" y="262" text-anchor="middle">class of part i</text>
+<path class="arrow" d="M530 220 L530 233"/>
+<rect class="stage" x="720" y="40" width="140" height="50" rx="6"/><text x="790" y="62" text-anchor="middle">link probs a_ij</text><text x="790" y="79" text-anchor="middle" class="small">+ a_i,none</text>
+<rect class="stage" x="880" y="40" width="160" height="50" rx="6"/><text x="960" y="62" text-anchor="middle">text tokens h_j</text><text x="960" y="79" text-anchor="middle" class="small">(text-image feature inside)</text>
+<rect class="rule" x="720" y="110" width="320" height="45" rx="6"/><text x="880" y="130" text-anchor="middle">t_i = &#931;_j a_ij h_j</text><text x="880" y="147" text-anchor="middle" class="small">weighted sum of FEATURES</text>
+<path class="arrow" d="M790 90 L830 108"/><path class="arrow" d="M960 90 L930 108"/>
+<rect class="todo" x="720" y="170" width="320" height="50" rx="6"/><text x="880" y="192" text-anchor="middle">MLP([h_i ; t_i ; a_i,none]) -> 9 scores</text><text x="880" y="209" text-anchor="middle" class="small">ONE class head</text>
+<path class="arrow" d="M880 155 L880 168"/>
+<rect class="box" x="720" y="235" width="320" height="45" rx="6"/><text x="880" y="262" text-anchor="middle">class of part i</text>
+<path class="arrow" d="M880 220 L880 233"/>
+</svg></div>
+<p><b>B1 results</b> (parallel head, OCR string input, trained 2026-10-15, wandb replay-v2d2_GS_cls_100k):</p>
+<div class="scroll"><table>
+<thead><tr><th>test</th><th>what</th><th>result</th></tr></thead>
+<tbody>
+<tr><td>oracle, clean41 (annotated boxes and strings)</td><td>class accuracy: class head / prefix rule</td><td class="n">91.7 % / 80.5 %</td></tr>
+<tr><td>oracle, clean41</td><td>link accuracy (unchanged by the head)</td><td class="n">92.9 %</td></tr>
+<tr><td>end to end, real OCR</td><td>class head on all boxes: mAP50 / F1 / class acc</td><td class="n">0.490 / 0.688 / 84.6 %</td></tr>
+<tr><td>end to end, perfect strings</td><td>class head on all boxes: mAP50 / F1</td><td class="n">0.608 / 0.753</td></tr>
+<tr><td>end to end, real OCR</td><td>detector only, for reference</td><td class="n">0.541 / 0.729 / 89.7 %</td></tr>
+</tbody></table></div>
+<p class="note">Why B1 falls below the detector end to end: its head never had to use the link, and for parts with no usable text it has
+only geometry. The prefix rule at 80.5 % (oracle) counts parts with no link as wrong, which is why it is below the head there.</p>
+<p><b>Pool, step by step</b> (example: part i links to "C12" with 0.9 and "C13" with 0.1):</p>
+<ul>
+<li>Link probabilities from the link head: a = 0.9 for C12, 0.1 for C13, ~0 for none.</li>
+<li>Pooled text feature t<sub>i</sub> = 0.9 &middot; h<sub>C12</sub> + 0.1 &middot; h<sub>C13</sub>: "what the linked text looks like". Both say "C" here.</li>
+<li>The class head reads [h<sub>i</sub> (the part: geometry, context) ; t<sub>i</sub> (its text) ; a<sub>i,none</sub> (how sure it has no text)] and outputs 9 scores.</li>
+<li>Part with no text: a<sub>i,none</sub> &asymp; 1, t<sub>i</sub> &asymp; 0, so the head must rely on h<sub>i</sub>; it learns this case from the none value.</li>
+<li>Training: the class loss flows into the head, into t<sub>i</sub>, into the link probabilities and the transformer (end to end). The link loss
+keeps the link right; a small extra loss asks each text token to predict the class its letters name, so t<sub>i</sub> carries that class.</li>
+</ul>
+</section>
+
+<section>
+<h2>3. End-to-end results (42 test photos, detector boxes)</h2>
+<div class="scroll"><table>
+<thead><tr><th>model</th><th>text input at test</th><th>class from</th><th>mAP50</th><th>F1</th><th>class acc*</th></tr></thead>
+<tbody>
+<tr><td>detector only</td><td>-</td><td>detector</td><td class="n">0.541</td><td class="n">0.729</td><td class="n">89.7 %</td></tr>
+<tr><td>old tree linker</td><td>OCR string</td><td>prefix rule</td><td class="n">0.570</td><td class="n">0.739</td><td class="n">90.9 %</td></tr>
+<tr><td>Model A (GS)</td><td>OCR string</td><td>prefix rule</td><td class="n">0.582</td><td class="n">0.737</td><td class="n">90.6 %</td></tr>
+<tr><td>Model B1 (GS + class head)</td><td>OCR string</td><td>prefix rule</td><td class="n">0.592</td><td class="n">0.743</td><td class="n">91.4 %</td></tr>
+<tr><td>Model B1 (GS + class head)</td><td>OCR string</td><td>class head on linked boxes, detector on the rest</td><td class="n">0.591</td><td class="n">0.743</td><td class="n">91.5 %</td></tr>
+<tr><td>Model B1 (GS + class head)</td><td>OCR string</td><td>class head on all boxes</td><td class="n">0.490</td><td class="n">0.688</td><td class="n">84.6 %</td></tr>
+<tr><td>I (image, link only)</td><td>text-image feature</td><td>prefix rule on PARSeq's reading</td><td class="n">0.571</td><td class="n">0.739</td><td class="n">90.8 %</td></tr>
+<tr><td>I (image, link only)</td><td>text-image feature, annotated text boxes</td><td>prefix rule on PARSeq's reading</td><td class="n">0.606</td><td class="n">0.755</td><td class="n">92.9 %</td></tr>
+<tr class="best"><td>Model A (GS)</td><td>annotated string (perfect OCR)</td><td>prefix rule</td><td class="n">0.642</td><td class="n">0.767</td><td class="n">94.3 %</td></tr>
+<tr class="v7"><td>I + rule boxes <span class="new">v7</span></td><td>text-image feature, OCR boxes inside detector boxes dropped</td><td>prefix rule, Claude reading</td><td class="n">0.592</td><td class="n">0.744</td><td class="n">91.5 %</td></tr>
+<tr class="v7"><td>I + noise 1.0 <span class="new">v7</span></td><td>text-image feature, all OCR boxes</td><td>prefix rule, Claude reading</td><td class="n">0.606</td><td class="n">0.748</td><td class="n">92.1 %</td></tr>
+<tr class="todo"><td>Model B2 / B3</td><td>text-image feature</td><td>class head</td><td class="n" colspan="3">not trained yet</td></tr>
+</tbody></table></div>
+<p class="note"><span class="new">v7</span> All rows here give each box ONE class. Section 6 shows the fairer top-3 format, where the detector is 0.602 and our best 0.670.</p>
+<p class="note">* class accuracy on the 4,065 annotated parts the detector finds (IoU >= 0.5). On the 3 dev photos the best real-OCR settings only tie the detector (0.619 vs 0.611).</p>
+</section>
+
+<section>
+<h2>4. Where the possible gain is lost (mAP50)</h2>
+<div class="scroll"><svg viewBox="0 0 1040 230" role="img" aria-label="mAP50 steps: detector 0.541; linker with OCR boxes and real reading about 0.58; with annotated text boxes and real reading 0.61; with perfect strings 0.64; all classes right 0.82.">
+<g transform="translate(300,10)">
+<rect class="bar" x="0" y="10" width="378.7" height="28"/><text x="-12" y="29" text-anchor="end">detector only</text><text x="388" y="29">0.541</text>
+<rect class="bar" x="0" y="52" width="409.5" height="28"/><text x="-12" y="71" text-anchor="end">+ linker, OCR boxes, real reading</text><text x="419" y="71">0.58 - 0.59</text>
+<rect class="bar" x="0" y="94" width="424.2" height="28"/><text x="-12" y="113" text-anchor="end">+ annotated text boxes</text><text x="434" y="113">0.61</text>
+<rect class="bar2" x="0" y="136" width="449.4" height="28"/><text x="-12" y="155" text-anchor="end">+ perfect strings (Model A best)</text><text x="459" y="155">0.64</text>
+<rect class="bar3" x="0" y="178" width="571.9" height="28"/><text x="-12" y="197" text-anchor="end">all detected classes right (ceiling)</text><text x="582" y="197">0.82</text>
+</g>
+</svg></div>
+<p class="note">Finding the text boxes costs ~0.03, reading the letters ~0.04. From 0.64 to 0.82: parts the detector misses or parts without printed text.</p>
+</section>
+
+<section id="v7-noise">
+<h2>5. Noise boxes: teach the linker to say "none" <span class="new">v7</span></h2>
+<p>On WACV photos only 52 % of the OCR text boxes are labels: 23 % sit on a part (pad, body, value marking such as "103") and 25 %
+elsewhere (vias, pads, print such as "GND"). The KiCad training data had only labels, so the linker linked parts to these boxes.</p>
+<div class="scroll"><svg viewBox="0 0 1060 360" role="img" aria-label="Training: part boxes, label boxes and new noise boxes from the KiCad design file become tokens with a PARSeq feature of their render crop; the linker learns to give noise boxes none. Inference: detector boxes and OCR boxes, optionally filtered by the rule, go to the same linker.">
+<text x="20" y="24" class="small">TRAINING (KiCad design file + render)</text>
+<rect class="data" x="20" y="38" width="260" height="46" rx="6"/><text x="35" y="58" class="bold">part boxes</text><text x="35" y="75" class="small">footprint bodies</text>
+<rect class="data" x="20" y="94" width="260" height="46" rx="6"/><text x="35" y="114" class="bold">label boxes (printed "C12")</text><text x="35" y="131" class="small">image only, no string; target: its part</text>
+<rect class="noise" x="20" y="150" width="260" height="62" rx="6"/><text x="35" y="170" class="bold">noise boxes (new)</text><text x="35" y="187" class="small">vias, print (GND, 3V3, names), test pads</text><text x="35" y="203" class="small">target: none</text>
+<rect class="stage" x="340" y="66" width="290" height="120" rx="6"/><text x="485" y="92" text-anchor="middle" class="bold">tokens</text>
+<text x="485" y="116" text-anchor="middle">part: geometry</text><text x="485" y="138" text-anchor="middle">text / noise: geometry + PARSeq feature</text><text x="485" y="158" text-anchor="middle" class="small">of the render crop, with photo-like damage</text>
+<rect class="stage" x="690" y="66" width="350" height="120" rx="6"/><text x="865" y="96" text-anchor="middle" class="bold">linker (trained)</text>
+<text x="865" y="122" text-anchor="middle">each part -> one text or none</text><text x="865" y="144" text-anchor="middle" class="small">0.5 or 1.0 noise boxes per label, sampled each step</text>
+<path class="arrow" d="M280 61 L338 100"/><path class="arrow" d="M280 117 L338 125"/><path class="arrow" d="M280 181 L338 150"/><path class="arrow" d="M630 126 L688 126"/>
+<text x="20" y="246" class="small">INFERENCE (WACV photo)</text>
+<rect class="data" x="20" y="260" width="260" height="40" rx="6"/><text x="35" y="285" class="bold">detector boxes</text>
+<rect class="data" x="20" y="310" width="260" height="40" rx="6"/><text x="35" y="335" class="bold">OCR text boxes</text><text x="160" y="335" class="small">~half not labels</text>
+<rect class="rule" x="340" y="290" width="290" height="56" rx="6"/><text x="485" y="313" text-anchor="middle">rule: drop OCR boxes >= 50 % inside a detector box</text><text x="485" y="333" text-anchor="middle" class="small">not needed any more with noise 1.0</text>
+<rect class="stage" x="690" y="280" width="350" height="56" rx="6"/><text x="865" y="304" text-anchor="middle">same linker</text><text x="865" y="324" text-anchor="middle" class="small">links -> reading -> prefix rule -> class</text>
+<path class="arrow" d="M280 280 L688 300"/><path class="arrow" d="M280 330 L338 320"/><path class="arrow" d="M630 318 L688 312"/>
+</svg></div>
+<ul>
+<li><b>Label box</b> = the box of the designator printed on the silkscreen (e.g. "C12"). Model I gets only its geometry and the PARSeq
+feature of its image crop, never the string. The string is used only to build the training target (which part it belongs to).</li>
+<li><b>noise R</b> = each time a training board is drawn, R x (its number of labels) noise boxes are sampled from that board's pool (up to
+max(20, 2 x labels) boxes) and added as text tokens. A board with 40 labels gets 20 (R = 0.5) or 40 (R = 1.0). On WACV photos there are
+~0.5 non-label OCR boxes per label after the rule, ~0.9 without it.</li>
+</ul>
+<p><b>In domain first: KiCad val</b> (1,311 held-out sides) with noise boxes added at test time:</p>
+<div class="scroll"><table>
+<thead><tr><th>linker (100k)</th><th>no noise: link / prec</th><th>+0.5 noise: link / prec</th><th>+1.0 noise: link / prec</th><th>noise boxes linked to a part (+1.0)</th></tr></thead>
+<tbody>
+<tr><td>I (trained without noise)</td><td class="n">97.9 / 98.4 %</td><td class="n">93.5 / 91.2 %</td><td class="n">90.5 / 87.5 %</td><td class="n">12.6 %</td></tr>
+<tr class="v7"><td>I + noise 0.5</td><td class="n">97.8 / 98.3 %</td><td class="n">97.7 / 98.0 %</td><td class="n">97.6 / 97.6 %</td><td class="n">0.9 %</td></tr>
+<tr class="v7"><td>I + noise 1.0</td><td class="n">97.8 / 98.3 %</td><td class="n">97.5 / 98.1 %</td><td class="n">97.6 / 97.9 %</td><td class="n">0.6 %</td></tr>
+</tbody></table></div>
+<p><b>Then WACV:</b></p>
+<div class="scroll"><table>
+<thead><tr><th>linker (100k)</th><th>clean41 link</th><th>e2e link, all OCR boxes*</th><th>e2e link, rule boxes*</th><th>mAP50, 1 class / box</th><th>mAP50, top-3, rule boxes</th><th>APr, top-3</th></tr></thead>
+<tbody>
+<tr><td>I (no noise)</td><td class="n">92.9 %</td><td class="n">52.2 %</td><td class="n">64.8 %</td><td class="n">0.586</td><td class="n">0.656</td><td class="n">0.585</td></tr>
+<tr class="v7"><td>I + noise 0.5</td><td class="n">92.6 %</td><td class="n">70.2 %</td><td class="n">74.4 %</td><td class="n">0.599</td><td class="n">0.670</td><td class="n">0.616</td></tr>
+<tr class="v7"><td>I + noise 1.0</td><td class="n">92.5 %</td><td class="n">75.3 %</td><td class="n">74.3 %</td><td class="n">0.606</td><td class="n">0.668</td><td class="n">0.610</td></tr>
+</tbody></table></div>
+<p class="note">* labelled clean41 parts that the detector finds and whose label has an OCR box. mAP50 with the Claude reader. The link gain is
+large and the mAP gain small: many fixed links do not change the class, because the detector was already right there (section 7).</p>
+</section>
+
+<section id="v7-score">
+<h2>6. How mAP50 uses the box score <span class="new">v7</span></h2>
+<ul>
+<li>For one class, AP sorts every box predicted as that class by its score, high to low, and measures precision while walking down the
+list. A wrong box with a high score hurts more than one with a low score.</li>
+<li>v6 and before: each box had ONE class. When the text changed the class, the box kept the detector's score, which is the detector's
+probability for its OWN class.</li>
+<li>Better: score(box, class c) = P(there is a part) x P(class = c), with P(class) = (1 - p) x detector distribution + p x the text's
+class, p = link probability. Each box gives its top-3 classes. The detector's 9 class scores were recovered from the same model run.</li>
+</ul>
+<div class="scroll"><table>
+<thead><tr><th>class source (42 test photos)</th><th>1 class per box</th><th>top-3 classes per box</th><th>macro-F1</th><th>APr</th><th>bal. acc</th></tr></thead>
+<tbody>
+<tr><td>detector only</td><td class="n">0.541</td><td class="n">0.602</td><td class="n">0.604</td><td class="n">0.485</td><td class="n">67.2 %</td></tr>
+<tr><td>I + rule boxes, prefix rule, no learning</td><td class="n">0.592 (0.609 with score fix)</td><td class="n">0.656</td><td class="n">0.667</td><td class="n">0.585</td><td class="n">78.1 %</td></tr>
+<tr class="v7"><td>I + noise 0.5 + rule boxes, prefix rule</td><td class="n">0.595</td><td class="n">0.670</td><td class="n">0.677</td><td class="n">0.616</td><td class="n">78.3 %</td></tr>
+<tr><td>late fusion (learned on WACV board folds), I + rule boxes</td><td class="n">-</td><td class="n">0.660</td><td class="n">0.674</td><td class="n">0.586</td><td class="n">79.2 %</td></tr>
+</tbody></table></div>
+<p class="note">APr = mean AP of the rare classes switch, inductor, transistor, oscillator. bal. acc = class accuracy per class, averaged, on
+found parts. "Score fix" (one class per box): detector score x link probability when the text changes the class, 1-(1-s)(1-p) when they
+agree; chosen on dev3. Learning the fusion on WACV adds almost nothing over the no-learning rule, so the rule stays.</p>
+</section>
+
+<section id="v7-errors">
+<h2>7. Where the class errors come from (clean41, detector boxes) <span class="new">v7</span></h2>
+<div class="scroll"><table>
+<thead><tr><th>cause (I + rule boxes + Claude reading)</th><th>wrong classes</th><th>mAP50 if fixed</th><th>bal. acc if fixed</th></tr></thead>
+<tbody>
+<tr><td>now</td><td class="n">343</td><td class="n">0.616</td><td class="n">75.7 %</td></tr>
+<tr class="best"><td>link problems: none 108, no OCR box 47, neighbour's label 30, junk box 19</td><td class="n">204</td><td class="n">0.711</td><td class="n">89.2 %</td></tr>
+<tr><td>link right, class wrong: naming 38 (LEDs named L1-L7, diodes DA1-3), misread 32</td><td class="n">70</td><td class="n">0.692</td><td class="n">81.6 %</td></tr>
+<tr><td>no label, detector class wrong</td><td class="n">69</td><td class="n">0.666</td><td class="n">80.5 %</td></tr>
+<tr><td>all found parts right (ceiling)</td><td class="n">0</td><td class="n">0.845</td><td class="n">100 %</td></tr>
+</tbody></table></div>
+<p class="note">Detector misses 1,012 of the 4,869 parts; class decisions cannot fix those. The 70 naming / misread errors cost more mAP per
+error: they land in rare classes (20 LEDs become inductors) and keep a high score. Noise boxes (section 5) attack the link row; a class
+decision that also sees the detector (late fusion, detector features) attacks the other two.</p>
+</section>
+
+<section id="v8-ladder">
+<h2>9. One table: what each step is worth (42 test photos, top-3 classes per box) <span class="new">v8</span></h2>
+<div class="scroll"><table>
+<thead><tr><th>#</th><th>setting</th><th>OCR (text boxes + reading)</th><th>link</th><th>text -> class</th><th>mAP50</th><th>vs row above</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>detector only</td><td>-</td><td>-</td><td>-</td><td class="n">0.602</td><td class="n">-</td></tr>
+<tr><td>2</td><td>pipeline with hard decisions (noise 0.5 + rule)</td><td>real, one reading</td><td>one box, p >= 0.5</td><td>prefix table</td><td class="n">0.665</td><td class="n">+0.063</td></tr>
+<tr class="best"><td>3</td><td><b>C: soft cascade (no training)</b></td><td>real, character probabilities</td><td>all boxes, probabilities</td><td>prefix table</td><td class="n"><b>0.682</b></td><td class="n"><b>+0.017</b></td></tr>
+<tr class="best"><td>3b</td><td><b>LLM decides prefix -> class per board</b> (blind agent, hard reading)</td><td>real, one reading</td><td>one box, p >= 0.5</td><td><b>LLM, per board</b></td><td class="n"><b>0.698</b></td><td class="n">+0.028 vs row 2</td></tr>
+<tr class="best"><td>3c</td><td><b>B v1: LinkFormer + class head, detector scores in the part token, footprint class target; (head + C) / 2</b></td><td>real, character probabilities</td><td>all boxes, probabilities</td><td><b>learned (KiCad)</b></td><td class="n"><b>0.713</b></td><td class="n">+0.015 vs row 3b</td></tr>
+<tr class="best"><td>3d</td><td><b>B v1 + detector-score dropout 0.3; (head + C) / 2</b></td><td>real, character probabilities</td><td>all boxes, probabilities</td><td><b>learned (KiCad)</b></td><td class="n"><b>0.724</b></td><td class="n">+0.011 vs row 3c</td></tr>
+<tr><td>4</td><td>perfect OCR (annotated boxes + strings)</td><td>perfect</td><td>one box, p >= 0.5</td><td>prefix table</td><td class="n">0.677</td><td class="n">-0.005 (= row 3)</td></tr>
+<tr class="todo"><td>5</td><td><b>perfect OCR + perfect text -> class</b></td><td>perfect</td><td>one box, p >= 0.5</td><td><b>always right</b></td><td class="n"><b>0.761</b></td><td class="n"><b>+0.084</b></td></tr>
+<tr><td>6</td><td>ceiling: every found part right (1 class per box)</td><td>-</td><td>-</td><td>-</td><td class="n">0.877</td><td class="n">link on detector boxes, parts without label</td></tr>
+</tbody></table></div>
+<p class="note">Row 3 = row 4: with soft reading, the real OCR is already as good as a perfect OCR under the prefix table. The largest text-side
+gap left is row 4 -> 5 (amber): the prefix table gives the wrong class when a board names parts its own way (LEDs L1-L7, diodes DA1-3).
+Proposal B targets exactly this (class target from the KiCad footprint name + detector scores in the part token).
+Row 3b: a fresh agent with no access to labels saw a per-board prefix summary and crops of 82 uncertain pairs and decided the class of
+each (board, prefix): L -> LED on four boards, EM -> capacitor (EMI filters), K / BUT / DIP -> switch, XT -> oscillator, FIL -> inductor,
+OCR misreads fixed. It closes about a third of the row 4 -> 5 gap (APr 0.616 -> 0.668). Row 3c: proposal B (class head alone 0.694; mixed with C 0.713, best on dev3 too, APr 0.685). Without detector scores in the part token the class head alone falls to 0.559. Row 3d: dropping the detector scores for 30 % of the KiCad parts in training stops the head from copying the (simulated, too accurate) detector: clean41 link 93.7 %, class head 93.7 %, end to end 0.724 (APr 0.705); the gap to a perfect text -> class step is now 0.037.</p>
+</section>
+
+<section id="v7-night">
+<h2>8. Night experiments 2026-10-16/17 <span class="new">v7</span></h2>
+<p><b>2x2 at 200k steps</b>, all I + parallel class head (intern02 GPUs 0-3). e2e = 42 test photos with detector boxes and Claude reading.</p>
+<div class="scroll"><table>
+<thead><tr><th>run (200k)</th><th>clean41 link / class head</th><th>e2e link, all / rule boxes</th><th>mAP50 1 class / box, score fix</th><th>mAP50 top-3</th><th>APr top-3</th><th>bal. acc top-3</th></tr></thead>
+<tbody>
+<tr><td>control</td><td class="n">91.6 / 89.4 %</td><td class="n">61.3 / 71.9 %</td><td class="n">0.617</td><td class="n">0.652</td><td class="n">0.578</td><td class="n">79.0 %</td></tr>
+<tr class="v7"><td>+ noise 0.5</td><td class="n">91.1 / 89.5 %</td><td class="n">73.6 / 75.0 %</td><td class="n">0.625</td><td class="n">0.666</td><td class="n">0.608</td><td class="n">79.2 %</td></tr>
+<tr><td>+ distance rank features</td><td class="n">92.3 / 89.1 %</td><td class="n">57.8 / 69.7 %</td><td class="n">0.604</td><td class="n">0.649</td><td class="n">0.572</td><td class="n">77.6 %</td></tr>
+<tr class="v7"><td>+ noise 0.5 + rank</td><td class="n">90.9 / 89.5 %</td><td class="n">72.6 / 74.2 %</td><td class="n">0.631</td><td class="n">0.670</td><td class="n">0.621</td><td class="n">80.2 %</td></tr>
+<tr><td>+ noise 0.5, seed 1 (repeat)</td><td class="n">90.3 / 89.1 %</td><td class="n">72.0 / 75.1 %</td><td class="n">0.618</td><td class="n">0.662</td><td class="n">0.600</td><td class="n">79.3 %</td></tr>
+<tr><td>+ noise 1.0</td><td class="n">90.9 / 89.8 %</td><td class="n">75.3 / 74.0 %</td><td class="n">0.619</td><td class="n">0.663</td><td class="n">0.602</td><td class="n">79.1 %</td></tr>
+<tr><td>reference: I + parallel, 100k</td><td class="n">92.8 / 91.0 %</td><td class="n" colspan="5">e2e not run with this checkpoint</td></tr>
+</tbody></table></div>
+<ul>
+<li><b>Noise boxes help at 200k too:</b> e2e link +12 points (all boxes), mAP50 top-3 +0.014, APr +0.03.</li>
+<li><b>Distance rank features</b> (rank of each text among a part's nearest texts, both ways, mutual nearest): +0.7 on clean41 but worse
+end to end; no help.</li>
+<li><b>200k overfits:</b> training loss keeps falling (class loss 0.037) while clean41 and even KiCad val class accuracy drop
+(class head 91.0 % -> 89.4 %). The falling loss on wandb was the cosine schedule plus memorising, not under-training. 100k stays the recipe.</li>
+<li><b>Board offset prior</b> (test time: offset density of the confident links on the same board, k-means-like): accuracy goes down for
+every setting (I 92.9 -> 92.3 %, GS 93.6 -> 93.5 %); the linker already uses this regularity.</li>
+<li><b>What blocks 98 %</b> (GS 150k, clean41): 12 % of the labels are printed nearer another part ("messy"); accuracy on them is 75 %
+(47 % of all errors), on the others 96.1 %. Errors bunch on a few boards: DigitalDiscovery 54 of 191 labels wrong.</li>
+</ul>
+<p class="note">Seed spread (noise 0.5, 200k, seed 0 vs 1): clean41 link 0.8 points, e2e link (all boxes) 1.6 points, mAP50 top-3 0.004,
+APr 0.008. So noise + rank (0.670) vs noise (0.666) is within seed noise, and noise 1.0 vs 0.5 at 200k is a tie.
+wandb group v2d2_cls (runs replaycls-*), now with link / class loss logged separately.</p>
+</section>
+</main>

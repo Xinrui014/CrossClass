@@ -1,0 +1,99 @@
+ACM-109_Bottom|SW: Capacitor - crop text is EM5 (OCR misread as SW3); linked part is a 3-terminal EMI filter chip, capacitor-like
+ACM-109_Bottom|EM: Capacitor - EM = chip EMI filter (NFM type), brown ceramic capacitor-type body
+ACM-109_Top|EM: Capacitor - EM = chip EMI filter, capacitor-type body in all crops
+ACM-109_Top|JR: Resistor - JR24 = R24 / jumper resistor; same size as R parts
+ACM-109_Top|L: Diode - L1 is an SMD LED (clear body, yellow die); this board family uses L for LEDs
+ACM-109_Top|DONE: Diode - DONE = FPGA DONE status LED label
+ATTIOT_Bottom|IR: Resistor - IR24 = R24 misread; small resistor-size part
+ATTIOT_Bottom|K: null - K64F is the board/MCU name (FRDM-K64F), not a designator
+Arty_Bottom|OR: Resistor - OR132/OR262 = R132/R262 misreads; small resistor chips
+Arty_Bottom|RSO: Resistor - RSO2 = R502/R50-type misread; resistor-size part
+Arty_Bottom|JC: Capacitor - JC171 = C171 misread; capacitor-size part
+Arty_Top|F: Inductor - F81 = FB1 (ferrite bead) misread, crop confirms FB1
+DigitalDiscovery|ER: Resistor - ER124 = R124 misread
+DuetWIFI_Bottom|SJ: null - SJ = solder jumper pads, not a component
+DuetWIFI_Top|HP: Connector - HP13 = JP13 misread; JP parts on this board are connectors
+DuetWIFI_Top|X: Connector - X2 sits on the corner of a 3-pin JST connector outline (X = connector); the linked electrolytic cap is C25 (link error)
+DuetWIFI_Top|PC: Capacitor - PC32 = C32 misread; 0805-size chip
+DuetWIFI_Top|ICS: Capacitor - ICS4 = C54 misread with stray stroke; 0805-size chip, not IC size
+DuetWIFI_Top|AR: Resistor - AR101 = R101 (or resistor array); resistor-size part
+DuetWIFI_Top|A: null - A5 has no clear designator meaning; cannot tell
+DuetWIFI_Top|JR: Resistor - JR57 = R57 / jumper resistor; resistor-size part
+DuetWIFI_Top|N: null - N18 has no clear meaning, likely misread; cannot tell
+DuetWIFI_Top|RO: Resistor - RO3 = R03/R3 misread
+EDA-008_Bottom|DA: IC - DA = analog IC (GOST style); SOT-23 regulator/supervisor packages
+EDA-008_Bottom|PS: null - PS = PolySwitch PTC fuse; not one of the 9 classes
+EDA-008_Bottom|SK: null - SK has no standard meaning; cannot tell
+EDA-008_Top|EM: Capacitor - EM = chip EMI filter, capacitor-type body in all crops
+EDA-008_Top|L: Diode - L2/L5 are SMD LEDs; this board family uses L for LEDs
+EDA-008_Top|M: Capacitor - M3 = EM3 with E lost (EM3 is the missing EM number); EMI filter, capacitor-type
+EDA-008_Top|RJ: Resistor - RJ = jumper resistor, resistor-size part
+EDA-008_Top|DA: IC - DA = analog IC; SOT-23 IC
+ML365_Top|DLLP: Connector - text is DLL + P22/P6; P22/P6 are 3-pin jumper headers
+ML365_Top|JC: Capacitor - JC376 = C376 misread
+ML450_Bottom1|H: Resistor - H238 = R238 misread (R2xx range on this side), resistor-size
+ML450_Top1|VR: null - VR = regulator module or trimmer next to PTH05000; linked parts are caps/headers (link errors); cannot tell
+ML450_Top1|SM: Diode - SM2/SM4 linked parts are SMD LEDs with diode symbols beside them
+ML450_Top1|DIP: Switch - DIP1 is an 8-way DIP switch
+ML450_Top1|CC: Capacitor - CC18 = C18 / ceramic cap
+ML450_Top1|XT: Oscillator - XT = crystal (metal can next to the text)
+ML450_Top1|B: Resistor - B177 = R177 misread; resistor-size
+ML450_Top1|EC: Capacitor - EC139 = C139 / electrolytic cap
+ML450_Top1|OC: Capacitor - OC46 = C46 misread
+ML450_Top1|ER: Resistor - ER126 = R126 misread
+ML450_Top1|FIL: Inductor - FIL = EMI filter / ferrite chip (grey ferrite body)
+ML450_Top1|PC: Capacitor - PC128 = C128 misread
+ML450_Top2|FIL: Inductor - FIL = EMI filter / ferrite chip (grey ferrite body)
+ML450_Top2|DIP: Switch - DIP1 is an 8-way DIP switch
+ML450_Top2|AP: Connector - AP49 = P49 misread; long connector, P = connector on this board
+ML450_Top2|XT: Oscillator - XT1 is a crystal oscillator can
+MicroZed_Bottom|G: Capacitor - G190/G90 = C190/C90 misreads (crop shows C190)
+MicroZed_Bottom|JX: Connector - JX1 = MicroZed MicroHeader board-to-board connector
+MicroZed_Top|JT: Resistor - JT = jumper tie, populated 0-ohm resistor-type part
+OlimexRed|BUT: Switch - BUT1 = push button
+OlimexRed|U: null - text is a fragment next to the EXT label, not an IC designator; linked part is crystal Q1
+RPI3B_Bottom|F: Inductor - F83 = FB3 (ferrite bead) misread, crop confirms FB3
+RPI3B_Top|V: IC - V13 = U13 misread; IC-size part
+RPI3B_Top|FA: Inductor - FA8 = FB8 misread; ferrite-bead size
+STK644|K: Switch - K0..K7 are tactile push buttons (Taster)
+STK644|L: Diode - L0..L7 are SMD LEDs
+STK644|UART: Connector - UART1 labels the serial connector
+STK644|ISP: Connector - ISP6 labels the ISP programming header
+Spartan3|A: null - A1 is the BGA ball-A1 / pin-1 marker, not a designator
+Spartan3|OR: Resistor - OR79 = R79 misread
+Spartan3|M: null - M2 likely a mounting-hole / marker label; cannot tell
+Spartan6Redux_Top|L: Diode - L0..L7 are a row of SMD LEDs
+Spartan6Redux_Top|EM: Capacitor - EM = chip EMI filter, capacitor-type body
+Spartan6Redux_Top|JRM: Resistor - JRM4 = RM4 / jumper resistor array; same size as RM
+Spartan6_Top|L: Diode - L2/L3 are SMD LEDs
+UTL-016|EM: Capacitor - EM = 3-terminal chip EMI filter, capacitor-type body
+UTL-016|CJ: Capacitor - CJ1/CJ2 are small brown ceramic chips (capacitors)
+UTL-016|L: Resistor - L1 position is filled with a marked thick-film chip (000 = 0-ohm jumper), looks like a resistor
+UTL-016|LE: Diode - LE02 = LED2 misread
+UTL-103|EM: Capacitor - EM = chip EMI filter, capacitor-type body
+UTL-103|PC: Capacitor - PC1 = FC1 misread; FC-size chip
+UTL-103|L: Resistor - L2 position is filled with a marked thick-film chip (0-ohm jumper), looks like a resistor
+Virtex6|F: null - F = fuse (or unclear text); not one of the 9 classes
+Virtex6|PE: null - PE298J is not a designator
+Virtex6|TJ: Connector - TJ31 = J31 misread; connector-size part
+Virtex6|CP: Capacitor - CP14 = polarized capacitor / C14
+Virtex6|TC: Capacitor - TC184 = C184 misread
+XCM-307A_Top|EM: Capacitor - EM = chip EMI filter, capacitor-type body
+XCM-307A_Top|DA: IC - DA = analog IC; SOT-23 ICs
+XCM-307A_Top|BR: Resistor - BR8 = R8 (R8 is printed in the same area); resistor-size
+XCM-307A_Top|RJ: Resistor - RJ = jumper resistor
+XLVDSproSupply_Top1|OC: Capacitor - OC115C = C115 misread
+XLVDSproSupply_Top1|X: null - text unclear; the linked part is a plain MLCC, not a crystal; cannot tell
+XLVDSproSupply_Top1|F: null - F = fuse; not one of the 9 classes
+XLVDSproSupply_Top1|POT: Resistor - POT1 = potentiometer (variable resistor)
+XLVDSproSupply_Top1|RB: Resistor - RB3 = resistor (R3 / bleeder)
+XLVDSproSupply_Top1|IR: Resistor - IR1 = R1 misread; small chip
+ZTurn|Q: IC - text is U43 (OCR misread as Q43); it labels the TSSOP-24 IC
+ZTurn|M: null - M1 likely a mounting-hole / module label; cannot tell
+Zedboard|JC: Connector - JC1 = Pmod connector (JC259 is a C259 misread)
+Zedboard|JB: Connector - JB1 = Pmod connector
+Zedboard|JA: Connector - JA1 = Pmod connector
+Zedboard|MI: Connector - MIO7 label on the MIO Pmod connector
+Ztex|B: Resistor - B3 = R3 misread; resistor-size
+Zybo|MI: Switch - MIO50 = label of the MIO push button (BTN4)
+Zybo|DC: Capacitor - DC150 = C150 misread

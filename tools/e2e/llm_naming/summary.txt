@@ -1,0 +1,449 @@
+
+== ACM-109_Bottom
+  C      n=  3 table=Capacitor  detector votes={'Capacitor': 3} size(px)=23x11 examples=['C15', 'C25', 'C5']
+  R      n=  3 table=Resistor   detector votes={'Resistor': 2, 'Capacitor': 1} size(px)=12x22 examples=['R10', 'R11', 'R29010']  *
+  RM     n=  1 table=Resistor   detector votes={'Resistor': 1} size(px)=56x37 examples=['RM1']
+  SW     n=  1 table=Switch     detector votes={'Capacitor': 1} size(px)=23x41 examples=['SW3']  *
+  EM     n=  1 table=-          detector votes={'Capacitor': 1} size(px)=42x24 examples=['EM2']  *
+
+== ACM-109_Top
+  C      n= 14 table=Capacitor  detector votes={'Capacitor': 14} size(px)=40x42 examples=['C1', 'C14', 'C16', 'C17', 'C19', 'C2', 'C21', 'C22']
+  U      n= 10 table=IC         detector votes={'IC': 9, 'Oscillator': 1} size(px)=42x46 examples=['U1', 'U10', 'U2', 'U3', 'U4', 'U5', 'U6', 'U7']
+  R      n= 10 table=Resistor   detector votes={'Resistor': 9, 'Capacitor': 1} size(px)=23x12 examples=['R1', 'R15', 'R21', 'R25', 'R26', 'R30', 'R5', 'R6']
+  EM     n=  3 table=-          detector votes={'Capacitor': 3} size(px)=25x41 examples=['EM1', 'EM3', 'EM4']  *
+  CN     n=  1 table=Connector  detector votes={'Resistor': 1} size(px)=22x11 examples=['CN1']  *
+  JR     n=  1 table=-          detector votes={'Resistor': 1} size(px)=22x12 examples=['JR24']  *
+  L      n=  1 table=Inductor   detector votes={'Diode': 1} size(px)=15x34 examples=['L1']  *
+  DONE   n=  1 table=-          detector votes={'Diode': 1} size(px)=35x15 examples=['DONE3']  *
+  SW     n=  1 table=Switch     detector votes={'Switch': 1} size(px)=59x99 examples=['SW1']
+  RM     n=  1 table=Resistor   detector votes={'Resistor': 1} size(px)=31x26 examples=['RM2']
+
+== ATTIOT_Bottom
+  R      n= 27 table=Resistor   detector votes={'Resistor': 22, 'Capacitor': 4, 'Diode': 1} size(px)=38x37 examples=['R1', 'R15', 'R16', 'R20', 'R21', 'R22', 'R25', 'R26']
+  C      n= 19 table=Capacitor  detector votes={'Capacitor': 17, 'IC': 1, 'Resistor': 1} size(px)=35x37 examples=['C10', 'C11', 'C131', 'C14', 'C16', 'C18', 'C2', 'C291R']
+  U      n= 11 table=IC         detector votes={'IC': 10, 'Resistor': 1} size(px)=60x68 examples=['U10', 'U11', 'U12', 'U13', 'U14', 'U15', 'U2', 'U3']
+  J      n=  7 table=Connector  detector votes={'Connector': 5, 'Resistor': 2} size(px)=115x183 examples=['J10', 'J18', 'J19', 'J21', 'J23', 'J26', 'J7']
+  D      n=  5 table=Diode      detector votes={'Resistor': 2, 'Diode': 2, 'IC': 1} size(px)=62x71 examples=['D2', 'D3', 'D4', 'D8', 'D9']  *
+  SW     n=  3 table=Switch     detector votes={'Switch': 3} size(px)=144x104 examples=['SW1', 'SW2', 'SW3']
+  Y      n=  2 table=Oscillator detector votes={'Oscillator': 1, 'Capacitor': 1} size(px)=66x100 examples=['Y1', 'Y2']  *
+  L      n=  2 table=Inductor   detector votes={'Resistor': 1, 'Capacitor': 1} size(px)=54x46 examples=['L1', 'L2']  *
+  IR     n=  1 table=-          detector votes={'Resistor': 1} size(px)=19x35 examples=['IR24']  *
+  RN     n=  1 table=Resistor   detector votes={'Resistor': 1} size(px)=70x31 examples=['RN1']
+  K      n=  1 table=-          detector votes={'Connector': 1} size(px)=1221x200 examples=['K64F']  *
+
+== ArduinoMega_Bottom
+
+== ArduinoMega_Top
+
+== Arty_Bottom
+  R      n=183 table=Resistor   detector votes={'Resistor': 178, 'Capacitor': 5} size(px)=23x43 examples=['R1', 'R10', 'R100', 'R101', 'R102', 'R104', 'R105', 'R108']
+  C      n= 50 table=Capacitor  detector votes={'Capacitor': 39, 'Diode': 6, 'Resistor': 5} size(px)=32x44 examples=['C1', 'C103', 'C121', 'C122', 'C123', 'C141', 'C142', 'C16']
+  IC     n=  6 table=IC         detector votes={'IC': 5, 'Capacitor': 1} size(px)=76x70 examples=['IC13', 'IC14', 'IC15', 'IC183A', 'IC5', 'IC9']
+  Q      n=  5 table=Transistor detector votes={'IC': 5} size(px)=82x82 examples=['Q1', 'Q4', 'Q7', 'Q8', 'Q9']  *
+  FB     n=  3 table=Inductor   detector votes={'Resistor': 3} size(px)=37x48 examples=['FB4', 'FB5', 'FB6']  *
+  OR     n=  2 table=-          detector votes={'Resistor': 1, 'Capacitor': 1} size(px)=34x45 examples=['OR132', 'OR262']  *
+  RSO    n=  1 table=-          detector votes={'Resistor': 1} size(px)=23x44 examples=['RSO2']  *
+  JC     n=  1 table=-          detector votes={'Capacitor': 1} size(px)=24x46 examples=['JC171']  *
+  X      n=  1 table=Oscillator detector votes={'Connector': 1} size(px)=237x153 examples=['X1']  *
+
+== Arty_Top
+  R      n= 42 table=Resistor   detector votes={'Resistor': 39, 'Capacitor': 3} size(px)=65x46 examples=['R149', 'R15', 'R156', 'R157', 'R162', 'R163', 'R173', 'R182']
+  C      n= 24 table=Capacitor  detector votes={'Capacitor': 20, 'Resistor': 3, 'IC': 1} size(px)=64x73 examples=['C1', 'C101', 'C124', 'C130', 'C131', 'C143', 'C145', 'C15']
+  LD     n=  9 table=Diode      detector votes={'Diode': 8, 'Connector': 1} size(px)=100x52 examples=['LD1', 'LD11', 'LD2', 'LD3', 'LD4', 'LD5', 'LD6', 'LD7']
+  BTN    n=  4 table=Switch     detector votes={'Switch': 4} size(px)=213x372 examples=['BTN0', 'BTN1', 'BTN2', 'BTN3']
+  J      n=  4 table=Connector  detector votes={'Connector': 4} size(px)=751x246 examples=['J1', 'J10', 'J3', 'J7']
+  IC     n=  3 table=IC         detector votes={'IC': 2, 'Capacitor': 1} size(px)=273x273 examples=['IC4', 'IC6', 'IC88']  *
+  L      n=  2 table=Inductor   detector votes={'Inductor': 2} size(px)=217x221 examples=['L1', 'L3']
+  SW     n=  2 table=Switch     detector votes={'Switch': 1, 'Connector': 1} size(px)=259x508 examples=['SW1', 'SW2']  *
+  FB     n=  2 table=Inductor   detector votes={'Resistor': 2} size(px)=44x87 examples=['FB2', 'FB3']  *
+  JP     n=  1 table=Connector  detector votes={'Switch': 1} size(px)=363x216 examples=['JP1']  *
+  F      n=  1 table=-          detector votes={'Resistor': 1} size(px)=48x86 examples=['F81']  *
+
+== DigitalDiscovery
+  C      n= 48 table=Capacitor  detector votes={'Capacitor': 44, 'Resistor': 3, 'Diode': 1} size(px)=30x28 examples=['C1', 'C108', 'C120', 'C121', 'C122', 'C123', 'C124', 'C125']
+  R      n= 33 table=Resistor   detector votes={'Resistor': 30, 'Capacitor': 3} size(px)=30x18 examples=['R108', 'R116', 'R117', 'R119', 'R126', 'R13', 'R149N', 'R152']
+  IC     n=  9 table=IC         detector votes={'IC': 5, 'Inductor': 1, 'Oscillator': 1} size(px)=130x127 examples=['IC10', 'IC11', 'IC13', 'IC16', 'IC19', 'IC2', 'IC3', 'IC6']  *
+  J      n=  4 table=Connector  detector votes={'Connector': 4} size(px)=252x278 examples=['J1', 'J2', 'J3', 'J4']
+  LD     n=  2 table=Diode      detector votes={'Diode': 2} size(px)=49x41 examples=['LD1', 'LD2']
+  ER     n=  1 table=-          detector votes={'Resistor': 1} size(px)=33x17 examples=['ER124']  *
+  Q      n=  1 table=Transistor detector votes={'Transistor': 1} size(px)=45x47 examples=['Q1']
+  D      n=  1 table=Diode      detector votes={'Resistor': 1} size(px)=27x45 examples=['D25']  *
+  L      n=  1 table=Inductor   detector votes={'IC': 1} size(px)=44x27 examples=['L1']  *
+
+== DuetWIFI_Bottom
+  SJ     n=  1 table=-          detector votes={'Diode': 1} size(px)=73x48 examples=['SJ1']  *
+
+== DuetWIFI_Top
+  R      n= 70 table=Resistor   detector votes={'Resistor': 64, 'Capacitor': 6} size(px)=67x36 examples=['R1', 'R10', 'R11', 'R12', 'R13', 'R14', 'R15', 'R17']
+  C      n= 49 table=Capacitor  detector votes={'Capacitor': 48, 'IC': 1} size(px)=64x58 examples=['C10', 'C11', 'C12', 'C13', 'C15', 'C16', 'C18', 'C19']
+  IC     n=  7 table=IC         detector votes={'IC': 4, 'Capacitor': 3} size(px)=72x96 examples=['IC1', 'IC10', 'IC17', 'IC49', 'IC58', 'IC7', 'IC8']  *
+  D      n=  5 table=Diode      detector votes={'Diode': 3, 'Capacitor': 1, 'Resistor': 1} size(px)=185x88 examples=['D2', 'D3', 'D4', 'D6', 'D9']  *
+  JP     n=  3 table=Connector  detector votes={'Connector': 3} size(px)=177x123 examples=['JP20', 'JP28', 'JP6']
+  Q      n=  2 table=Transistor detector votes={'Oscillator': 1, 'Connector': 1} size(px)=172x125 examples=['Q2', 'Q6']  *
+  HP     n=  1 table=-          detector votes={'Connector': 1} size(px)=73x187 examples=['HP13']  *
+  J      n=  1 table=Connector  detector votes={'Capacitor': 1} size(px)=206x216 examples=['J2']  *
+  X      n=  1 table=Oscillator detector votes={'Capacitor': 1} size(px)=207x233 examples=['X2']  *
+  PC     n=  1 table=-          detector votes={'Capacitor': 1} size(px)=66x32 examples=['PC32']  *
+  ICS    n=  1 table=-          detector votes={'Capacitor': 1} size(px)=64x31 examples=['ICS4']  *
+  AR     n=  1 table=-          detector votes={'Resistor': 1} size(px)=31x73 examples=['AR101']  *
+  A      n=  1 table=-          detector votes={'Resistor': 1} size(px)=65x33 examples=['A5']  *
+  JR     n=  1 table=-          detector votes={'Resistor': 1} size(px)=65x34 examples=['JR57']  *
+  N      n=  1 table=-          detector votes={'Capacitor': 1} size(px)=31x69 examples=['N18']  *
+  LED    n=  1 table=Diode      detector votes={'Capacitor': 1} size(px)=61x32 examples=['LED1']  *
+  RO     n=  1 table=-          detector votes={'Resistor': 1} size(px)=31x71 examples=['RO3']  *
+
+== EDA-008_Bottom
+  C      n= 17 table=Capacitor  detector votes={'Capacitor': 16, 'Resistor': 1} size(px)=16x16 examples=['C15', 'C20', 'C25', 'C27', 'C28', 'C32', 'C33', 'C340']
+  R      n=  9 table=Resistor   detector votes={'Resistor': 9} size(px)=9x16 examples=['R16', 'R18?', 'R19', 'R23', 'R24', 'R25', 'R28', 'R39']
+  RM     n=  4 table=Resistor   detector votes={'Resistor': 4} size(px)=23x21 examples=['RM1', 'RM2', 'RM3', 'RM5']
+  DA     n=  2 table=-          detector votes={'IC': 2} size(px)=15x15 examples=['DA1', 'DA3']  *
+  Q      n=  2 table=Transistor detector votes={'IC': 2} size(px)=21x21 examples=['Q2', 'Q3']  *
+  U      n=  1 table=IC         detector votes={'IC': 1} size(px)=73x52 examples=['U32']
+  PS     n=  1 table=-          detector votes={'Resistor': 1} size(px)=20x41 examples=['PS1']  *
+  SK     n=  1 table=-          detector votes={'Resistor': 1} size(px)=20x41 examples=['SK1']  *
+
+== EDA-008_Top
+  U      n= 18 table=IC         detector votes={'IC': 18} size(px)=33x25 examples=['U1', 'U19', 'U20', 'U21', 'U22', 'U24', 'U25', 'U26']
+  C      n= 11 table=Capacitor  detector votes={'Capacitor': 9, 'Resistor': 2} size(px)=29x31 examples=['C1', 'C2', 'C21', 'C29', 'C430', 'C46', 'C5', 'C6']
+  R      n= 11 table=Resistor   detector votes={'Resistor': 11} size(px)=17x8 examples=['R1', 'R2', 'R3', 'R30', 'R31', 'R330', 'R35CH', 'R38']
+  EM     n=  6 table=-          detector votes={'Capacitor': 6} size(px)=30x17 examples=['EM1', 'EM2', 'EM4', 'EM5', 'EM6', 'EM7']  *
+  RM     n=  3 table=Resistor   detector votes={'Resistor': 3} size(px)=39x26 examples=['RM6', 'RM7', 'RM8']
+  SW     n=  2 table=Switch     detector votes={'Switch': 2} size(px)=39x71 examples=['SW2', 'SW3']
+  L      n=  2 table=Inductor   detector votes={'Diode': 2} size(px)=18x18 examples=['L2', 'L5']  *
+  JP     n=  2 table=Connector  detector votes={'Connector': 2} size(px)=75x40 examples=['JP1', 'JP2']
+  CN     n=  1 table=Connector  detector votes={'Connector': 1} size(px)=57x128 examples=['CN2']
+  M      n=  1 table=-          detector votes={'Capacitor': 1} size(px)=29x18 examples=['M3']  *
+  Y      n=  1 table=Oscillator detector votes={'Oscillator': 1} size(px)=38x30 examples=['Y1']
+  RJ     n=  1 table=-          detector votes={'Resistor': 1} size(px)=53x17 examples=['RJ1']  *
+  D      n=  1 table=Diode      detector votes={'Diode': 1} size(px)=56x29 examples=['D3']
+  DA     n=  1 table=-          detector votes={'IC': 1} size(px)=15x16 examples=['DA2']  *
+
+== ML365_Bottom
+  C      n=170 table=Capacitor  detector votes={'Capacitor': 165, 'Connector': 5} size(px)=96x46 examples=['C1', 'C105', 'C116', 'C12', 'C138', 'C147', 'C149', 'C15']
+  R      n=  7 table=Resistor   detector votes={'Resistor': 4, 'Capacitor': 1, 'Oscillator': 1} size(px)=41x58 examples=['R11', 'R12', 'R12?', 'R17', 'R213', 'R23', 'R413']  *
+
+== ML365_Top
+  C      n= 31 table=Capacitor  detector votes={'Capacitor': 31} size(px)=47x31 examples=['C10', 'C11', 'C12', 'C13', 'C14', 'C2', 'C28', 'C287']
+  P      n= 20 table=Connector  detector votes={'Connector': 20} size(px)=58x58 examples=['P10', 'P23', 'P26', 'P3', 'P30', 'P31', 'P32', 'P35']
+  R      n=  8 table=Resistor   detector votes={'Resistor': 5, 'Capacitor': 3} size(px)=76x34 examples=['R129', 'R13', 'R134', 'R135', 'R308', 'R310', 'R42', 'R536']  *
+  SW     n=  6 table=Switch     detector votes={'Connector': 4, 'Switch': 2} size(px)=176x169 examples=['SW1', 'SW2', 'SW3', 'SW4', 'SW6', 'SW8']  *
+  U      n=  5 table=IC         detector votes={'IC': 4, 'Connector': 1} size(px)=148x132 examples=['U1', 'U13', 'U2', 'U3', 'U4']
+  J      n=  4 table=Connector  detector votes={'Connector': 3, 'Switch': 1} size(px)=196x218 examples=['J1', 'J2', 'J4', 'J5']
+  D      n=  3 table=Diode      detector votes={'Capacitor': 2, 'Diode': 1} size(px)=45x23 examples=['D1', 'D6', 'D9']  *
+  DLLP   n=  2 table=-          detector votes={'Connector': 2} size(px)=142x55 examples=['DLLP22', 'DLLP6']  *
+  L      n=  2 table=Inductor   detector votes={'Capacitor': 1, 'Resistor': 1} size(px)=93x52 examples=['L2', 'L3']  *
+  Q      n=  2 table=Transistor detector votes={'Transistor': 1, 'IC': 1} size(px)=61x58 examples=['Q3', 'Q8']  *
+  JC     n=  1 table=-          detector votes={'Capacitor': 1} size(px)=95x189 examples=['JC376']  *
+  Y      n=  1 table=Oscillator detector votes={'Oscillator': 1} size(px)=102x138 examples=['Y2']
+
+== ML450_Bottom1
+  C      n= 54 table=Capacitor  detector votes={'Capacitor': 52, 'Resistor': 1, 'Connector': 1} size(px)=32x33 examples=['C1', 'C157', 'C158', 'C159', 'C161', 'C162', 'C165', 'C166']
+  R      n=  2 table=Resistor   detector votes={'Capacitor': 2} size(px)=36x29 examples=['R216', 'R242']  *
+  J      n=  1 table=Connector  detector votes={'Connector': 1} size(px)=973x792 examples=['J13']
+  H      n=  1 table=-          detector votes={'Resistor': 1} size(px)=18x34 examples=['H238']  *
+
+== ML450_Bottom2
+  C      n= 25 table=Capacitor  detector votes={'Capacitor': 23, 'IC': 2} size(px)=23x45 examples=['C12', 'C153', 'C154', 'C155', 'C156', 'C160', 'C178', 'C181']
+  R      n= 10 table=Resistor   detector votes={'Resistor': 7, 'Capacitor': 3} size(px)=18x29 examples=['R215', 'R216', 'R218', 'R221', 'R24', 'R246', 'R254', 'R260']
+
+== ML450_Top1
+  C      n= 55 table=Capacitor  detector votes={'Capacitor': 51, 'Resistor': 2, 'IC': 1} size(px)=26x32 examples=['C1', 'C10', 'C103', 'C107', 'C108', 'C117', 'C13', 'C135']
+  R      n= 51 table=Resistor   detector votes={'Resistor': 38, 'Capacitor': 9, 'Diode': 4} size(px)=28x50 examples=['R1', 'R100', 'R103', 'R122', 'R128', 'R147R', 'R150', 'R155']
+  P      n= 14 table=Connector  detector votes={'Connector': 13, 'Switch': 1} size(px)=59x98 examples=['P1', 'P11', 'P14', 'P18', 'P21', 'P3', 'P30', 'P36']
+  D      n= 11 table=Diode      detector votes={'Diode': 8, 'Connector': 2, 'IC': 1} size(px)=45x102 examples=['D1', 'D10', 'D12', 'D15', 'D19', 'D20', 'D211', 'D22']
+  U      n=  4 table=IC         detector votes={'IC': 3, 'Connector': 1} size(px)=104x130 examples=['U10', 'U15', 'U2', 'U7']
+  VR     n=  4 table=-          detector votes={'Capacitor': 2, 'Connector': 2} size(px)=47x91 examples=['VR1', 'VR2', 'VR3', 'VR5']  *
+  SW     n=  3 table=Switch     detector votes={'Switch': 2, 'Diode': 1} size(px)=209x151 examples=['SW1', 'SW10', 'SW11']  *
+  J      n=  3 table=Connector  detector votes={'Connector': 3} size(px)=146x149 examples=['J4', 'J5', 'J8']
+  SM     n=  2 table=-          detector votes={'Diode': 2} size(px)=43x102 examples=['SM2', 'SM4']  *
+  Q      n=  2 table=Transistor detector votes={'Transistor': 1, 'IC': 1} size(px)=52x62 examples=['Q2', 'Q4']  *
+  DIP    n=  1 table=-          detector votes={'Switch': 1} size(px)=178x220 examples=['DIP1']  *
+  CC     n=  1 table=-          detector votes={'Capacitor': 1} size(px)=43x23 examples=['CC18']  *
+  XT     n=  1 table=-          detector votes={'IC': 1} size(px)=196x129 examples=['XT1']  *
+  B      n=  1 table=-          detector votes={'Resistor': 1} size(px)=15x27 examples=['B177']  *
+  EC     n=  1 table=-          detector votes={'Capacitor': 1} size(px)=28x15 examples=['EC139']  *
+  OC     n=  1 table=-          detector votes={'Capacitor': 1} size(px)=14x26 examples=['OC46']  *
+  TR     n=  1 table=Inductor   detector votes={'Connector': 1} size(px)=159x151 examples=['TR1']  *
+  ER     n=  1 table=-          detector votes={'Capacitor': 1} size(px)=30x15 examples=['ER126']  *
+  FIL    n=  1 table=-          detector votes={'Capacitor': 1} size(px)=79x41 examples=['FIL1']  *
+  PC     n=  1 table=-          detector votes={'Capacitor': 1} size(px)=15x26 examples=['PC128']  *
+
+== ML450_Top2
+  C      n= 60 table=Capacitor  detector votes={'Capacitor': 59, 'Resistor': 1} size(px)=30x40 examples=['C1', 'C10', 'C101', 'C1050', 'C106', 'C109', 'C11', 'C110']
+  R      n= 24 table=Resistor   detector votes={'Resistor': 16, 'Capacitor': 8} size(px)=17x29 examples=['R1', 'R100', 'R171', 'R176', 'R178', 'R2', 'R205', 'R206']  *
+  P      n= 13 table=Connector  detector votes={'Connector': 12, 'Switch': 1} size(px)=63x132 examples=['P17', 'P2', 'P20', 'P24', 'P25', 'P35', 'P39', 'P40']
+  J      n=  4 table=Connector  detector votes={'Connector': 4} size(px)=144x147 examples=['J10', 'J3', 'J6']
+  L      n=  4 table=Inductor   detector votes={'Capacitor': 2, 'Connector': 1, 'Inductor': 1} size(px)=58x87 examples=['L1', 'L2', 'L3', 'L4']  *
+  SW     n=  3 table=Switch     detector votes={'Connector': 2, 'Switch': 1} size(px)=171x134 examples=['SW1', 'SW7', 'SW9']  *
+  FIL    n=  3 table=-          detector votes={'Inductor': 3} size(px)=79x42 examples=['FIL1', 'FIL2', 'FIL4']  *
+  IC     n=  2 table=IC         detector votes={'IC': 1, 'Capacitor': 1} size(px)=56x57 examples=['IC3', 'IC4']  *
+  U      n=  1 table=IC         detector votes={'IC': 1} size(px)=435x442 examples=['U13']
+  DIP    n=  1 table=-          detector votes={'Switch': 1} size(px)=164x218 examples=['DIP1']  *
+  D      n=  1 table=Diode      detector votes={'Diode': 1} size(px)=44x104 examples=['D16']
+  AP     n=  1 table=-          detector votes={'Connector': 1} size(px)=171x757 examples=['AP49']  *
+  T      n=  1 table=Inductor   detector votes={'Inductor': 1} size(px)=66x67 examples=['T1']
+  XT     n=  1 table=-          detector votes={'Oscillator': 1} size(px)=200x289 examples=['XT1']  *
+  Y      n=  1 table=Oscillator detector votes={'Oscillator': 1} size(px)=130x142 examples=['Y10']
+
+== MicroZed_Bottom
+  C      n= 81 table=Capacitor  detector votes={'Capacitor': 74, 'Resistor': 4, 'Diode': 3} size(px)=27x23 examples=['C1', 'C10', 'C101', 'C102', 'C103', 'C105', 'C112', 'C12']
+  R      n= 33 table=Resistor   detector votes={'Resistor': 33} size(px)=41x34 examples=['R22', 'R47', 'R5', 'R50', 'R52', 'R54', 'R55', 'R567']
+  D      n=  8 table=Diode      detector votes={'IC': 3, 'Diode': 2, 'Capacitor': 2} size(px)=82x84 examples=['D1', 'D11', 'D12', 'D18', 'D7', 'D8', 'D9']  *
+  Q      n=  3 table=Transistor detector votes={'IC': 2, 'Transistor': 1} size(px)=77x82 examples=['Q2', 'Q3', 'Q4']  *
+  U      n=  2 table=IC         detector votes={'IC': 2} size(px)=50x54 examples=['U1', 'U20']
+  G      n=  2 table=-          detector votes={'Capacitor': 1, 'Connector': 1} size(px)=48x244 examples=['G190', 'G90']  *
+  J      n=  1 table=Connector  detector votes={'Connector': 1} size(px)=461x376 examples=['J6']
+  JX     n=  1 table=-          detector votes={'Connector': 1} size(px)=1167x182 examples=['JX1']  *
+
+== MicroZed_Top
+  C      n= 57 table=Capacitor  detector votes={'Capacitor': 52, 'Resistor': 4, 'IC': 1} size(px)=47x68 examples=['C1', 'C10', 'C11', 'C12', 'C13', 'C14', 'C15', 'C17']
+  R      n= 32 table=Resistor   detector votes={'Resistor': 32} size(px)=24x44 examples=['R1', 'R10', 'R11', 'R12', 'R13', 'R14', 'R2', 'R25']
+  U      n= 14 table=IC         detector votes={'IC': 11, 'Inductor': 1, 'Oscillator': 1} size(px)=109x112 examples=['U1', 'U10', 'U11', 'U14', 'U15', 'U17', 'U2', 'U3']
+  D      n=  4 table=Diode      detector votes={'Diode': 4} size(px)=58x30 examples=['D2', 'D3', 'D4', 'D5']
+  L      n=  4 table=Inductor   detector votes={'Capacitor': 3, 'Inductor': 1} size(px)=64x84 examples=['L1', 'L2', 'L5', 'L6']  *
+  JP     n=  3 table=Connector  detector votes={'Connector': 3} size(px)=83x196 examples=['JP1', 'JP2', 'JP3']
+  SW     n=  2 table=Switch     detector votes={'Switch': 2} size(px)=129x154 examples=['SW1', 'SW28']
+  J      n=  2 table=Connector  detector votes={'Connector': 2} size(px)=201x328 examples=['J2', 'J5']
+  JT     n=  1 table=-          detector votes={'Resistor': 1} size(px)=96x32 examples=['JT6']  *
+  RP     n=  1 table=Resistor   detector votes={'Resistor': 1} size(px)=90x75 examples=['RP1']
+  Q      n=  1 table=Transistor detector votes={'Transistor': 1} size(px)=81x77 examples=['Q1']
+
+== OlimexRed
+  R      n= 19 table=Resistor   detector votes={'Resistor': 18, 'Capacitor': 1} size(px)=55x131 examples=['R1', 'R10', 'R11', 'R13R', 'R14', 'R15', 'R16', 'R17']
+  C      n=  5 table=Capacitor  detector votes={'Capacitor': 5} size(px)=56x131 examples=['C1', 'C2', 'C4', 'C8', 'C9']
+  BUT    n=  1 table=-          detector votes={'Switch': 1} size(px)=484x335 examples=['BUT1']  *
+  U      n=  1 table=IC         detector votes={'Oscillator': 1} size(px)=640x242 examples=['U8']  *
+
+== RPI3B_Bottom
+  C      n= 48 table=Capacitor  detector votes={'Capacitor': 48} size(px)=13x22 examples=['C10', 'C103', 'C11', 'C14', 'C155', 'C188', 'C190', 'C192']
+  R      n= 17 table=Resistor   detector votes={'Resistor': 17} size(px)=12x22 examples=['R1', 'R2', 'R20', 'R25', 'R3', 'R314', 'R45', 'R57']
+  U      n=  5 table=IC         detector votes={'IC': 5} size(px)=50x33 examples=['U14', 'U15', 'U18', 'U19', 'U5']
+  Q      n=  4 table=Transistor detector votes={'IC': 4} size(px)=41x46 examples=['Q1', 'Q3', 'Q7', 'Q8']  *
+  X      n=  2 table=Oscillator detector votes={'Oscillator': 2} size(px)=39x34 examples=['X1', 'X2']
+  FB     n=  2 table=Inductor   detector votes={'Capacitor': 2} size(px)=24x11 examples=['FB1', 'FB2']  *
+  F      n=  1 table=-          detector votes={'Capacitor': 1} size(px)=12x24 examples=['F83']  *
+
+== RPI3B_Top
+  C      n= 44 table=Capacitor  detector votes={'Capacitor': 42, 'Resistor': 2} size(px)=36x35 examples=['C101', 'C102', 'C106', 'C162', 'C163', 'C187', 'C200', 'C211']
+  R      n= 36 table=Resistor   detector votes={'Resistor': 33, 'Capacitor': 3} size(px)=18x35 examples=['R10', 'R12', 'R13', 'R15', 'R16', 'R17', 'R18', 'R19']
+  U      n=  8 table=IC         detector votes={'IC': 7, 'Connector': 1} size(px)=71x81 examples=['U1', 'U10', 'U11', 'U17?', 'U2', 'U20', 'U4', 'U8']
+  J      n=  6 table=Connector  detector votes={'Connector': 5, 'IC': 1} size(px)=182x257 examples=['J1', 'J10', 'J16', 'J6', 'J7', 'J8']
+  FB     n=  3 table=Inductor   detector votes={'Capacitor': 3} size(px)=26x58 examples=['FB5', 'FB6', 'FB71']  *
+  L      n=  2 table=Inductor   detector votes={'Inductor': 2} size(px)=111x98 examples=['L2', 'L3']
+  V      n=  1 table=-          detector votes={'IC': 1} size(px)=89x72 examples=['V13']  *
+  D      n=  1 table=Diode      detector votes={'IC': 1} size(px)=87x69 examples=['D3']  *
+  FA     n=  1 table=-          detector votes={'Resistor': 1} size(px)=61x27 examples=['FA8']  *
+
+== STK644
+  K      n= 10 table=-          detector votes={'Switch': 8, 'Capacitor': 2} size(px)=200x242 examples=['K0', 'K1', 'K2', 'K3', 'K4', 'K5', 'K6', 'K7']  *
+  L      n=  8 table=Inductor   detector votes={'Diode': 6, 'Capacitor': 2} size(px)=122x62 examples=['L0', 'L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7']  *
+  UART   n=  1 table=-          detector votes={'Connector': 1} size(px)=548x881 examples=['UART1']  *
+  ISP    n=  1 table=-          detector votes={'Connector': 1} size(px)=272x434 examples=['ISP6']  *
+
+== Spartan3
+  C      n= 26 table=Capacitor  detector votes={'Capacitor': 25, 'Diode': 1} size(px)=45x78 examples=['C13', 'C14', 'C16', 'C17', 'C18', 'C19', 'C2', 'C20']
+  R      n= 10 table=Resistor   detector votes={'Resistor': 10} size(px)=77x43 examples=['R31', 'R32', 'R34', 'R60', 'R62', 'R65', 'R67', 'R68']
+  LD     n=  5 table=Diode      detector votes={'Diode': 4, 'Capacitor': 1} size(px)=54x114 examples=['LD0', 'LD1', 'LD2', 'LD3', 'LD8']
+  IC     n=  3 table=IC         detector votes={'IC': 1, 'Connector': 1, 'Transistor': 1} size(px)=258x363 examples=['IC14', 'IC2', 'IC8']  *
+  A      n=  2 table=-          detector votes={'IC': 1, 'Connector': 1} size(px)=1189x599 examples=['A1', 'A2']  *
+  J      n=  2 table=Connector  detector votes={'Resistor': 1, 'Connector': 1} size(px)=334x269 examples=['J1', 'J4']  *
+  OR     n=  1 table=-          detector votes={'Resistor': 1} size(px)=38x70 examples=['OR79']  *
+  D      n=  1 table=Diode      detector votes={'Diode': 1} size(px)=58x117 examples=['D5']
+  M      n=  1 table=-          detector votes={'IC': 1} size(px)=96x178 examples=['M2']  *
+
+== Spartan6Redux_Bottom
+  U      n= 12 table=IC         detector votes={'IC': 12} size(px)=73x84 examples=['U1', 'U11', 'U12', 'U14', 'U15', 'U16', 'U17', 'U18']
+  R      n=  6 table=Resistor   detector votes={'Resistor': 5, 'Capacitor': 1} size(px)=12x25 examples=['R1', 'R14', 'R17', 'R24C', 'R31']
+  C      n=  4 table=Capacitor  detector votes={'Capacitor': 4} size(px)=19x18 examples=['C19', 'C2', 'C3', 'C7']
+  FC     n=  1 table=Capacitor  detector votes={'Capacitor': 1} size(px)=25x11 examples=['FC2']
+
+== Spartan6Redux_Top
+  R      n= 17 table=Resistor   detector votes={'Resistor': 16, 'Diode': 1} size(px)=25x12 examples=['R1', 'R16', 'R2', 'R20', 'R21', 'R22', 'R23', 'R25']
+  C      n= 13 table=Capacitor  detector votes={'Capacitor': 13} size(px)=29x50 examples=['C1', 'C11', 'C13', 'C15', 'C16', 'C17', 'C3', 'C4']
+  U      n=  6 table=IC         detector votes={'IC': 5, 'Inductor': 1} size(px)=87x73 examples=['U2', 'U22', 'U3', 'U4', 'U5', 'U7']
+  L      n=  5 table=Inductor   detector votes={'Diode': 5} size(px)=11x23 examples=['L1', 'L2', 'L3', 'L5', 'L7']  *
+  RM     n=  5 table=Resistor   detector votes={'Resistor': 5} size(px)=40x26 examples=['RM1', 'RM2', 'RM3', 'RM5', 'RM6']
+  SW     n=  3 table=Switch     detector votes={'Switch': 3} size(px)=39x78 examples=['SW1', 'SW2', 'SW3']
+  EM     n=  2 table=-          detector votes={'Capacitor': 2} size(px)=46x29 examples=['EM1', 'EM2']  *
+  CN     n=  2 table=Connector  detector votes={'Connector': 2} size(px)=48x128 examples=['CN3', 'CN5']
+  Q      n=  1 table=Transistor detector votes={'IC': 1} size(px)=17x20 examples=['Q1']  *
+  JRM    n=  1 table=-          detector votes={'Resistor': 1} size(px)=40x26 examples=['JRM4']  *
+  P      n=  1 table=Connector  detector votes={'Capacitor': 1} size(px)=16x8 examples=['P4']  *
+  D      n=  1 table=Diode      detector votes={'Diode': 1} size(px)=37x34 examples=['D1']
+
+== Spartan6_Bottom
+  R      n=  7 table=Resistor   detector votes={'Resistor': 6, 'Capacitor': 1} size(px)=42x20 examples=['R1', 'R2', 'R3', 'R4', 'R7']
+  U      n=  3 table=IC         detector votes={'Inductor': 1, 'IC': 1, 'Diode': 1} size(px)=77x78 examples=['U2', 'U3', 'U4']  *
+  C      n=  2 table=Capacitor  detector votes={'Capacitor': 2} size(px)=23x51 examples=['C1', 'C2']
+  RM     n=  2 table=Resistor   detector votes={'Switch': 1, 'Connector': 1} size(px)=106x61 examples=['RM1', 'RM2']  *
+
+== Spartan6_Top
+  U      n=  2 table=IC         detector votes={'Diode': 1, 'IC': 1} size(px)=126x124 examples=['U51', 'U6L']  *
+  L      n=  2 table=Inductor   detector votes={'Diode': 2} size(px)=64x27 examples=['L2', 'L31']  *
+  R      n=  2 table=Resistor   detector votes={'Resistor': 2} size(px)=20x44 examples=['R5', 'R6D']
+  C      n=  1 table=Capacitor  detector votes={'Capacitor': 1} size(px)=19x40 examples=['C3']
+
+== SystemAce_Bottom
+
+== SystemAce_Top
+  C      n= 21 table=Capacitor  detector votes={'Capacitor': 20, 'IC': 1} size(px)=44x73 examples=['C1', 'C11', 'C16', 'C19', 'C2', 'C20', 'C25', 'C26']
+  R      n= 15 table=Resistor   detector votes={'Resistor': 15} size(px)=75x39 examples=['R1', 'R13', 'R20', 'R23', 'R3', 'R30', 'R310?', 'R33']
+  SW     n=  3 table=Switch     detector votes={'Switch': 3} size(px)=241x228 examples=['SW1', 'SW2', 'SW5']
+  CR     n=  3 table=Diode      detector votes={'Capacitor': 3} size(px)=60x127 examples=['CR1', 'CR2', 'CR4']  *
+  U      n=  2 table=IC         detector votes={'IC': 2} size(px)=247x257 examples=['U5', 'U7']
+  J      n=  2 table=Connector  detector votes={'Connector': 2} size(px)=283x68 examples=['J27', 'J4']
+  RP     n=  2 table=Resistor   detector votes={'Capacitor': 1, 'Resistor': 1} size(px)=72x78 examples=['RP2', 'RP5']  *
+  DS     n=  1 table=Diode      detector votes={'Switch': 1} size(px)=124x120 examples=['DS2']  *
+  S      n=  1 table=Switch     detector votes={'Capacitor': 1} size(px)=35x73 examples=['S14']  *
+  Y      n=  1 table=Oscillator detector votes={'Oscillator': 1} size(px)=137x119 examples=['Y1']
+
+== ThingMagicM6e
+  R      n= 18 table=Resistor   detector votes={'Resistor': 17, 'Capacitor': 1} size(px)=51x27 examples=['R10', 'R11', 'R12', 'R13', 'R14', 'R15', 'R16', 'R17']
+  C      n= 15 table=Capacitor  detector votes={'Capacitor': 13, 'Resistor': 2} size(px)=29x50 examples=['C1', 'C13', 'C15', 'C16', 'C17', 'C19', 'C2', 'C20']
+  J      n=  9 table=Connector  detector votes={'Connector': 7, 'IC': 1, 'Capacitor': 1} size(px)=147x182 examples=['J11', 'J13', 'J16', 'J17', 'J18', 'J19', 'J2', 'J5']
+  U      n=  4 table=IC         detector votes={'IC': 3, 'Connector': 1} size(px)=89x77 examples=['U1', 'U2', 'U3', 'U4']
+  DS     n=  4 table=Diode      detector votes={'Diode': 3, 'Capacitor': 1} size(px)=50x26 examples=['DS1', 'DS2', 'DS3', 'DS6']
+  SW     n=  1 table=Switch     detector votes={'Switch': 1} size(px)=150x86 examples=['SW2']
+  L      n=  1 table=Inductor   detector votes={'Capacitor': 1} size(px)=50x25 examples=['L2']  *
+
+== UTL-016
+  C      n= 20 table=Capacitor  detector votes={'Capacitor': 19, 'Resistor': 1} size(px)=32x31 examples=['C1', 'C10', 'C12', 'C13', 'C14', 'C15', 'C16?', 'C18']
+  R      n= 10 table=Resistor   detector votes={'Resistor': 9, 'Capacitor': 1} size(px)=42x20 examples=['R1', 'R10', 'R12', 'R15', 'R2', 'R3', 'R4', 'R5']
+  CN     n=  6 table=Connector  detector votes={'Connector': 6} size(px)=98x95 examples=['CN2', 'CN3', 'CN4', 'CN5', 'CN6', 'CN7']
+  U      n=  3 table=IC         detector votes={'IC': 3} size(px)=46x69 examples=['U1', 'U2', 'U4']
+  SW     n=  3 table=Switch     detector votes={'Switch': 3} size(px)=92x111 examples=['SW1', 'SW2', 'SW3']
+  RM     n=  3 table=Resistor   detector votes={'Resistor': 3} size(px)=29x24 examples=['RM1', 'RM2', 'RM3']
+  EM     n=  2 table=-          detector votes={'Capacitor': 2} size(px)=40x52 examples=['EM1', 'EM2']  *
+  CJ     n=  2 table=-          detector votes={'Capacitor': 2} size(px)=14x30 examples=['CJ1', 'CJ2']  *
+  L      n=  1 table=Inductor   detector votes={'Resistor': 1} size(px)=43x19 examples=['L1']  *
+  LE     n=  1 table=-          detector votes={'Diode': 1} size(px)=41x20 examples=['LE02']  *
+  D      n=  1 table=Diode      detector votes={'IC': 1} size(px)=46x46 examples=['D1']  *
+  JP     n=  1 table=Connector  detector votes={'Connector': 1} size(px)=109x116 examples=['JP1']
+
+== UTL-103
+  FC     n= 36 table=Capacitor  detector votes={'Capacitor': 36} size(px)=21x10 examples=['FC1', 'FC10', 'FC11', 'FC12', 'FC13', 'FC15L', 'FC17', 'FC19']
+  C      n= 35 table=Capacitor  detector votes={'Capacitor': 33, 'Inductor': 1, 'IC': 1} size(px)=41x26 examples=['C1', 'C10', 'C12', 'C13', 'C14', 'C15', 'C16', 'C18']
+  R      n= 24 table=Resistor   detector votes={'Resistor': 24} size(px)=28x14 examples=['R1', 'R10', 'R11', 'R12', 'R13', 'R14', 'R15', 'R16']
+  U      n= 16 table=IC         detector votes={'IC': 16} size(px)=45x44 examples=['U1', 'U10', 'U11', 'U12', 'U13', 'U14', 'U15', 'U17']
+  EM     n=  4 table=-          detector votes={'Capacitor': 4} size(px)=36x35 examples=['EM2', 'EM3', 'EM4', 'EM5']  *
+  CN     n=  4 table=Connector  detector votes={'Connector': 3, 'IC': 1} size(px)=114x196 examples=['CN1', 'CN2', 'CN3', 'CN4']
+  LED    n=  1 table=Diode      detector votes={'Diode': 1} size(px)=28x15 examples=['LED3']
+  PC     n=  1 table=-          detector votes={'Capacitor': 1} size(px)=22x10 examples=['PC1']  *
+  L      n=  1 table=Inductor   detector votes={'Resistor': 1} size(px)=29x14 examples=['L2']  *
+  J      n=  1 table=Connector  detector votes={'Resistor': 1} size(px)=29x14 examples=['J1']  *
+  RM     n=  1 table=Resistor   detector votes={'Resistor': 1} size(px)=26x28 examples=['RM1']
+  D      n=  1 table=Diode      detector votes={'Resistor': 1} size(px)=31x30 examples=['D1']  *
+
+== Virtex5
+  C      n= 12 table=Capacitor  detector votes={'Capacitor': 12} size(px)=92x181 examples=['C11', 'C12', 'C29', 'C3', 'C36', 'C37', 'C39', 'C47']
+  R      n=  7 table=Resistor   detector votes={'Resistor': 6, 'Connector': 1} size(px)=178x83 examples=['R11', 'R2', 'R30', 'R31', 'R32', 'R8', 'R9']
+  U      n=  5 table=IC         detector votes={'IC': 3, 'Transistor': 1, 'Connector': 1} size(px)=283x370 examples=['U3', 'U4', 'U6?', 'U7', 'U8']  *
+  J      n=  3 table=Connector  detector votes={'Connector': 2, 'Resistor': 1} size(px)=526x349 examples=['J2', 'J3', 'J4']  *
+  Y      n=  2 table=Oscillator detector votes={'Inductor': 1, 'Capacitor': 1} size(px)=305x575 examples=['Y1', 'Y2']  *
+
+== Virtex6
+  C      n= 42 table=Capacitor  detector votes={'Capacitor': 37, 'Diode': 2, 'Resistor': 2} size(px)=53x44 examples=['C1', 'C106', 'C107', 'C1089', 'C115', 'C116?', 'C123', 'C134']
+  J      n= 19 table=Connector  detector votes={'Connector': 16, 'Capacitor': 1, 'Switch': 1} size(px)=160x158 examples=['J1', 'J10', 'J12', 'J18', 'J20', 'J26', 'J28', 'J30']
+  U      n= 11 table=IC         detector votes={'IC': 8, 'Inductor': 2, 'Connector': 1} size(px)=167x141 examples=['U1', 'U10', 'U15', 'U16', 'U30', 'U38?', 'U4', 'U80']
+  R      n=  9 table=Resistor   detector votes={'Resistor': 6, 'Capacitor': 2, 'Connector': 1} size(px)=38x31 examples=['R103', 'R131', 'R150', 'R169', 'R282', 'R29', 'R296', 'R346']  *
+  DS     n=  8 table=Diode      detector votes={'Diode': 6, 'Capacitor': 2} size(px)=37x68 examples=['DS1', 'DS18', 'DS19', 'DS2', 'DS20', 'DS25', 'DS30', 'DS31']
+  SW     n=  5 table=Switch     detector votes={'Switch': 3, 'Capacitor': 1, 'Connector': 1} size(px)=201x149 examples=['SW2', 'SW3', 'SW5', 'SW6', 'SW8']  *
+  X      n=  2 table=Oscillator detector votes={'Oscillator': 1, 'Connector': 1} size(px)=221x210 examples=['X2', 'X3']  *
+  F      n=  2 table=-          detector votes={'Capacitor': 1, 'Resistor': 1} size(px)=43x38 examples=['F1', 'F18']  *
+  Y      n=  1 table=Oscillator detector votes={'Oscillator': 1} size(px)=308x111 examples=['Y1']
+  PE     n=  1 table=-          detector votes={'Capacitor': 1} size(px)=126x73 examples=['PE298J']  *
+  P      n=  1 table=Connector  detector votes={'Connector': 1} size(px)=372x1002 examples=['P4']
+  TJ     n=  1 table=-          detector votes={'Connector': 1} size(px)=166x151 examples=['TJ31']  *
+  S      n=  1 table=Switch     detector votes={'Switch': 1} size(px)=354x226 examples=['S2']
+  CP     n=  1 table=-          detector votes={'Capacitor': 1} size(px)=28x42 examples=['CP14?']  *
+  TC     n=  1 table=-          detector votes={'Capacitor': 1} size(px)=26x49 examples=['TC184']  *
+  Z      n=  1 table=Diode      detector votes={'Resistor': 1} size(px)=31x57 examples=['Z8']  *
+  RP     n=  1 table=Resistor   detector votes={'Resistor': 1} size(px)=23x57 examples=['RP3?']
+  Q      n=  1 table=Transistor detector votes={'Resistor': 1} size(px)=21x16 examples=['Q2']  *
+
+== XCM-307A_Bottom
+  R      n= 11 table=Resistor   detector votes={'Resistor': 9, 'Capacitor': 2} size(px)=11x19 examples=['R1', 'R15', 'R16', 'R2', 'R20', 'R21', 'R25', 'R26']
+  C      n=  4 table=Capacitor  detector votes={'Capacitor': 4} size(px)=48x40 examples=['C10', 'C13', 'C14', 'C20']
+  U      n=  1 table=IC         detector votes={'IC': 1} size(px)=36x40 examples=['U7']
+  Q      n=  1 table=Transistor detector votes={'Diode': 1} size(px)=27x22 examples=['Q1']  *
+
+== XCM-307A_Top
+  R      n= 16 table=Resistor   detector votes={'Resistor': 16} size(px)=85x44 examples=['R1', 'R10', 'R12', 'R20', 'R27', 'R28', 'R29', 'R3']
+  C      n= 11 table=Capacitor  detector votes={'Capacitor': 11} size(px)=249x152 examples=['C1', 'C12', 'C15', 'C16', 'C17', 'C18', 'C2', 'C3']
+  U      n=  9 table=IC         detector votes={'IC': 8, 'Oscillator': 1} size(px)=196x165 examples=['U1', 'U11', 'U3R', 'U4', 'U5', 'U6', 'U8', 'U9']
+  RM     n=  3 table=Resistor   detector votes={'Resistor': 3} size(px)=112x96 examples=['RM1', 'RM2', 'RM5']
+  SW     n=  2 table=Switch     detector votes={'Switch': 2} size(px)=192x364 examples=['SW1', 'SW2']
+  EM     n=  2 table=-          detector votes={'Capacitor': 2} size(px)=91x149 examples=['EM1', 'EM2']  *
+  DA     n=  2 table=-          detector votes={'IC': 2} size(px)=74x75 examples=['DA1', 'DA2']  *
+  P      n=  1 table=Connector  detector votes={'IC': 1} size(px)=198x208 examples=['P1']  *
+  BR     n=  1 table=-          detector votes={'Capacitor': 1} size(px)=81x39 examples=['BR8']  *
+  CN     n=  1 table=Connector  detector votes={'Connector': 1} size(px)=195x852 examples=['CN2']
+  RJ     n=  1 table=-          detector votes={'Resistor': 1} size(px)=41x80 examples=['RJ1']  *
+
+== XLVDSproSupply_Bottom1
+
+== XLVDSproSupply_Bottom2
+
+== XLVDSproSupply_Top1
+  C      n= 96 table=Capacitor  detector votes={'Capacitor': 89, 'Resistor': 6, 'Diode': 1} size(px)=49x37 examples=['C1', 'C10', 'C100', 'C104', 'C105', 'C108', 'C109', 'C112']
+  R      n= 34 table=Resistor   detector votes={'Resistor': 21, 'Capacitor': 12, 'Inductor': 1} size(px)=39x41 examples=['R11', 'R116', 'R117', 'R119', 'R123', 'R125', 'R13', 'R130']  *
+  IC     n= 13 table=IC         detector votes={'IC': 13} size(px)=166x142 examples=['IC1', 'IC11', 'IC12', 'IC13', 'IC18', 'IC21', 'IC23', 'IC24']
+  L      n=  4 table=Inductor   detector votes={'Inductor': 2, 'Capacitor': 1, 'Connector': 1} size(px)=54x66 examples=['L1', 'L10', 'L7']  *
+  J      n=  3 table=Connector  detector votes={'Connector': 2, 'Capacitor': 1} size(px)=149x97 examples=['J5', 'J6', 'J7']  *
+  OC     n=  1 table=-          detector votes={'Capacitor': 1} size(px)=85x63 examples=['OC115C']  *
+  LED    n=  1 table=Diode      detector votes={'Capacitor': 1} size(px)=39x72 examples=['LED3']  *
+  X      n=  1 table=Oscillator detector votes={'Capacitor': 1} size(px)=51x31 examples=['X1']  *
+  F      n=  1 table=-          detector votes={'Resistor': 1} size(px)=128x110 examples=['F012']  *
+  POT    n=  1 table=-          detector votes={'Resistor': 1} size(px)=132x112 examples=['POT1']  *
+  CE     n=  1 table=Capacitor  detector votes={'Capacitor': 1} size(px)=144x71 examples=['CE3']
+  RB     n=  1 table=-          detector votes={'Resistor': 1} size(px)=30x55 examples=['RB3']  *
+  IR     n=  1 table=-          detector votes={'Capacitor': 1} size(px)=36x51 examples=['IR1']  *
+  D      n=  1 table=Diode      detector votes={'Connector': 1} size(px)=66x62 examples=['D12']  *
+
+== ZTurn
+  R      n= 43 table=Resistor   detector votes={'Resistor': 40, 'Capacitor': 3} size(px)=72x37 examples=['R1', 'R10', 'R102', 'R104', 'R107??Y?', 'R109?', 'R11', 'R114']
+  C      n= 39 table=Capacitor  detector votes={'Capacitor': 39} size(px)=76x79 examples=['C1', 'C10', 'C100', 'C110', 'C111', 'C141', 'C142', 'C143']
+  U      n= 16 table=IC         detector votes={'IC': 13, 'Connector': 2, 'Switch': 1} size(px)=271x234 examples=['U1', 'U11', 'U13', 'U14', 'U15', 'U16', 'U17', 'U2']
+  D      n= 14 table=Diode      detector votes={'Diode': 7, 'Capacitor': 6, 'IC': 1} size(px)=70x126 examples=['D1', 'D12', 'D13', 'D21', 'D23', 'D25', 'D29', 'D30']  *
+  FB     n=  8 table=Inductor   detector votes={'Capacitor': 6, 'Resistor': 1, 'Inductor': 1} size(px)=84x112 examples=['FB1', 'FB10', 'FB18', 'FB20', 'FB24', 'FB25', 'FB8', 'FB9']  *
+  J      n=  4 table=Connector  detector votes={'Connector': 3, 'Inductor': 1} size(px)=671x569 examples=['J1', 'J3', 'J5', 'J6']
+  L      n=  3 table=Inductor   detector votes={'Inductor': 2, 'Capacitor': 1} size(px)=286x216 examples=['L2', 'L3', 'L5']  *
+  Q      n=  1 table=Transistor detector votes={'IC': 1} size(px)=316x324 examples=['Q43']  *
+  CON    n=  1 table=Connector  detector votes={'Connector': 1} size(px)=327x295 examples=['CON1']
+  Y      n=  1 table=Oscillator detector votes={'Oscillator': 1} size(px)=154x126 examples=['Y1']
+  JP     n=  1 table=Connector  detector votes={'Connector': 1} size(px)=226x135 examples=['JP2']
+  M      n=  1 table=-          detector votes={'Connector': 1} size(px)=467x493 examples=['M1']  *
+
+== Zedboard
+  C      n= 90 table=Capacitor  detector votes={'Capacitor': 76, 'Resistor': 7, 'Diode': 7} size(px)=49x44 examples=['C1', 'C1190001', 'C120', 'C128?', 'C129', 'C155', 'C159', 'C16']
+  R      n= 14 table=Resistor   detector votes={'Resistor': 14} size(px)=29x51 examples=['R103', 'R104', 'R125', 'R128', 'R133', 'R152', 'R189', 'R266']
+  J      n= 13 table=Connector  detector votes={'Connector': 11, 'Inductor': 1, 'Capacitor': 1} size(px)=230x318 examples=['J1', 'J14', 'J17', 'J19', 'J2', 'J20', 'J21', 'J3']
+  JP     n=  9 table=Connector  detector votes={'Connector': 5, 'Resistor': 4} size(px)=76x134 examples=['JP1', 'JP10', 'JP11', 'JP12', 'JP13?', 'JP2', 'JP3', 'JP8']  *
+  LD     n=  8 table=Diode      detector votes={'Diode': 7, 'Capacitor': 1} size(px)=36x67 examples=['LD1', 'LD11?', 'LD12', 'LD13', 'LD2', 'LD3', 'LD6', 'LD7']
+  BTN    n=  3 table=Switch     detector votes={'Switch': 3} size(px)=193x256 examples=['BTN6', 'BTN8', 'BTN9']
+  IC     n=  2 table=IC         detector votes={'IC': 2} size(px)=432x369 examples=['IC26', 'IC6']
+  JC     n=  2 table=-          detector votes={'Connector': 1, 'Capacitor': 1} size(px)=230x239 examples=['JC1', 'JC259']  *
+  SW     n=  2 table=Switch     detector votes={'Connector': 2} size(px)=272x273 examples=['SW7', 'SW8']  *
+  JB     n=  1 table=-          detector votes={'Connector': 1} size(px)=449x394 examples=['JB1']  *
+  JA     n=  1 table=-          detector votes={'Connector': 1} size(px)=448x393 examples=['JA1']  *
+  MI     n=  1 table=-          detector votes={'Connector': 1} size(px)=920x363 examples=['MI07']  *
+
+== Ztex
+  C      n=  9 table=Capacitor  detector votes={'Capacitor': 7, 'IC': 2} size(px)=47x35 examples=['C1', 'C10', 'C11', 'C12', 'C15', 'C17', 'C18', 'C49']
+  R      n=  5 table=Resistor   detector votes={'Resistor': 5} size(px)=64x31 examples=['R1', 'R5', 'R6']
+  LED    n=  1 table=Diode      detector votes={'Diode': 1} size(px)=29x74 examples=['LED1']
+  B      n=  1 table=-          detector votes={'Resistor': 1} size(px)=69x33 examples=['B3']  *
+  IC     n=  1 table=IC         detector votes={'IC': 1} size(px)=110x79 examples=['IC1']
+
+== Zybo
+  C      n= 43 table=Capacitor  detector votes={'Capacitor': 43} size(px)=38x69 examples=['C1', 'C10', 'C101', 'C102', 'C103', 'C105', 'C117', 'C120']
+  R      n= 29 table=Resistor   detector votes={'Resistor': 28, 'Capacitor': 1} size(px)=71x40 examples=['R08', 'R11', 'R116', 'R119', 'R195', 'R2', 'R21', 'R215']
+  J      n=  9 table=Connector  detector votes={'Connector': 9} size(px)=630x608 examples=['J10', 'J11', 'J14', 'J15', 'J2', 'J3', 'J5', 'J7']
+  LD     n=  6 table=Diode      detector votes={'Diode': 4, 'Capacitor': 2} size(px)=73x73 examples=['LD10', 'LD11', 'LD3?018?', 'LD4', 'LD6', 'LD7']  *
+  JP     n=  4 table=Connector  detector votes={'Connector': 2, 'Resistor': 2} size(px)=237x183 examples=['JP1', 'JP2', 'JP5', 'JP7']  *
+  BTN    n=  3 table=Switch     detector votes={'Switch': 3} size(px)=212x367 examples=['BTN3', 'BTN6', 'BTN7']
+  IC     n=  2 table=IC         detector votes={'IC': 1, 'Capacitor': 1} size(px)=260x235 examples=['IC21', 'IC250']  *
+  MI     n=  1 table=-          detector votes={'Switch': 1} size(px)=208x369 examples=['MI050']  *
+  SW     n=  1 table=Switch     detector votes={'Connector': 1} size(px)=271x591 examples=['SW4']  *
+  DC     n=  1 table=-          detector votes={'Capacitor': 1} size(px)=85x43 examples=['DC150']  *
+  FB     n=  1 table=Inductor   detector votes={'Capacitor': 1} size(px)=60x106 examples=['FB1']  *

@@ -44,6 +44,19 @@ training forward; ~0.085 s/step after compiling but recompiles cost ~2 min each,
 - Lesson: early gains shrink with longer training; test changes at full length; differences < ~1 point need seeds.
 - Queue tooling: `queue_runner.sh` / `gpu_guard.sh` on intern02; runs uploaded to wandb from their logs (`replay-<tag>`).
 
+**2026-10-15 .. 10-17: text-image tokens, noise boxes, class head (still branch `linker-v2`, code not yet committed)**
+(details: `memory/2026-10-17.md`, raw `snapshot/2026-10-17.md`; all 100k steps, 16 boards / step, lr 2e-4, data v2, intern02 A800)
+- GS 150k = best oracle link with strings: clean41 93.6 %. **I** (`--tokens E1 --geobias --txtfeat linkdata/kicad_textfeat`): text
+  tokens carry a PARSeq text-image feature (688-d, KiCad render crops with photo-like damage) instead of a string: clean41 92.9 %.
+- **Noise boxes** `--noise 0.5|1.0` (`tools/kicad_noise.py`: vias, non-label silkscreen print, non-component pads, target none; features
+  `text_features.py noise`): end-to-end link acc 52 -> 75 %, clean41 ±0. 200k overfits; `--rankrel`, `--glayers`, `--local`, board
+  offset prior: no gain.
+- **Class head** `--clshead --clsmode parallel` (mix / pool: no better). **B v1** = I + noise 0.5 + parallel head + `--detscore
+  data/det_score_pool_v22test.json` (detector 9-class scores on part tokens, sampled per true class on KiCad) + `--fptype
+  linkdata/kicad_fptype` (KiCad class target from the footprint name) + `--det_drop 0.3`: tag `v2d2_B1_det_fp_drop03_100k`, clean41 link
+  93.7 % / class head 93.7 %; end to end (42 test, top-3) head 0.701, **(head + soft cascade C) / 2 = 0.724 mAP50** (detector 0.602;
+  APr 0.485 -> 0.705). Evaluation: `tools/e2e_infer_b.py` + `tools/score_b.py`; ladder and metrics in `memory/2026-10-17.md`.
+
 v2 smoke tests (L40, size S, `tools/v2_decode_check.py`): at 15k steps the lg head trails the v1 head (KiCad val subset 88.4 % with its
 best decoding vs 90.7 %; clean41 79.7 vs 81.2 %; the gap shrinks with training: −17 points at 2.5k steps, −8.5 at 15k with the default
 decoding), while strings help early (lg + geobias + strings at 3k steps ≈ v1 at 3k). So the planned A → B → C chain was changed to three
@@ -69,5 +82,6 @@ a neighbour's label. Design discussion and references: `page/model/` (artifact 4
 | KiCad source boards (25 GB) | `kicad_scan/boards/` | – |
 | vendor design files | `designfiles/` | – |
 | v1 checkpoints | `ckpt/` (XL, XXL lr 3e-4 / 2e-4 / 1e-4) | `ckpt/` (all v1 runs) |
+| text features, noise boxes, footprint types, detector 9-class scores (2026-10-15..17; also on intern02) | `linkdata/kicad_render`, `kicad_textfeat`, `kicad_noise`, `kicad_noisefeat`, `kicad_fptype`; `data/preds_wacv_1280_cls9.json`, `data/det_score_pool_v22test.json` | – |
 | v2 checkpoints | `ckpt/` (v2_S, v2_G) | `ckpt/` (`v2_A/G/S`); intern02 `/dev_vepfs/xiyu/crossclass/ckpt/` (`v2d2_*`, overnight runs) |
 | training logs | – | `logs/linkformer/`; wandb project `crossclass` (group `dv1` = v1, `v2` = v2) |

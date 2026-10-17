@@ -20,3 +20,5 @@ page/review/design.json
 page/errors/sheets/
 page/errors/errors.json
 page/errors/placement.json
+page/linkcheck/*.jpg
+wandb/
