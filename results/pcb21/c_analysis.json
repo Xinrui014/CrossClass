@@ -1,0 +1,118 @@
+{
+ "n_found": 3050,
+ "acc": {
+  "det": 0.9032786885245901,
+  "C": 0.9455737704918032
+ },
+ "per_class": {
+  "det": {
+   "resistor": 97.9,
+   "capacitor": 97.8,
+   "inductor": 21.2,
+   "connector": 96.2,
+   "diode": 55.1,
+   "switch": 92.3,
+   "transistor": 32.6,
+   "IC": 85.6,
+   "oscillator": 10.0
+  },
+  "C": {
+   "resistor": 97.6,
+   "capacitor": 98.5,
+   "inductor": 48.5,
+   "connector": 96.2,
+   "diode": 81.6,
+   "switch": 100.0,
+   "transistor": 62.8,
+   "IC": 96.9,
+   "oscillator": 80.0
+  }
+ },
+ "n_err": 166,
+ "n_fix": 169,
+ "causes": {
+  "OCR misread": 50,
+  "prefix not in table": 32,
+  "wrong text linked": 30,
+  "no link (detector fallback)": 28,
+  "other (no GT designator)": 18,
+  "naming (own label, table class differs)": 8
+ },
+ "causes_by_class": {
+  "inductor": {
+   "prefix not in table": 26,
+   "no link (detector fallback)": 8,
+   "wrong text linked": 2,
+   "OCR misread": 13,
+   "naming (own label, table class differs)": 2
+  },
+  "connector": {
+   "no link (detector fallback)": 3,
+   "other (no GT designator)": 2,
+   "wrong text linked": 2
+  },
+  "diode": {
+   "no link (detector fallback)": 6,
+   "prefix not in table": 6,
+   "wrong text linked": 2,
+   "OCR misread": 21,
+   "naming (own label, table class differs)": 2,
+   "other (no GT designator)": 1
+  },
+  "resistor": {
+   "other (no GT designator)": 10,
+   "wrong text linked": 12,
+   "no link (detector fallback)": 4,
+   "naming (own label, table class differs)": 2,
+   "OCR misread": 2
+  },
+  "capacitor": {
+   "other (no GT designator)": 2,
+   "no link (detector fallback)": 3,
+   "wrong text linked": 9,
+   "OCR misread": 2
+  },
+  "IC": {
+   "wrong text linked": 2,
+   "other (no GT designator)": 1,
+   "OCR misread": 3
+  },
+  "oscillator": {
+   "no link (detector fallback)": 2
+  },
+  "transistor": {
+   "other (no GT designator)": 2,
+   "OCR misread": 9,
+   "no link (detector fallback)": 2,
+   "wrong text linked": 1,
+   "naming (own label, table class differs)": 2
+  }
+ },
+ "sheet_causes": [
+  "OCR misread",
+  "OCR misread",
+  "OCR misread",
+  "OCR misread",
+  "prefix not in table",
+  "prefix not in table",
+  "prefix not in table",
+  "prefix not in table",
+  "wrong text linked",
+  "wrong text linked",
+  "wrong text linked",
+  "wrong text linked",
+  "no link (detector fallback)",
+  "no link (detector fallback)",
+  "no link (detector fallback)",
+  "no link (detector fallback)",
+  "other (no GT designator)",
+  "other (no GT designator)",
+  "other (no GT designator)",
+  "other (no GT designator)",
+  "naming (own label, table class differs)",
+  "naming (own label, table class differs)",
+  "naming (own label, table class differs)",
+  "naming (own label, table class differs)"
+ ],
+ "broken": 40
+}

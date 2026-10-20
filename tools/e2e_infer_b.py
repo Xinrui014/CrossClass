@@ -7,7 +7,7 @@ import sys, os, json, numpy as np, torch
 sys.path.insert(0, os.path.join(os.environ["CROSSCLASS"], "tools")); import linkformer as LF
 ck, inp, fe, out = sys.argv[1:5]; dev = torch.device("cuda")
 model, vocab, A = LF.load_model(ck, dev); LF.TXT_DIM = getattr(model, "txtdim", 0); LF.DET_DIM = getattr(model, "detdim", 0)
-Z = np.load(fe); P9 = json.load(open(os.path.join(os.environ["CROSSCLASS"], "data/preds_wacv_1280_cls9.json"))); res = {}
+Z = np.load(fe); P9 = json.load(open(os.environ.get("P9", os.path.join(os.environ["CROSSCLASS"], "data/preds_wacv_1280_cls9.json")))); res = {}   # env P9: other test sets
 with torch.no_grad():
     for b in json.load(open(inp)):
         if not (b["parts"] and b["texts"]): res[b["id"]] = {}; continue

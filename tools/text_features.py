@@ -23,7 +23,7 @@ ROOT = Path(os.environ.get("CROSSCLASS", Path.home()/"projects/crossclass"))
 ap = argparse.ArgumentParser(); ap.add_argument("mode", choices=["kicad", "wacv", "boxes", "noise"]); ap.add_argument("--worker", type=int, default=0)
 ap.add_argument("--threads", type=int, default=0, help="torch CPU threads (0 = min(32, cpus))")
 ap.add_argument("--boards", default="", help="boxes mode: e2e boards JSON (id, texts[].box) on WACV photos"); ap.add_argument("--out", default="")
-ap.add_argument("--device", default="cuda")
+ap.add_argument("--device", default="cuda"); ap.add_argument("--imgdir", default="", help="boxes mode: photo folder (<board id>.jpg) instead of WACV")
 ap.add_argument("--nworkers", type=int, default=1); ap.add_argument("--limit", type=int, default=0); a = ap.parse_args()
 dev = torch.device(a.device); torch.set_num_threads(a.threads or min(32, os.cpu_count() or 8))
 CS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"; tok = Tokenizer(CS)
@@ -116,6 +116,8 @@ elif a.mode == "noise":                              # noise boxes of tools/kica
 elif a.mode == "boxes":                              # any text boxes on WACV photos, e.g. OCR candidates of the end-to-end boards
     sys.path.insert(0, os.path.expanduser("~/projects/gdino_fewshot/assoc")); from assoc_lib import RAW
     photo = lambda bid: next(f for f in sorted((RAW/bid).iterdir()) if f.suffix.lower() in (".jpg", ".jpeg", ".png"))
+    if a.imgdir: photo = lambda bid: Path(a.imgdir)/f"{bid}.jpg"                 # e.g. data/21pcb/images (21PCB photos)
+    Image.MAX_IMAGE_PIXELS = None
     out = {}
     for b in json.load(open(a.boards)):
         if not b["texts"]: out[b["id"]] = np.zeros((0, 688), np.float16); continue
