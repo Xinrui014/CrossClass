@@ -1,0 +1,47 @@
+<title>21PCB Class Reference</title>
+<style>
+/* Layout: a photo picker bar on top, the reference photo below; wheel / buttons zoom, drag pans. Single dark look: board photos. */
+:root { --bg: #101418; --bar: #171d23; --line: #2b343e; --fg: #e2e8ee; --dim: #8e9aa6; --accent: #5cc8ff;
+        --ui: system-ui, -apple-system, "Segoe UI", sans-serif; color-scheme: dark; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font: 14px/1.4 var(--ui); display: flex; flex-direction: column; overflow: hidden; }
+header { background: var(--bar); border-bottom: 1px solid var(--line); padding-block: 8px; padding-inline: 16px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+h1 { font-size: 15px; margin: 0; font-weight: 600; }
+select, button { background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 5px 9px; font: 13px var(--ui); cursor: pointer; }
+select:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.hint { color: var(--dim); font-size: 12px; }
+#view { flex: 1; position: relative; overflow: hidden; cursor: grab; touch-action: none; }
+#view.drag { cursor: grabbing; }
+#img { position: absolute; left: 0; top: 0; transform-origin: 0 0; user-select: none; -webkit-user-drag: none; max-width: none; background: #fff; }
+</style>
+<header>
+  <h1>21PCB Class Reference</h1>
+  <select id="sel" aria-label="Photo"></select>
+  <button id="prev">&larr; Prev</button><button id="next">Next &rarr;</button>
+  <button id="zin">Zoom +</button><button id="zout">Zoom &minus;</button><button id="fit">Fit</button>
+  <span class="hint">Vendor assembly drawings and layout pages from the design packages, cropped to the board. Bottom-side drawings may be mirrored.</span>
+</header>
+<div id="view"><img id="img" alt="Reference photo with class-coloured boxes"></div>
+<script>
+const PAGES = [["24 cleared designators (your class kept)", "../own/cleared_designators.jpg"], ["Card5_T - your labels (test points in red)", "../own/Card5_T.jpg"], ["Card5_B - your labels (test points in red)", "../own/Card5_B.jpg"], ["Card5 p1 (HVL117D_Assy.PDF)", "Card5_0.jpg"], ["Card5 p2 (HVL117D_Assy.PDF)", "Card5_1.jpg"], ["Card6 p1 (01-059358-01-b.pdf)", "Card6_0.jpg"], ["Card6 p2 (01-059358-01-b.pdf)", "Card6_1.jpg"], ["Card7 p1 (EVAL-CN0395-ARDZ-TopAssembly-RevB.pdf)", "Card7_0.jpg"], ["Card7 p2 (EVAL-CN0395-ARDZ-BottomAssembly-RevB.pdf)", "Card7_1.jpg"], ["Card8 p1 (01-054610-01-b.pdf)", "Card8_0.jpg"], ["Card8 p2 (01-054610-01-b.pdf)", "Card8_1.jpg"], ["Card9 p1 (EVAL-CN0216-SDPZ-AssemblyDrawing-RevA.pdf)", "Card9_0.jpg"], ["Card16 p1 (EVAL-CN0272-SDPZ-AssemblyDrawing-RevC.pdf)", "Card16_0.jpg"], ["Card17 p1 (EVAL-CN0321-SDPZ Layout.pdf)", "Card17_0.jpg"], ["Card17 p2 (EVAL-CN0321-SDPZ Layout.pdf)", "Card17_1.jpg"], ["Card17 p3 (EVAL-CN0321-SDPZ Layout.pdf)", "Card17_2.jpg"], ["Card17 p4 (EVAL-CN0321-SDPZ Layout.pdf)", "Card17_3.jpg"], ["Card17 p5 (EVAL-CN0321-SDPZ Layout.pdf)", "Card17_4.jpg"], ["Card19 p1 (AM437X_INDUSTRIAL_EVM_3K0008_PCB_REV1_4A_ASSEMBLY_TOP.pdf)", "Card19_0.jpg"], ["Card19 p2 (AM437X_INDUSTRIAL_EVM_3K0008_PCB_REV1_4A_ASSEMBLY_BOTTOM.pdf)", "Card19_1.jpg"]];
+const PHOTOS = PAGES.map(p => p[0]), FILE = Object.fromEntries(PAGES);
+const sel = document.getElementById("sel"), img = document.getElementById("img"), view = document.getElementById("view");
+let z = 1, x = 0, y = 0, drag = null;
+PHOTOS.forEach(p => { const o = document.createElement("option"); o.value = o.textContent = p; sel.appendChild(o); });
+const apply = () => { img.style.transform = `translate(${x}px, ${y}px) scale(${z})`; };
+function fit() { const r = view.getBoundingClientRect(); z = Math.min(r.width / img.naturalWidth, r.height / img.naturalHeight); x = (r.width - img.naturalWidth * z) / 2; y = (r.height - img.naturalHeight * z) / 2; apply(); }
+function show(p) { sel.value = p; img.onload = fit; img.src = `assy/${FILE[p]}`; try { localStorage.setItem("ref21", p); } catch (_) {} }
+function zoomAt(f, cx, cy) { const nz = Math.min(4, Math.max(0.03, z * f)); x = cx - (cx - x) * nz / z; y = cy - (cy - y) * nz / z; z = nz; apply(); }
+view.addEventListener("wheel", e => { e.preventDefault(); const r = view.getBoundingClientRect(); zoomAt(Math.exp(-e.deltaY * 0.0015), e.clientX - r.left, e.clientY - r.top); }, { passive: false });
+view.addEventListener("pointerdown", e => { view.setPointerCapture(e.pointerId); drag = { sx: e.clientX, sy: e.clientY, x, y }; view.classList.add("drag"); });
+view.addEventListener("pointermove", e => { if (!drag) return; x = drag.x + e.clientX - drag.sx; y = drag.y + e.clientY - drag.sy; apply(); });
+view.addEventListener("pointerup", () => { drag = null; view.classList.remove("drag"); });
+view.addEventListener("dblclick", e => { const r = view.getBoundingClientRect(); zoomAt(2, e.clientX - r.left, e.clientY - r.top); });
+const step = d => show(PHOTOS[(PHOTOS.indexOf(sel.value) + d + PHOTOS.length) % PHOTOS.length]);
+sel.onchange = () => show(sel.value); document.getElementById("prev").onclick = () => step(-1); document.getElementById("next").onclick = () => step(1);
+document.getElementById("zin").onclick = () => { const r = view.getBoundingClientRect(); zoomAt(1.5, r.width / 2, r.height / 2); };
+document.getElementById("zout").onclick = () => { const r = view.getBoundingClientRect(); zoomAt(1 / 1.5, r.width / 2, r.height / 2); };
+document.getElementById("fit").onclick = fit; window.addEventListener("resize", fit);
+let start = PHOTOS[0]; try { const s = localStorage.getItem("ref21"); if (PHOTOS.includes(s)) start = s; } catch (_) {}
+show(start);
+</script>
