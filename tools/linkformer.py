@@ -39,6 +39,7 @@ TXT_DIM = 0                                           # > 0: text tokens carry a
 AUG_ROT = True                                        # augment(): random 90-degree rotation and mirror; off with --aug_norot
 DISTRACT, PREFIX_DROP, CLS_W, TCLS_W = 0.0, 0.0, 1.0, 0.5   # --distract, --prefix_drop, --cls_w, --tcls_w
 DET_DIM, DET_POOL, DET_DROP = 0, None, 0.0                           # --detscore: part tokens carry detector class scores (9); KiCad: sampled from DET_POOL[class]
+AR_ONLY = False                                       # --arhead --freeze_backbone: the loss is the causal head's only
 NOISE = 0.0                                           # augment(): noise boxes (vias, print, non-component pads; tools/kicad_noise.py) per label; --noise
 NUMS = re.compile(r"^(\d{1,4})([A-Z]?)$")             # a designator whose letters OCR lost ("C12" -> "12")
 PFX_CLS = {"R": 0, "RN": 0, "RV": 0, "VR": 0, "RP": 0, "RA": 0, "RM": 0, "TH": 0, "C": 1, "L": 2, "FB": 2, "F": 2, "FL": 2, "FIL": 2,
@@ -215,7 +216,7 @@ def encode(b, vocab, as_numpy=False):
 def load_model(path, dev):
     """A saved checkpoint -> (model in eval mode, vocab, its training args)."""
     ck = torch.load(path, map_location="cpu"); A = ck["args"]; vocab = Vocab(ck["vocab"]); d, L = SIZES[A["size"]]
-    m = LinkFormer(d, L, len(vocab.idx)+2, A["tokens"] == "E2", 0.0, A.get("head", "dot"), A.get("geobias", False), A.get("strrel", False), A.get("glayers", False), A.get("local", 0.0), A.get("imgdim", 0), A.get("clshead", False), A.get("txtdim", 0), A.get("clsmode", "parallel"), A.get("rankrel", False), A.get("detdim", 0))
+    m = LinkFormer(d, L, len(vocab.idx)+2, A["tokens"] == "E2", 0.0, A.get("head", "dot"), A.get("geobias", False), A.get("strrel", False), A.get("glayers", False), A.get("local", 0.0), A.get("imgdim", 0), A.get("clshead", False), A.get("txtdim", 0), A.get("clsmode", "parallel"), A.get("rankrel", False), A.get("detdim", 0), A.get("arhead", False))
     m.load_state_dict(ck["model"]); return m.to(dev).eval(), vocab, A
 
 def messy(b, margin=0.5):
@@ -355,8 +356,47 @@ def pair_rank(box, is_text, valid):
     r = dist.float().masked_fill(~ok, float("inf")).argsort(-1).argsort(-1).float(); rt = r.transpose(-1, -2)
     return torch.stack([torch.log1p(r), torch.log1p(rt), ((r == 0) & (rt == 0)).float()], -1) * ok[..., None]
 
+class ARHead(nn.Module):
+    """Causal (autoregressive) link head (2026-10-19, owner idea: decide the links one part at a time, so one-to-one is part of the
+    model, not a Hungarian post-step). Parts are ordered by the base head's confidence (max row probability, high first). Step k sees,
+    through a causal transformer over the ordered parts, the decisions of steps < k (token = part + embedding of the chosen text or
+    none, shifted by one); texts taken at steps < k are masked (-inf). Logits = base logits + learned correction (zero-initialised,
+    so an untrained head = greedy one-to-one decoding of the base head in confidence order)."""
+    def __init__(self, d, heads, layers=2):
+        super().__init__(); self.d = d
+        self.dz = nn.Linear(d, d); self.none_z = nn.Parameter(torch.zeros(d)); self.start = nn.Parameter(torch.zeros(d))
+        self.dec = nn.TransformerEncoder(nn.TransformerEncoderLayer(d, heads, 4*d, dropout=0.0, batch_first=True, norm_first=True), layers)
+        self.q = nn.Linear(d, d); self.k = nn.Linear(d, d); self.nz = nn.Linear(d, 1)
+        for m in (self.q, self.nz): nn.init.zeros_(m.weight); nn.init.zeros_(m.bias)
+    def seq_logits(self, hp, xt, base, chosen, protect=None):
+        """hp (P, d) part tokens in decoding order, xt (M, d) text tokens, base (P, M+1) base logits in that order, chosen (P,) the
+        decision of each step (0..M-1 = text, M = none; teacher forcing in training, the running greedy choices at inference).
+        -> (P, M+1) step logits, texts taken at earlier steps masked."""
+        P, M = base.shape[0], base.shape[1] - 1
+        z = torch.where((chosen < M)[:, None], xt[chosen.clamp(max=max(M-1, 0))] if M else self.none_z.expand(P, -1), self.none_z.expand(P, -1))
+        u = hp + torch.cat([self.start[None], self.dz(z[:-1])], 0)
+        cm = torch.triu(torch.full((P, P), float("-inf"), device=hp.device), 1)
+        o = self.dec(u, mask=cm)
+        L = base.float() + torch.cat([self.q(o) @ self.k(xt).T / math.sqrt(self.d), self.nz(o)], 1).float()
+        if M:
+            oh = F.one_hot(chosen.clamp(max=M), M+1)[:, :M].float()                       # (P, M) chosen text per step
+            taken = (torch.cumsum(oh, 0) - oh) > 0                                         # taken at steps < k
+            if protect is not None: taken = taken & ~protect[:, :M]                        # training: never mask a part's own target
+            L = torch.cat([L[:, :M].masked_fill(taken, float("-inf")), L[:, M:]], 1)
+        return L
+    @torch.no_grad()
+    def greedy(self, hp, xt, base):
+        """Inference: decide step by step in confidence order; -> (P, M+1) step logits in the ORIGINAL part order."""
+        P, M = base.shape[0], base.shape[1] - 1
+        order = torch.argsort(torch.softmax(base.float(), 1).max(1).values, descending=True)
+        chosen = torch.full((P,), M, dtype=torch.long, device=hp.device); rows = torch.empty(P, M+1, device=hp.device)
+        for s in range(P):
+            L = self.seq_logits(hp[order[:s+1]], xt, base[order[:s+1]], chosen[:s+1])[s]
+            rows[s] = L.clamp_min(-1e4); chosen[s] = int(L.argmax())
+        out = torch.empty_like(rows); out[order] = rows; return out
+
 class LinkFormer(nn.Module):
-    def __init__(self, d, layers, n_prefix, use_string, dropout=0.0, head="dot", geobias=False, strrel=False, glayers=False, local=0.0, imgdim=0, clshead=False, txtdim=0, clsmode="parallel", rankrel=False, detdim=0):
+    def __init__(self, d, layers, n_prefix, use_string, dropout=0.0, head="dot", geobias=False, strrel=False, glayers=False, local=0.0, imgdim=0, clshead=False, txtdim=0, clsmode="parallel", rankrel=False, detdim=0, arhead=False):
         super().__init__(); self.use_string = use_string; hd = 64; heads = d // hd; self.head = head; self.geobias = geobias; self.rankrel = rankrel
         self.strrel, self.glayers, self.heads, self.local, self.imgdim, self.clshead = strrel, glayers, heads, local, imgdim, clshead
         self.clsmode = clsmode if clshead else ""
@@ -379,6 +419,8 @@ class LinkFormer(nn.Module):
         elif geobias: self.gb = nn.Sequential(nn.Linear(nf, 32), nn.GELU(), nn.Linear(32, heads))
         lam = torch.logspace(math.log10(0.5), math.log10(512), hd // 4)   # wavelengths from half a part to 512 parts
         self.register_buffer("freqs", 2*math.pi/lam)
+        self.arhead = arhead
+        if arhead: self.ar = ARHead(d, heads)                              # causal link head on top of the matrix head
     def forward(self, e):
         if isinstance(e, list): return self.forward_batch(e)
         if "tm" in e: return self.train_loss(e)
@@ -400,6 +442,9 @@ class LinkFormer(nn.Module):
             for key in ("img", "tf", "ds"):
                 if key in es[0]: d[key] = torch.stack([pad(e[key]) for e in es])
             x = self.dense(d); outs = [self.head_out(x[b, :n], e["n"]) for b, (e, n) in enumerate(zip(es, Ns))]
+            if self.arhead and not self.training:                               # causal head: step logits (one-to-one by construction)
+                outs = [self.ar.greedy(x[b, :e["n"]].float(), x[b, e["n"]:n].float(), o.float()) if e["n"] and n > e["n"] else o
+                        for b, (e, n, o) in enumerate(zip(es, Ns, outs))]
             if not with_cls: return outs
             if self.clsmode == "parallel": return outs, [self.cls(x[b, :e["n"]]).float() for b, e in enumerate(es)]
             cls = []
@@ -457,6 +502,19 @@ class LinkFormer(nn.Module):
         per = torch.logsumexp(L, 2) - torch.logsumexp(L.masked_fill(~d["tm"], float("-inf")), 2)                # padded part rows: 0
         if "w" in d: per = per * d["w"]
         lk = (per.sum(1) / d["n"]).sum(); loss = lk; lc_ = lt_ = lk.new_zeros(())
+        if self.arhead:                                                          # causal head, teacher forcing in base-confidence order
+            la = lk.new_zeros(()); Nv = d["valid"].sum(1)
+            for b in range(B):
+                n_, nb = int(d["n"][b]), int(Nv[b])
+                if n_ == 0 or nb <= n_: continue
+                base = torch.cat([L[b, :n_, n_:nb], L[b, :n_, N:N+1]], 1); tm = torch.cat([d["tm"][b, :n_, n_:nb], d["tm"][b, :n_, N:N+1]], 1); M = nb - n_
+                order = torch.argsort(torch.softmax(base.detach(), 1).max(1).values, descending=True)
+                bo, to = base[order], tm[order]
+                ch = torch.where(to[:, :M].any(1), bo[:, :M].detach().masked_fill(~to[:, :M], float("-inf")).argmax(1), torch.full_like(order, M))
+                La = self.ar.seq_logits(hp[b, order].float(), x[b, n_:nb].float(), bo, ch, protect=to)
+                la = la + (torch.logsumexp(La, 1) - torch.logsumexp(La.masked_fill(~to, float("-inf")), 1)).mean()
+            loss = (la if AR_ONLY else loss + la); lt_ = la                     # logged in the 3rd loss slot
+            self._parts = torch.stack([lk, lc_, lt_]).detach(); return loss
         if self.clshead and "pc" in d:                                           # + class loss per part (mean over the board's parts)
             lc = self.cls(hp).float() if self.clsmode == "parallel" else self.class_through_link(torch.softmax(L, 2), hp, x)
             ce = F.cross_entropy(lc.transpose(1, 2), d["pc"], ignore_index=-1, reduction="none")
@@ -626,6 +684,7 @@ if __name__ == "__main__":
     ap.add_argument("--fake", type=float, default=0.05, help="augment: fake designator-like labels per text (name no part)")
     ap.add_argument("--none_w", type=float, default=1.0, help="loss weight of parts whose target is none (batched dot head)")
     ap.add_argument("--ign_messy", action="store_true", help="no loss on parts whose label is printed nearer another part (KiCad train)")
+    ap.add_argument("--arhead", action="store_true", help="add the causal (autoregressive) link head (ARHead); with --freeze_backbone only it is trained")
     ap.add_argument("--compile", action="store_true", help="torch.compile the padded training forward + loss (dynamic shapes; single GPU)")
     ap.add_argument("--fused_adam", action="store_true", help="fused AdamW kernel (same update rule)")
     ap.add_argument("--profile", default="", help="'A:B': NVTX ranges per phase and a CUDA profiler range (nsys --capture-range=cudaProfilerApi) "
@@ -738,9 +797,9 @@ if __name__ == "__main__":
         dev = torch.device(a.device)
     d, L = SIZES[a.size]
     assert not a.strrel or (a.tokens == "E2" and a.geobias), "--strrel needs --tokens E2 and --geobias"; assert not a.glayers or a.geobias; assert not a.rankrel or a.geobias, "--rankrel needs --geobias"
-    model = LinkFormer(d, L, len(vocab.idx)+2, a.tokens == "E2", a.dropout, a.head, a.geobias, a.strrel, a.glayers, a.local, a.imgdim, a.clshead, a.txtdim, a.clsmode, a.rankrel, a.detdim).to(dev)
+    model = LinkFormer(d, L, len(vocab.idx)+2, a.tokens == "E2", a.dropout, a.head, a.geobias, a.strrel, a.glayers, a.local, a.imgdim, a.clshead, a.txtdim, a.clsmode, a.rankrel, a.detdim, a.arhead).to(dev)
     if a.init:
-        miss = model.load_state_dict(ck["model"], strict=not a.imgdim)
+        miss = model.load_state_dict(ck["model"], strict=not (a.imgdim or a.arhead))
         if a.imgdim and is_main: print(f"[{a.tag}] init {a.init}: new parameters {miss.missing_keys}", flush=True)
     net = torch.nn.parallel.DistributedDataParallel(model, device_ids=[local], find_unused_parameters=True) if world > 1 else model
     if a.compile and world == 1 and a.batched and a.head == "dot": model.train_loss = torch.compile(model.train_loss, dynamic=True)
@@ -748,7 +807,8 @@ if __name__ == "__main__":
     npar = sum(p.numel() for p in model.parameters()); tag = a.tag or f"{a.train}_{a.size}_{a.tokens}"
     if is_main: print(f"[{tag}] params {npar/1e6:.1f}M, train boards {len(trb)} ({sum(len(b['parts']) for b in trb)} parts), device {dev}, ranks {world} x {acc} boards/step, init {a.init or '-'}", flush=True)
     if a.freeze_backbone:                             # train only the image adapter: does the image add information to a fixed linker?
-        for n_, p in model.named_parameters(): p.requires_grad = n_.startswith("img.")
+        keep = "ar." if a.arhead else "img."; AR_ONLY = bool(a.arhead)
+        for n_, p in model.named_parameters(): p.requires_grad = n_.startswith(keep)
     groups = [dict(params=[p for n_, p in model.named_parameters() if not n_.startswith("img.")])]
     if a.imgdim: groups.append(dict(params=list(model.img.parameters()), lr=a.lr*a.img_lr_mult))
     opt = torch.optim.AdamW(groups, lr=a.lr, weight_decay=a.wd, fused=a.fused_adam and dev.type == "cuda")
