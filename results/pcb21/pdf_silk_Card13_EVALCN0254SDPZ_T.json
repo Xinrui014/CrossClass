@@ -1,0 +1,2040 @@
+{
+ "summary": {
+  "photo": "Card13_EVALCN0254SDPZ_T",
+  "pdf_words": 135,
+  "pairs": 71,
+  "inliers": 14,
+  "mirrored": true,
+  "residual_px": 16.2,
+  "boxes": 135,
+  "with_nearest": 130,
+  "disagree": 67
+ },
+ "boxes": [
+  {
+   "box": [
+    6149.0,
+    35.8,
+    6502.1,
+    667.7
+   ],
+   "label": "diode",
+   "desc": "TVS5",
+   "nearest": "PS3",
+   "nearest_dist": 0.39,
+   "bom_class": "ignore",
+   "bom_raw": "other",
+   "disagree": true
+  },
+  {
+   "box": [
+    4055.8,
+    2280.5,
+    4553.7,
+    2773.8
+   ],
+   "label": "IC",
+   "desc": "U2",
+   "nearest": "C56",
+   "nearest_dist": 0.44,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": true
+  },
+  {
+   "box": [
+    4968.6,
+    2840.9,
+    5463.5,
+    3141.9
+   ],
+   "label": "capacitor",
+   "desc": "C15",
+   "nearest": "C30",
+   "nearest_dist": 0.82,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": false
+  },
+  {
+   "box": [
+    1138.4,
+    3018.1,
+    1760.9,
+    3383.8
+   ],
+   "label": "diode",
+   "desc": "TVS2",
+   "nearest": "TVS2",
+   "nearest_dist": 0.37,
+   "bom_class": "diode",
+   "bom_raw": "diode/LED",
+   "disagree": false
+  },
+  {
+   "box": [
+    4973.0,
+    3694.8,
+    5476.1,
+    4006.0
+   ],
+   "label": "capacitor",
+   "desc": "C14",
+   "nearest": "C14",
+   "nearest_dist": 0.8,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": false
+  },
+  {
+   "box": [
+    6925.8,
+    3233.3,
+    7226.8,
+    3726.7
+   ],
+   "label": "capacitor",
+   "desc": "C18",
+   "nearest": "L1",
+   "nearest_dist": 0.68,
+   "bom_class": "inductor",
+   "bom_raw": "inductor",
+   "disagree": true
+  },
+  {
+   "box": [
+    3465.8,
+    3584.0,
+    3731.9,
+    3696.4
+   ],
+   "label": "resistor",
+   "desc": "R81",
+   "nearest": "R81",
+   "nearest_dist": 0.82,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": false
+  },
+  {
+   "box": [
+    7369.3,
+    130.1,
+    7565.8,
+    606.6
+   ],
+   "label": "capacitor",
+   "desc": "C2",
+   "nearest": "C44",
+   "nearest_dist": 0.47,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": false
+  },
+  {
+   "box": [
+    7627.4,
+    524.3,
+    7791.6,
+    904.5
+   ],
+   "label": "capacitor",
+   "desc": "C16",
+   "nearest": "U9",
+   "nearest_dist": 0.71,
+   "bom_class": "IC",
+   "bom_raw": "IC",
+   "disagree": true
+  },
+  {
+   "box": [
+    7534.2,
+    4678.2,
+    7806.2,
+    4794.4
+   ],
+   "label": "resistor",
+   "desc": "R2",
+   "nearest": null,
+   "nearest_dist": 1.61,
+   "bom_class": null,
+   "bom_raw": null,
+   "disagree": false
+  },
+  {
+   "box": [
+    5521.7,
+    4469.7,
+    5693.6,
+    4849.8
+   ],
+   "label": "capacitor",
+   "desc": "C24",
+   "nearest": "B6",
+   "nearest_dist": 0.2,
+   "bom_class": "inductor",
+   "bom_raw": "inductor",
+   "disagree": true
+  },
+  {
+   "box": [
+    3454.7,
+    1431.3,
+    3717.8,
+    1548.6
+   ],
+   "label": "resistor",
+   "desc": "R80",
+   "nearest": "R80",
+   "nearest_dist": 0.8,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": false
+  },
+  {
+   "box": [
+    4720.0,
+    15.1,
+    5731.5,
+    740.5
+   ],
+   "label": "connector",
+   "desc": "CN2",
+   "nearest": "CN2",
+   "nearest_dist": 0.44,
+   "bom_class": "connector",
+   "bom_raw": "connector",
+   "disagree": false
+  },
+  {
+   "box": [
+    7529.6,
+    4493.5,
+    7797.3,
+    4610.7
+   ],
+   "label": "resistor",
+   "desc": "R3",
+   "nearest": "U18",
+   "nearest_dist": 0.97,
+   "bom_class": "IC",
+   "bom_raw": "IC",
+   "disagree": true
+  },
+  {
+   "box": [
+    2910.8,
+    4468.7,
+    3177.8,
+    4577.0
+   ],
+   "label": "resistor",
+   "desc": "R25",
+   "nearest": "C8",
+   "nearest_dist": 0.56,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": true
+  },
+  {
+   "box": [
+    3450.4,
+    1241.9,
+    3717.8,
+    1356.9
+   ],
+   "label": "resistor",
+   "desc": "R79",
+   "nearest": "R79",
+   "nearest_dist": 0.8,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": false
+  },
+  {
+   "box": [
+    3463.9,
+    3768.8,
+    3732.8,
+    3885.0
+   ],
+   "label": "resistor",
+   "desc": "R82",
+   "nearest": "R82",
+   "nearest_dist": 0.77,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": false
+  },
+  {
+   "box": [
+    3001.0,
+    2642.9,
+    3271.3,
+    2758.8
+   ],
+   "label": "resistor",
+   "desc": "R96",
+   "nearest": "R95",
+   "nearest_dist": 0.63,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": false
+  },
+  {
+   "box": [
+    2772.5,
+    547.3,
+    2881.9,
+    802.8
+   ],
+   "label": "capacitor",
+   "desc": "C72",
+   "nearest": "R19",
+   "nearest_dist": 0.53,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": true
+  },
+  {
+   "box": [
+    2886.1,
+    1746.2,
+    3150.6,
+    1855.9
+   ],
+   "label": "resistor",
+   "desc": "R23",
+   "nearest": "C4",
+   "nearest_dist": 0.64,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": true
+  },
+  {
+   "box": [
+    2277.2,
+    1317.2,
+    2541.6,
+    1432.8
+   ],
+   "label": "resistor",
+   "desc": "R13",
+   "nearest": "C46",
+   "nearest_dist": 0.38,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": true
+  },
+  {
+   "box": [
+    2967.7,
+    3262.2,
+    3234.7,
+    3372.4
+   ],
+   "label": "resistor",
+   "desc": "R10",
+   "nearest": "R10",
+   "nearest_dist": 0.64,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": false
+  },
+  {
+   "box": [
+    1116.8,
+    1688.7,
+    1740.8,
+    2055.5
+   ],
+   "label": "diode",
+   "desc": "TVS6",
+   "nearest": "TVS6",
+   "nearest_dist": 0.34,
+   "bom_class": "diode",
+   "bom_raw": "diode/LED",
+   "disagree": false
+  },
+  {
+   "box": [
+    3156.7,
+    2130.3,
+    3417.4,
+    2238.6
+   ],
+   "label": "capacitor",
+   "desc": "C20",
+   "nearest": "C67",
+   "nearest_dist": 0.72,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": false
+  },
+  {
+   "box": [
+    2797.6,
+    3276.5,
+    2909.9,
+    3533.1
+   ],
+   "label": "capacitor",
+   "desc": "C73",
+   "nearest": "R11",
+   "nearest_dist": 0.54,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": true
+  },
+  {
+   "box": [
+    2529.7,
+    1750.6,
+    2791.8,
+    1859.7
+   ],
+   "label": "resistor",
+   "desc": "R12",
+   "nearest": "C3",
+   "nearest_dist": 0.47,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": true
+  },
+  {
+   "box": [
+    4835.3,
+    4510.8,
+    5015.1,
+    4836.3
+   ],
+   "label": "ignore",
+   "desc": "F2",
+   "nearest": "B3",
+   "nearest_dist": 0.27,
+   "bom_class": "inductor",
+   "bom_raw": "inductor",
+   "disagree": true
+  },
+  {
+   "box": [
+    3938.3,
+    2128.1,
+    4196.1,
+    2232.9
+   ],
+   "label": "capacitor",
+   "desc": "C60",
+   "nearest": "C20",
+   "nearest_dist": 0.61,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": false
+  },
+  {
+   "box": [
+    5058.6,
+    2639.6,
+    5322.6,
+    2754.5
+   ],
+   "label": "resistor",
+   "desc": "R94",
+   "nearest": null,
+   "nearest_dist": 1.51,
+   "bom_class": null,
+   "bom_raw": null,
+   "disagree": false
+  },
+  {
+   "box": [
+    3002.0,
+    2465.6,
+    3265.7,
+    2576.1
+   ],
+   "label": "capacitor",
+   "desc": "C19",
+   "nearest": "C66",
+   "nearest_dist": 0.67,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": false
+  },
+  {
+   "box": [
+    2943.8,
+    532.4,
+    3208.2,
+    641.8
+   ],
+   "label": "resistor",
+   "desc": "R7",
+   "nearest": "R7",
+   "nearest_dist": 0.71,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": false
+  },
+  {
+   "box": [
+    2101.7,
+    2636.2,
+    2373.8,
+    2756.1
+   ],
+   "label": "capacitor",
+   "desc": "C25",
+   "nearest": "C25",
+   "nearest_dist": 0.62,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": false
+  },
+  {
+   "box": [
+    6608.2,
+    4519.8,
+    6730.8,
+    4786.5
+   ],
+   "label": "capacitor",
+   "desc": "C23",
+   "nearest": null,
+   "nearest_dist": 2.31,
+   "bom_class": null,
+   "bom_raw": null,
+   "disagree": false
+  },
+  {
+   "box": [
+    3804.4,
+    4147.9,
+    4070.7,
+    4260.4
+   ],
+   "label": "capacitor",
+   "desc": "C54",
+   "nearest": "R84",
+   "nearest_dist": 0.56,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": true
+  },
+  {
+   "box": [
+    1111.7,
+    793.5,
+    1733.7,
+    1155.6
+   ],
+   "label": "diode",
+   "desc": "TVS3",
+   "nearest": "TVS1",
+   "nearest_dist": 0.33,
+   "bom_class": "diode",
+   "bom_raw": "diode/LED",
+   "disagree": false
+  },
+  {
+   "box": [
+    1774.4,
+    1735.8,
+    1888.6,
+    1998.4
+   ],
+   "label": "resistor",
+   "desc": "R18",
+   "nearest": "R18",
+   "nearest_dist": 0.74,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": false
+  },
+  {
+   "box": [
+    7918.5,
+    1058.4,
+    8042.5,
+    1328.3
+   ],
+   "label": "capacitor",
+   "desc": "C21",
+   "nearest": "J3",
+   "nearest_dist": 0.83,
+   "bom_class": "connector",
+   "bom_raw": "connector",
+   "disagree": true
+  },
+  {
+   "box": [
+    3787.9,
+    1428.8,
+    4054.0,
+    1545.0
+   ],
+   "label": "capacitor",
+   "desc": "C49",
+   "nearest": "R80",
+   "nearest_dist": 0.5,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": true
+  },
+  {
+   "box": [
+    1803.4,
+    4409.2,
+    1919.8,
+    4670.6
+   ],
+   "label": "resistor",
+   "desc": "R20",
+   "nearest": "R20",
+   "nearest_dist": 0.81,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": false
+  },
+  {
+   "box": [
+    1770.9,
+    1285.2,
+    1885.7,
+    1553.7
+   ],
+   "label": "resistor",
+   "desc": "R14",
+   "nearest": "R14",
+   "nearest_dist": 0.76,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": false
+  },
+  {
+   "box": [
+    3799.5,
+    3767.9,
+    4070.2,
+    3882.3
+   ],
+   "label": "capacitor",
+   "desc": "C52",
+   "nearest": "R82",
+   "nearest_dist": 0.52,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": true
+  },
+  {
+   "box": [
+    1794.5,
+    3514.2,
+    1912.2,
+    3780.3
+   ],
+   "label": "resistor",
+   "desc": "R24",
+   "nearest": "R24",
+   "nearest_dist": 0.74,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": false
+  },
+  {
+   "box": [
+    5743.5,
+    2953.4,
+    6879.5,
+    3882.4
+   ],
+   "label": "inductor",
+   "desc": "L1",
+   "nearest": "D1",
+   "nearest_dist": 0.24,
+   "bom_class": "diode",
+   "bom_raw": "diode/LED",
+   "disagree": true
+  },
+  {
+   "box": [
+    2556.2,
+    2146.1,
+    2678.1,
+    2411.6
+   ],
+   "label": "capacitor",
+   "desc": "C28",
+   "nearest": "C28",
+   "nearest_dist": 0.61,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": false
+  },
+  {
+   "box": [
+    7979.7,
+    598.6,
+    8922.9,
+    4280.3
+   ],
+   "label": "resistor",
+   "desc": "R31",
+   "nearest": "C27",
+   "nearest_dist": 0.2,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": true
+  },
+  {
+   "box": [
+    3785.7,
+    1242.3,
+    4051.3,
+    1351.6
+   ],
+   "label": "capacitor",
+   "desc": "C48",
+   "nearest": "R79",
+   "nearest_dist": 0.49,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": true
+  },
+  {
+   "box": [
+    1800.4,
+    3961.6,
+    1915.2,
+    4223.7
+   ],
+   "label": "resistor",
+   "desc": "R22",
+   "nearest": "R22",
+   "nearest_dist": 0.79,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": false
+  },
+  {
+   "box": [
+    1793.3,
+    3066.4,
+    1909.3,
+    3330.6
+   ],
+   "label": "resistor",
+   "desc": "R26",
+   "nearest": "R26",
+   "nearest_dist": 0.73,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": false
+  },
+  {
+   "box": [
+    26.7,
+    200.1,
+    1022.6,
+    5010.2
+   ],
+   "label": "connector",
+   "desc": "J2",
+   "nearest": "J2",
+   "nearest_dist": 0.06,
+   "bom_class": "connector",
+   "bom_raw": "connector",
+   "disagree": false
+  },
+  {
+   "box": [
+    1769.4,
+    838.7,
+    1881.8,
+    1107.0
+   ],
+   "label": "resistor",
+   "desc": "R8",
+   "nearest": "R8",
+   "nearest_dist": 0.77,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": false
+  },
+  {
+   "box": [
+    7817.4,
+    194.7,
+    7929.3,
+    459.4
+   ],
+   "label": "resistor",
+   "desc": "R28",
+   "nearest": "U9",
+   "nearest_dist": 0.65,
+   "bom_class": "IC",
+   "bom_raw": "IC",
+   "disagree": true
+  },
+  {
+   "box": [
+    3800.1,
+    3581.6,
+    4067.8,
+    3696.1
+   ],
+   "label": "capacitor",
+   "desc": "C50",
+   "nearest": "R81",
+   "nearest_dist": 0.47,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": true
+  },
+  {
+   "box": [
+    2884.3,
+    1583.9,
+    3147.9,
+    1692.8
+   ],
+   "label": "capacitor",
+   "desc": "C4",
+   "nearest": "C4",
+   "nearest_dist": 0.67,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": false
+  },
+  {
+   "box": [
+    3868.6,
+    4486.7,
+    4034.9,
+    4861.0
+   ],
+   "label": "capacitor",
+   "desc": "C17",
+   "nearest": "C17",
+   "nearest_dist": 0.65,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": false
+  },
+  {
+   "box": [
+    1963.1,
+    3033.3,
+    2253.4,
+    3329.5
+   ],
+   "label": "resistor",
+   "desc": "R95",
+   "nearest": "D16",
+   "nearest_dist": 0.57,
+   "bom_class": "diode",
+   "bom_raw": "diode/LED",
+   "disagree": true
+  },
+  {
+   "box": [
+    5925.2,
+    92.7,
+    6125.2,
+    576.5
+   ],
+   "label": "ignore",
+   "desc": "PS3",
+   "nearest": "CN2",
+   "nearest_dist": 0.79,
+   "bom_class": "connector",
+   "bom_raw": "connector",
+   "disagree": true
+  },
+  {
+   "box": [
+    2729.5,
+    2136.0,
+    3085.6,
+    2418.5
+   ],
+   "label": "inductor",
+   "desc": "B3",
+   "nearest": "U5",
+   "nearest_dist": 0.49,
+   "bom_class": "IC",
+   "bom_raw": "IC",
+   "disagree": true
+  },
+  {
+   "box": [
+    2972.2,
+    3428.1,
+    3234.6,
+    3536.0
+   ],
+   "label": "capacitor",
+   "desc": "C5",
+   "nearest": "C73",
+   "nearest_dist": 0.48,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": false
+  },
+  {
+   "box": [
+    5908.4,
+    2234.9,
+    6713.9,
+    2923.9
+   ],
+   "label": "IC",
+   "desc": "",
+   "nearest": "C31",
+   "nearest_dist": 0.22,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": true
+  },
+  {
+   "box": [
+    2612.5,
+    3582.6,
+    3131.0,
+    4267.6
+   ],
+   "label": "IC",
+   "desc": "",
+   "nearest": "U4",
+   "nearest_dist": 0.21,
+   "bom_class": "IC",
+   "bom_raw": "IC",
+   "disagree": false
+  },
+  {
+   "box": [
+    2591.1,
+    860.2,
+    3098.6,
+    1537.0
+   ],
+   "label": "IC",
+   "desc": "",
+   "nearest": "U3",
+   "nearest_dist": 0.24,
+   "bom_class": "IC",
+   "bom_raw": "IC",
+   "disagree": false
+  },
+  {
+   "box": [
+    6821.1,
+    660.5,
+    6988.8,
+    1042.0
+   ],
+   "label": "capacitor",
+   "desc": "",
+   "nearest": "TVS5",
+   "nearest_dist": 0.72,
+   "bom_class": "diode",
+   "bom_raw": "diode/LED",
+   "disagree": true
+  },
+  {
+   "box": [
+    7019.2,
+    642.0,
+    7553.5,
+    954.2
+   ],
+   "label": "IC",
+   "desc": "",
+   "nearest": "C44",
+   "nearest_dist": 0.5,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": true
+  },
+  {
+   "box": [
+    1150.1,
+    4363.0,
+    1770.2,
+    4725.8
+   ],
+   "label": "diode",
+   "desc": "",
+   "nearest": "TVS7",
+   "nearest_dist": 0.34,
+   "bom_class": "diode",
+   "bom_raw": "diode/LED",
+   "disagree": false
+  },
+  {
+   "box": [
+    2453.5,
+    535.4,
+    2714.7,
+    650.1
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "R19",
+   "nearest_dist": 0.69,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": false
+  },
+  {
+   "box": [
+    1138.5,
+    3467.2,
+    1765.1,
+    3833.5
+   ],
+   "label": "diode",
+   "desc": "",
+   "nearest": "TVS2",
+   "nearest_dist": 0.35,
+   "bom_class": "diode",
+   "bom_raw": "diode/LED",
+   "disagree": false
+  },
+  {
+   "box": [
+    6545.3,
+    114.3,
+    7031.7,
+    343.4
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "PS3",
+   "nearest_dist": 0.64,
+   "bom_class": "ignore",
+   "bom_raw": "other",
+   "disagree": true
+  },
+  {
+   "box": [
+    6742.6,
+    2156.3,
+    6860.3,
+    2412.5
+   ],
+   "label": "capacitor",
+   "desc": "",
+   "nearest": "U8",
+   "nearest_dist": 0.31,
+   "bom_class": "IC",
+   "bom_raw": "IC",
+   "disagree": true
+  },
+  {
+   "box": [
+    3466.3,
+    4146.9,
+    3733.6,
+    4263.2
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "R84",
+   "nearest_dist": 0.77,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": false
+  },
+  {
+   "box": [
+    6926.5,
+    2684.0,
+    7313.6,
+    2845.2
+   ],
+   "label": "capacitor",
+   "desc": "",
+   "nearest": "C29",
+   "nearest_dist": 0.86,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": false
+  },
+  {
+   "box": [
+    7114.3,
+    148.0,
+    7309.0,
+    504.1
+   ],
+   "label": "capacitor",
+   "desc": "",
+   "nearest": "B4",
+   "nearest_dist": 0.19,
+   "bom_class": "inductor",
+   "bom_raw": "inductor",
+   "disagree": true
+  },
+  {
+   "box": [
+    3466.4,
+    3958.6,
+    3732.5,
+    4079.3
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "R83",
+   "nearest_dist": 0.77,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": false
+  },
+  {
+   "box": [
+    6754.2,
+    4313.5,
+    7457.4,
+    4799.6
+   ],
+   "label": "IC",
+   "desc": "",
+   "nearest": "C23",
+   "nearest_dist": 0.26,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": true
+  },
+  {
+   "box": [
+    3448.9,
+    1052.9,
+    3715.9,
+    1167.8
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "R78",
+   "nearest_dist": 0.81,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": false
+  },
+  {
+   "box": [
+    3444.2,
+    863.3,
+    3712.8,
+    978.6
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "R77",
+   "nearest_dist": 0.81,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": false
+  },
+  {
+   "box": [
+    5549.4,
+    1856.9,
+    5810.3,
+    1964.0
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": null,
+   "nearest_dist": 1.66,
+   "bom_class": null,
+   "bom_raw": null,
+   "disagree": false
+  },
+  {
+   "box": [
+    5555.9,
+    2639.3,
+    5811.9,
+    2748.8
+   ],
+   "label": "capacitor",
+   "desc": "",
+   "nearest": "R94",
+   "nearest_dist": 0.6,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": true
+  },
+  {
+   "box": [
+    2482.3,
+    3266.0,
+    2742.7,
+    3374.5
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "R11",
+   "nearest_dist": 0.63,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": false
+  },
+  {
+   "box": [
+    1143.9,
+    3915.1,
+    1768.4,
+    4282.1
+   ],
+   "label": "diode",
+   "desc": "",
+   "nearest": "TVS4",
+   "nearest_dist": 0.35,
+   "bom_class": "diode",
+   "bom_raw": "diode/LED",
+   "disagree": false
+  },
+  {
+   "box": [
+    3716.8,
+    2473.7,
+    3972.3,
+    2581.8
+   ],
+   "label": "capacitor",
+   "desc": "",
+   "nearest": "C19",
+   "nearest_dist": 0.32,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": false
+  },
+  {
+   "box": [
+    3718.4,
+    2641.1,
+    3975.6,
+    2749.6
+   ],
+   "label": "capacitor",
+   "desc": "",
+   "nearest": "C19",
+   "nearest_dist": 0.48,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": false
+  },
+  {
+   "box": [
+    4485.2,
+    2008.7,
+    4749.0,
+    2122.9
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "C60",
+   "nearest_dist": 1.15,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": true
+  },
+  {
+   "box": [
+    3716.8,
+    2306.4,
+    3973.5,
+    2412.2
+   ],
+   "label": "capacitor",
+   "desc": "",
+   "nearest": "C20",
+   "nearest_dist": 0.69,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": false
+  },
+  {
+   "box": [
+    5089.6,
+    4488.0,
+    5470.7,
+    4641.1
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "F2",
+   "nearest_dist": 0.13,
+   "bom_class": "ignore",
+   "bom_raw": "fuse",
+   "disagree": true
+  },
+  {
+   "box": [
+    2277.4,
+    1151.1,
+    2538.1,
+    1261.6
+   ],
+   "label": "capacitor",
+   "desc": "",
+   "nearest": "R13",
+   "nearest_dist": 0.38,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": true
+  },
+  {
+   "box": [
+    6758.4,
+    2692.2,
+    6872.6,
+    2950.4
+   ],
+   "label": "capacitor",
+   "desc": "",
+   "nearest": "L1",
+   "nearest_dist": 1.49,
+   "bom_class": "inductor",
+   "bom_raw": "inductor",
+   "disagree": true
+  },
+  {
+   "box": [
+    5550.0,
+    2327.9,
+    5807.5,
+    2436.7
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "R5",
+   "nearest_dist": 0.46,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": false
+  },
+  {
+   "box": [
+    2277.5,
+    983.9,
+    2539.8,
+    1094.5
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "R13",
+   "nearest_dist": 0.67,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": false
+  },
+  {
+   "box": [
+    4380.2,
+    4694.1,
+    4752.3,
+    4846.7
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "F1",
+   "nearest_dist": 0.31,
+   "bom_class": "ignore",
+   "bom_raw": "fuse",
+   "disagree": true
+  },
+  {
+   "box": [
+    2556.7,
+    4470.9,
+    2821.3,
+    4579.7
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "C7",
+   "nearest_dist": 0.36,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": true
+  },
+  {
+   "box": [
+    4561.5,
+    2184.0,
+    4677.4,
+    2440.5
+   ],
+   "label": "capacitor",
+   "desc": "",
+   "nearest": "U2",
+   "nearest_dist": 0.76,
+   "bom_class": "IC",
+   "bom_raw": "IC",
+   "disagree": true
+  },
+  {
+   "box": [
+    6946.5,
+    1863.9,
+    7218.8,
+    1981.2
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "C13",
+   "nearest_dist": 1.11,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": true
+  },
+  {
+   "box": [
+    5091.6,
+    4687.8,
+    5471.9,
+    4839.9
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "F2",
+   "nearest_dist": 0.4,
+   "bom_class": "ignore",
+   "bom_raw": "fuse",
+   "disagree": true
+  },
+  {
+   "box": [
+    2305.7,
+    3701.7,
+    2560.0,
+    3810.8
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "R35",
+   "nearest_dist": 0.64,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": false
+  },
+  {
+   "box": [
+    6530.7,
+    428.7,
+    6912.8,
+    588.7
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "TVS5",
+   "nearest_dist": 0.4,
+   "bom_class": "diode",
+   "bom_raw": "diode/LED",
+   "disagree": true
+  },
+  {
+   "box": [
+    2303.8,
+    4034.9,
+    2561.8,
+    4143.1
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "C65",
+   "nearest_dist": 0.3,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": true
+  },
+  {
+   "box": [
+    4375.1,
+    4495.3,
+    4750.5,
+    4650.0
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "F1",
+   "nearest_dist": 0.34,
+   "bom_class": "ignore",
+   "bom_raw": "fuse",
+   "disagree": true
+  },
+  {
+   "box": [
+    5549.4,
+    2169.7,
+    5809.9,
+    2282.2
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "R5",
+   "nearest_dist": 0.89,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": false
+  },
+  {
+   "box": [
+    4662.5,
+    1715.2,
+    4926.9,
+    1829.0
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "B2",
+   "nearest_dist": 1.03,
+   "bom_class": "inductor",
+   "bom_raw": "inductor",
+   "disagree": true
+  },
+  {
+   "box": [
+    4120.5,
+    4502.4,
+    4300.7,
+    4838.0
+   ],
+   "label": "capacitor",
+   "desc": "",
+   "nearest": "C17",
+   "nearest_dist": 0.12,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": false
+  },
+  {
+   "box": [
+    2307.2,
+    3867.4,
+    2559.7,
+    3975.9
+   ],
+   "label": "capacitor",
+   "desc": "",
+   "nearest": "R35",
+   "nearest_dist": 0.29,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": true
+  },
+  {
+   "box": [
+    1107.3,
+    346.2,
+    1731.0,
+    710.4
+   ],
+   "label": "diode",
+   "desc": "",
+   "nearest": "TVS1",
+   "nearest_dist": 0.4,
+   "bom_class": "diode",
+   "bom_raw": "diode/LED",
+   "disagree": false
+  },
+  {
+   "box": [
+    3318.0,
+    2476.0,
+    3437.7,
+    2742.4
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "C66",
+   "nearest_dist": 0.32,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": true
+  },
+  {
+   "box": [
+    5553.9,
+    2818.1,
+    5817.6,
+    2930.2
+   ],
+   "label": "capacitor",
+   "desc": "",
+   "nearest": "C30",
+   "nearest_dist": 0.31,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": false
+  },
+  {
+   "box": [
+    5063.2,
+    2491.2,
+    5316.3,
+    2595.5
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": null,
+   "nearest_dist": 1.5,
+   "bom_class": null,
+   "bom_raw": null,
+   "disagree": false
+  },
+  {
+   "box": [
+    2481.2,
+    3433.5,
+    2740.6,
+    3538.7
+   ],
+   "label": "capacitor",
+   "desc": "",
+   "nearest": "R11",
+   "nearest_dist": 0.45,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": true
+  },
+  {
+   "box": [
+    2532.3,
+    1587.8,
+    2790.9,
+    1695.8
+   ],
+   "label": "capacitor",
+   "desc": "",
+   "nearest": "C3",
+   "nearest_dist": 0.64,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": false
+  },
+  {
+   "box": [
+    6953.6,
+    2039.9,
+    7209.3,
+    2150.3
+   ],
+   "label": "capacitor",
+   "desc": "",
+   "nearest": "C13",
+   "nearest_dist": 1.14,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": false
+  },
+  {
+   "box": [
+    5552.4,
+    2483.6,
+    5814.0,
+    2592.5
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "R94",
+   "nearest_dist": 0.46,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": false
+  },
+  {
+   "box": [
+    2948.0,
+    710.0,
+    3208.1,
+    817.6
+   ],
+   "label": "capacitor",
+   "desc": "",
+   "nearest": "C72",
+   "nearest_dist": 0.41,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": false
+  },
+  {
+   "box": [
+    7647.9,
+    193.9,
+    7761.2,
+    459.4
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "U9",
+   "nearest_dist": 0.9,
+   "bom_class": "IC",
+   "bom_raw": "IC",
+   "disagree": true
+  },
+  {
+   "box": [
+    5550.0,
+    2014.3,
+    5804.3,
+    2122.3
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "R5",
+   "nearest_dist": 1.48,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": false
+  },
+  {
+   "box": [
+    3159.0,
+    2296.6,
+    3417.0,
+    2406.8
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "R27",
+   "nearest_dist": 0.71,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": false
+  },
+  {
+   "box": [
+    2456.0,
+    713.6,
+    2710.0,
+    819.9
+   ],
+   "label": "capacitor",
+   "desc": "",
+   "nearest": "R19",
+   "nearest_dist": 0.5,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": true
+  },
+  {
+   "box": [
+    5522.6,
+    2966.2,
+    5696.8,
+    3364.1
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "L11",
+   "nearest_dist": 0.39,
+   "bom_class": "inductor",
+   "bom_raw": "inductor",
+   "disagree": true
+  },
+  {
+   "box": [
+    3787.0,
+    1051.5,
+    4046.5,
+    1162.7
+   ],
+   "label": "capacitor",
+   "desc": "",
+   "nearest": "R78",
+   "nearest_dist": 0.5,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": true
+  },
+  {
+   "box": [
+    2911.4,
+    4302.6,
+    3170.8,
+    4408.9
+   ],
+   "label": "capacitor",
+   "desc": "",
+   "nearest": "C8",
+   "nearest_dist": 0.67,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": false
+  },
+  {
+   "box": [
+    5515.7,
+    3489.6,
+    5700.4,
+    3898.3
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "C14",
+   "nearest_dist": 0.15,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": true
+  },
+  {
+   "box": [
+    3803.1,
+    3955.6,
+    4070.2,
+    4073.3
+   ],
+   "label": "capacitor",
+   "desc": "",
+   "nearest": "R83",
+   "nearest_dist": 0.55,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": true
+  },
+  {
+   "box": [
+    1116.1,
+    1244.6,
+    1738.3,
+    1606.2
+   ],
+   "label": "diode",
+   "desc": "",
+   "nearest": "TVS3",
+   "nearest_dist": 0.34,
+   "bom_class": "diode",
+   "bom_raw": "diode/LED",
+   "disagree": false
+  },
+  {
+   "box": [
+    3502.2,
+    2091.1,
+    3879.3,
+    2251.3
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "C20",
+   "nearest_dist": 0.59,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": true
+  },
+  {
+   "box": [
+    2553.5,
+    4304.7,
+    2821.0,
+    4413.0
+   ],
+   "label": "capacitor",
+   "desc": "",
+   "nearest": "C7",
+   "nearest_dist": 0.61,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": false
+  },
+  {
+   "box": [
+    1766.2,
+    391.0,
+    1878.6,
+    658.5
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "R1",
+   "nearest_dist": 0.83,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": false
+  },
+  {
+   "box": [
+    3783.7,
+    862.0,
+    4050.7,
+    974.9
+   ],
+   "label": "capacitor",
+   "desc": "",
+   "nearest": "R77",
+   "nearest_dist": 0.49,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": true
+  },
+  {
+   "box": [
+    6485.5,
+    1319.6,
+    7871.3,
+    1836.2
+   ],
+   "label": "connector",
+   "desc": "",
+   "nearest": "C13",
+   "nearest_dist": 0.35,
+   "bom_class": "capacitor",
+   "bom_raw": "capacitor",
+   "disagree": true
+  },
+  {
+   "box": [
+    1964.3,
+    3939.0,
+    2252.7,
+    4227.0
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "D18",
+   "nearest_dist": 0.59,
+   "bom_class": "diode",
+   "bom_raw": "diode/LED",
+   "disagree": true
+  },
+  {
+   "box": [
+    1965.9,
+    3493.8,
+    2255.5,
+    3777.3
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "D17",
+   "nearest_dist": 0.58,
+   "bom_class": "diode",
+   "bom_raw": "diode/LED",
+   "disagree": true
+  },
+  {
+   "box": [
+    3499.4,
+    2358.6,
+    3662.4,
+    2740.6
+   ],
+   "label": "capacitor",
+   "desc": "",
+   "nearest": "R96",
+   "nearest_dist": 0.29,
+   "bom_class": "resistor",
+   "bom_raw": "resistor",
+   "disagree": true
+  },
+  {
+   "box": [
+    1968.8,
+    4380.0,
+    2259.7,
+    4676.1
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "D19",
+   "nearest_dist": 0.61,
+   "bom_class": "diode",
+   "bom_raw": "diode/LED",
+   "disagree": true
+  },
+  {
+   "box": [
+    1934.9,
+    356.3,
+    2222.1,
+    661.1
+   ],
+   "label": "connector",
+   "desc": "",
+   "nearest": "D12",
+   "nearest_dist": 0.65,
+   "bom_class": "diode",
+   "bom_raw": "diode/LED",
+   "disagree": true
+  },
+  {
+   "box": [
+    1942.4,
+    1260.3,
+    2225.4,
+    1552.3
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "D14",
+   "nearest_dist": 0.61,
+   "bom_class": "diode",
+   "bom_raw": "diode/LED",
+   "disagree": true
+  },
+  {
+   "box": [
+    1940.5,
+    820.3,
+    2222.9,
+    1105.5
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "D13",
+   "nearest_dist": 0.63,
+   "bom_class": "diode",
+   "bom_raw": "diode/LED",
+   "disagree": true
+  },
+  {
+   "box": [
+    6928.5,
+    2200.1,
+    7237.6,
+    2409.6
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "U8",
+   "nearest_dist": 0.91,
+   "bom_class": "IC",
+   "bom_raw": "IC",
+   "disagree": true
+  },
+  {
+   "box": [
+    4955.5,
+    3214.5,
+    5477.3,
+    3643.6
+   ],
+   "label": "inductor",
+   "desc": "",
+   "nearest": "L11",
+   "nearest_dist": 0.83,
+   "bom_class": "inductor",
+   "bom_raw": "inductor",
+   "disagree": false
+  },
+  {
+   "box": [
+    1944.1,
+    1712.8,
+    2230.5,
+    2002.8
+   ],
+   "label": "resistor",
+   "desc": "",
+   "nearest": "D15",
+   "nearest_dist": 0.58,
+   "bom_class": "diode",
+   "bom_raw": "diode/LED",
+   "disagree": true
+  }
+ ]
+}

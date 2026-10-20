@@ -1,0 +1,192 @@
+{
+ "summary": {
+  "photo": "Card5_TPS65982EVM_B",
+  "design_side": "bottom",
+  "side_swapped": false,
+  "design_parts": 116,
+  "prelabel_parts": 104,
+  "part_pairs": 74,
+  "text_pairs": 77,
+  "aligned": true,
+  "residual_px": 3.1,
+  "median_part_px": 195.6,
+  "residual_part_sizes": 0.016,
+  "counts": {
+   "missed": 17,
+   "right": 58,
+   "wrong": 14,
+   "none": 27,
+   "class_wrong": 6,
+   "extra": 5
+  },
+  "box_recall": 0.853,
+  "designator_right_of_matched": 0.586,
+  "class_right_of_matched": 0.939
+ },
+ "missed": [
+  "H5",
+  "H6",
+  "H7",
+  "H8",
+  "C12",
+  "C30",
+  "C41",
+  "C49",
+  "C52",
+  "R6",
+  "R81",
+  "R83",
+  "R91",
+  "R93",
+  "FID4",
+  "FID5",
+  "FID6"
+ ],
+ "wrong": [
+  [
+   "C5",
+   "C4"
+  ],
+  [
+   "C12",
+   "C5"
+  ],
+  [
+   "C4",
+   "C18"
+  ],
+  [
+   "U5",
+   "C22"
+  ],
+  [
+   "C38",
+   "C36"
+  ],
+  [
+   "C52",
+   "C42"
+  ],
+  [
+   "C49",
+   "C47"
+  ],
+  [
+   "C42",
+   "C50"
+  ],
+  [
+   "C50",
+   "C51"
+  ],
+  [
+   "R63",
+   "D1"
+  ],
+  [
+   "R52",
+   "R5"
+  ],
+  [
+   "R104",
+   "R102"
+  ],
+  [
+   "R109",
+   "R103"
+  ],
+  [
+   "R102",
+   "R104"
+  ]
+ ],
+ "class": [
+  {
+   "ref": "C22",
+   "pre": 7,
+   "bom": "capacitor"
+  },
+  {
+   "ref": "C38",
+   "pre": 3,
+   "bom": "capacitor"
+  },
+  {
+   "ref": "D1",
+   "pre": 0,
+   "bom": "diode/LED"
+  },
+  {
+   "ref": "L1",
+   "pre": 0,
+   "bom": "inductor"
+  },
+  {
+   "ref": "U5",
+   "pre": 6,
+   "bom": "IC"
+  },
+  {
+   "ref": "Q10",
+   "pre": 4,
+   "bom": "transistor"
+  }
+ ],
+ "extra": [
+  {
+   "box": [
+    3838.0,
+    1067.0,
+    4459.6,
+    3401.7
+   ],
+   "ref": "C51",
+   "cls": 1,
+   "score": 0.805
+  },
+  {
+   "box": [
+    1810.4,
+    3961.9,
+    2677.3,
+    4593.3
+   ],
+   "ref": null,
+   "cls": 2,
+   "score": 0.482
+  },
+  {
+   "box": [
+    2808.0,
+    725.1,
+    2940.1,
+    996.6
+   ],
+   "ref": null,
+   "cls": 0,
+   "score": 0.396
+  },
+  {
+   "box": [
+    1495.6,
+    3140.0,
+    1756.7,
+    3702.9
+   ],
+   "ref": "D1",
+   "cls": 4,
+   "score": 0.384
+  },
+  {
+   "box": [
+    959.3,
+    3699.8,
+    1196.7,
+    3911.6
+   ],
+   "ref": "Q10",
+   "cls": 6,
+   "score": 0.264
+  }
+ ]
+}

@@ -1,0 +1,399 @@
+<title>21PCB Part Labeller</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: full-height photo canvas on the left, a narrow inspector rail on the right (stacks below at phone width).
+   Single dark look on purpose: board photos read best on a dark surround. */
+:root {
+  --bg: #11151a; --panel: #181e25; --line: #2a333d; --fg: #dfe6ec; --dim: #8b98a5;
+  --accent: #4fd1c5; --ok: #7bd88f; --warn: #f4b860; --bad: #ef6b6b; --sel: #ffffff;
+  --ui: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font: 14px/1.4 var(--ui); overflow: hidden; }
+#app { display: grid; grid-template-columns: minmax(0, 1fr) 330px; height: 100%; }
+#stage { position: relative; min-width: 0; background: #0b0e11; }
+#cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; touch-action: none; }
+#hud { position: absolute; left: 12px; top: 12px; display: flex; gap: 8px; flex-wrap: wrap; pointer-events: none; }
+.chip { background: rgba(17, 21, 26, .85); border: 1px solid var(--line); border-radius: 4px; padding: 3px 8px; font: 12px var(--mono); }
+.chip.mode { color: var(--warn); border-color: var(--warn); }
+#rail { background: var(--panel); border-left: 1px solid var(--line); overflow-y: auto; padding-block: 12px; padding-inline: 16px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+h1 { font-size: 16px; font-weight: 600; margin: 0; letter-spacing: .02em; }
+h2 { font-size: 11px; font-weight: 600; margin: 0 0 6px; color: var(--dim); text-transform: uppercase; letter-spacing: .08em; }
+select, input[type=text] { width: 100%; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 6px 8px; font: 13px var(--mono); box-sizing: border-box; }
+select:focus-visible, input:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--ok); width: 0; }
+.row { display: flex; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; }
+.dim { color: var(--dim); }
+.mono { font-family: var(--mono); }
+.classes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+.classes button { text-align: left; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 4px 6px; font: 12px var(--ui); cursor: pointer; }
+.classes button kbd { font: 11px var(--mono); color: var(--dim); margin-right: 6px; }
+.classes button.on { border-color: var(--accent); background: rgba(79, 209, 197, .14); }
+.btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.btns button { background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 5px 9px; font: 12px var(--ui); cursor: pointer; }
+.btns button.primary { border-color: var(--ok); color: var(--ok); }
+.card { border: 1px solid var(--line); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.bom { font-size: 12px; color: var(--dim); word-break: break-word; }
+.keys { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-size: 12px; }
+.keys kbd { font: 11px var(--mono); color: var(--accent); }
+#missing { font: 12px var(--mono); color: var(--dim); max-height: 120px; overflow-y: auto; word-break: break-word; }
+#status { font-size: 12px; color: var(--dim); }
+#status.err { color: var(--bad); }
+.tag { display: inline-block; font: 11px var(--mono); padding: 0 5px; border-radius: 3px; border: 1px solid var(--line); }
+.tag.ok { color: var(--ok); border-color: var(--ok); } .tag.del { color: var(--bad); border-color: var(--bad); } .tag.new { color: var(--warn); border-color: var(--warn); }
+@media (max-width: 760px) {
+  body { overflow: auto; }
+  #app { grid-template-columns: minmax(0, 1fr); grid-template-rows: 60vh auto; height: auto; }
+  #rail { border-left: 0; border-top: 1px solid var(--line); }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div id="app">
+  <div id="stage">
+    <canvas id="cv" aria-label="Board photo with part and text boxes"></canvas>
+    <div id="hud"><span class="chip" id="hudPhoto">loading</span><span class="chip mode" id="hudMode" hidden></span><span class="chip" id="hudZoom"></span></div>
+  </div>
+  <aside id="rail">
+    <div>
+      <h1>21PCB Part Labeller</h1>
+      <div id="status">Loading photos and saved labels.</div>
+    </div>
+    <div>
+      <h2>Photo</h2>
+      <select id="photoSel" aria-label="Photo"></select>
+    </div>
+    <div>
+      <div class="row"><span>Parts checked</span><span id="progTxt" class="mono">0 / 0</span></div>
+      <div class="bar"><i id="progBar"></i></div>
+    </div>
+    <div class="card" id="partCard">
+      <div class="row"><strong id="selTitle">No part selected</strong><span id="selTags"></span></div>
+      <div class="classes" id="classBtns"></div>
+      <div>
+        <h2>Designator text</h2>
+        <input type="text" id="textInput" placeholder="click L, then a text box" aria-label="Linked designator text">
+      </div>
+      <div class="bom" id="bomInfo"></div>
+      <div class="btns">
+        <button class="primary" id="bOk">Confirm + next (Space)</button>
+        <button id="bLink">Link text (L)</button>
+        <button id="bNone">No label (N)</button>
+        <button id="bDel">Not a part (D)</button>
+        <button id="bBox">Redraw box (E)</button>
+      </div>
+    </div>
+    <div class="btns">
+      <button id="bNewPart">Draw missing part (P)</button>
+      <button id="bNewText">Draw text box (T)</button>
+      <button id="bUndo">Undo (Ctrl+Z)</button>
+      <button id="bFit">Whole photo (F)</button>
+    </div>
+    <div>
+      <h2>BoM designators not linked yet (this board)</h2>
+      <div id="missing"></div>
+    </div>
+    <div>
+      <h2>Keys</h2>
+      <div class="keys">
+        <kbd>Space</kbd><span>confirm this part, go to the next unchecked one</span>
+        <kbd>1-9</kbd><span>set class (see list); <span class="mono">0</span> = ignore (test point, mech, fuse)</span>
+        <kbd>L</kbd><span>then click a text box: link it to this part</span>
+        <kbd>N</kbd><span>this part has no printed label</span>
+        <kbd>D</kbd><span>not a part (delete box); again to restore</span>
+        <kbd>E / P / T</kbd><span>drag to redraw box / add part / add text box</span>
+        <kbd>X</kbd><span>delete the selected text box</span>
+        <kbd>&larr; &rarr;</kbd><span>previous / next part</span>
+        <kbd>F</kbd><span>whole photo; wheel = zoom, drag = pan</span>
+        <kbd>Esc</kbd><span>cancel the current mode</span>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<script>
+const CLS = ["resistor", "capacitor", "inductor", "connector", "diode", "switch", "transistor", "IC", "oscillator"];
+const COLORS = { unchecked: "#4fd1c5", ok: "#7bd88f", del: "#ef6b6b", text: "#f4b860", textNo: "#7d8792", link: "#c6f68d", sel: "#ffffff" };
+const S = { pre: null, photo: null, parts: {}, texts: {}, order: [], sel: null, selText: null, mode: null, img: null, imgScale: 1,
+            view: { x: 0, y: 0, z: 0.1 }, db: null, unsub: [], undo: [], drag: null, saved: {} };
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+const $ = id => document.getElementById(id);
+const status = (msg, err) => { const e = $("status"); e.textContent = msg; e.className = err ? "err" : ""; };
+const now = () => new Date().toISOString();
+const card = () => S.photo.split("_")[0];
+const bomOf = ref => ref ? (S.pre.bom[card()] || {})[ref.toUpperCase()] : null;
+
+// ---------- class buttons ----------
+CLS.forEach((c, i) => { const b = document.createElement("button"); b.innerHTML = `<kbd>${i + 1}</kbd>${c}`; b.onclick = () => setCls(i); b.dataset.c = i; $("classBtns").appendChild(b); });
+{ const b = document.createElement("button"); b.innerHTML = `<kbd>0</kbd>ignore`; b.onclick = () => setCls(-1); b.dataset.c = -1; $("classBtns").appendChild(b); }
+
+// ---------- state: base pre-labels + saved overrides ----------
+function partState(id) { return S.parts[id]; }
+function loadPhoto(st) {
+  S.unsub.forEach(u => u()); S.unsub = []; S.photo = st; S.sel = null; S.selText = null; S.mode = null; S.undo = [];
+  const v = S.pre.photos[st]; S.base = v; S.parts = {}; S.texts = {}; S.saved = { parts: {}, texts: {} };
+  v.parts.forEach(p => S.parts[p.id] = { id: p.id, box: p.box, cls: p.cls, text: p.text, del: false, ok: false, src: p.src, det_cls: p.det_cls, score: p.score });
+  v.texts.forEach(t => S.texts[t.id] = { id: t.id, box: t.box, str: t.str, ocr: t.ocr, del: false });
+  orderParts();
+  S.img = new Image(); S.img.onload = () => { S.imgScale = S.img.naturalWidth / v.W; fit(); draw(); }; S.img.src = `img/${st}.jpg`;
+  $("hudPhoto").textContent = st;
+  if (S.db) subscribe();
+  refresh();
+}
+function orderParts() {
+  const v = S.base, band = v.H / 24;
+  S.order = Object.values(S.parts).sort((a, b) => (Math.floor(cy(a.box) / band) - Math.floor(cy(b.box) / band)) || (cx(a.box) - cx(b.box))).map(p => p.id);
+}
+const cx = b => (b[0] + b[2]) / 2, cy = b => (b[1] + b[3]) / 2;
+
+function subscribe() {
+  const base = `photos/${S.photo}`, st = S.photo;
+  S.unsub.push(S.db.collection(base + "/parts").onSnapshot(snap => {
+    if (st !== S.photo) return;
+    snap.docChanges().forEach(ch => {
+      const d = ch.doc.data(); if (!d) return; const id = ch.doc.id; S.saved.parts[id] = d;
+      const old = S.parts[id] || {}; S.parts[id] = Object.assign({}, old, { id, box: d.box, cls: d.cls, text: d.text ?? null, del: !!d.del, ok: !!d.ok, src: old.src || "new" });
+    });
+    if (snap.docChanges().some(c => c.type === "added" && !S.order.includes(c.doc.id))) orderParts();
+    refresh(); draw();
+  }, e => status("Saved labels could not load (" + e.code + "). Reload the page.", true)));
+  S.unsub.push(S.db.collection(base + "/texts").onSnapshot(snap => {
+    if (st !== S.photo) return;
+    snap.docChanges().forEach(ch => {
+      const d = ch.doc.data(); if (!d) return; const id = ch.doc.id; S.saved.texts[id] = d;
+      const old = S.texts[id] || {}; S.texts[id] = Object.assign({}, old, { id, box: d.box, str: d.str, del: !!d.del, ocr: old.ocr ?? null });
+    });
+    refresh(); draw();
+  }, e => status("Saved text boxes could not load (" + e.code + ").", true)));
+}
+
+// ---------- writes (one per user action, undoable within this visit) ----------
+const queue = {}; // per-doc serialisation
+async function save(kind, id, body, undoGroup) {
+  const before = kind === "parts" ? snapPart(id) : snapText(id);
+  if (kind === "parts") Object.assign(S.parts[id] = S.parts[id] || { id, src: "new" }, body); else Object.assign(S.texts[id] = S.texts[id] || { id }, body);
+  const after = kind === "parts" ? snapPart(id) : snapText(id);
+  if (JSON.stringify(before) === JSON.stringify(after)) return;
+  if (undoGroup !== false) S.undo.push({ kind, id, before, grp: undoGroup || Math.random() });
+  refresh(); draw();
+  if (!S.db) { status("Not connected: this change is only on this screen.", true); return; }
+  const path = `photos/${S.photo}/${kind}/${id}`, doc = Object.assign({}, after, { at: now() });
+  const prev = queue[path] || Promise.resolve();
+  queue[path] = prev.then(() => S.db.doc(path).set(doc)).then(() => status("Saved."), e => status("Save failed (" + e.code + "). Try again.", true));
+}
+function snapPart(id) { const p = S.parts[id]; return p ? { box: p.box, cls: p.cls, text: p.text ?? null, del: !!p.del, ok: !!p.ok } : null; }
+function snapText(id) { const t = S.texts[id]; return t ? { box: t.box, str: t.str, del: !!t.del } : null; }
+function undo() {
+  const last = S.undo.pop(); if (!last) { status("Nothing to undo."); return; }
+  const grp = [last]; while (S.undo.length && S.undo[S.undo.length - 1].grp === last.grp) grp.push(S.undo.pop());
+  grp.forEach(u => {
+    if (u.before) save(u.kind, u.id, u.before, false);
+    else save(u.kind, u.id, u.kind === "parts" ? { del: true } : { del: true }, false);
+  });
+  status("Undone.");
+}
+
+// ---------- actions ----------
+function cur() { return S.sel ? S.parts[S.sel] : null; }
+function setCls(c) { const p = cur(); if (!p) return; save("parts", p.id, { cls: c }); }
+function linkText(tid, grp) {
+  const p = cur(); if (!p) return; grp = grp || Math.random();
+  Object.values(S.parts).forEach(q => { if (q.id !== p.id && q.text === tid && !q.del) save("parts", q.id, { text: null, ok: false }, grp); });
+  const t = S.texts[tid], b = bomOf(t && t.str);
+  save("parts", p.id, b && b.cls !== undefined ? { text: tid, cls: b.cls } : { text: tid }, grp);
+}
+function confirmNext() {
+  const p = cur(); if (p) save("parts", p.id, { ok: true });
+  const i = S.order.indexOf(S.sel);
+  const next = S.order.slice(i + 1).concat(S.order.slice(0, i + 1)).find(id => !S.parts[id].ok && !S.parts[id].del && id !== S.sel);
+  if (next) select(next, true); else status("Every part on this photo is checked. Use P to add any missing part.");
+}
+function step(d) { if (!S.order.length) return; const i = S.order.indexOf(S.sel); select(S.order[(i + d + S.order.length) % S.order.length], true); }
+function select(id, focus) {
+  S.sel = id; S.selText = null; S.mode = null;
+  const p = S.parts[id]; if (focus && p) focusBox(p.box);
+  refresh(); draw();
+}
+function setMode(m) { S.mode = S.mode === m ? null : m; refresh(); draw(); }
+
+// ---------- view ----------
+function resize() { const r = cv.getBoundingClientRect(), d = devicePixelRatio || 1; cv.width = r.width * d; cv.height = r.height * d; ctx.setTransform(d, 0, 0, d, 0, 0); draw(); }
+function fit() { const r = cv.getBoundingClientRect(), v = S.base; const z = Math.min(r.width / v.W, r.height / v.H) * 0.98; S.view = { z, x: (r.width - v.W * z) / 2, y: (r.height - v.H * z) / 2 }; draw(); }
+function focusBox(b) {
+  const r = cv.getBoundingClientRect(), s = Math.max(b[2] - b[0], b[3] - b[1]);
+  const z = Math.min(r.width, r.height) / Math.max(s * 12, 600 * S.base.W / 8000);
+  S.view.z = z; S.view.x = r.width / 2 - cx(b) * z; S.view.y = r.height / 2 - cy(b) * z;
+}
+const toScr = (x, y) => [x * S.view.z + S.view.x, y * S.view.z + S.view.y];
+const toImg = (sx, sy) => [(sx - S.view.x) / S.view.z, (sy - S.view.y) / S.view.z];
+
+function draw() {
+  const r = cv.getBoundingClientRect(); ctx.clearRect(0, 0, r.width, r.height);
+  if (!S.base) return;
+  const v = S.view;
+  if (S.img && S.img.complete && S.img.naturalWidth) { ctx.imageSmoothingQuality = "high"; ctx.drawImage(S.img, v.x, v.y, S.base.W * v.z, S.base.H * v.z); }
+  const [ix0, iy0] = toImg(0, 0), [ix1, iy1] = toImg(r.width, r.height);
+  const vis = b => b[2] >= ix0 && b[0] <= ix1 && b[3] >= iy0 && b[1] <= iy1;
+  const showLabels = v.z * (S.base.W / 8000) > 0.12;
+  ctx.lineWidth = 1.5;
+  for (const t of Object.values(S.texts)) {
+    if (t.del || !vis(t.box)) continue;
+    const [x, y] = toScr(t.box[0], t.box[1]), w = (t.box[2] - t.box[0]) * v.z, h = (t.box[3] - t.box[1]) * v.z;
+    ctx.strokeStyle = bomOf(t.str) ? COLORS.text : COLORS.textNo; ctx.setLineDash([4, 3]); ctx.strokeRect(x, y, w, h); ctx.setLineDash([]);
+    if (t.id === S.selText) { ctx.strokeStyle = COLORS.sel; ctx.lineWidth = 3; ctx.strokeRect(x - 2, y - 2, w + 4, h + 4); ctx.lineWidth = 1.5; }
+  }
+  for (const p of Object.values(S.parts)) {
+    if (!vis(p.box) && p.id !== S.sel) continue;
+    const [x, y] = toScr(p.box[0], p.box[1]), w = (p.box[2] - p.box[0]) * v.z, h = (p.box[3] - p.box[1]) * v.z;
+    ctx.strokeStyle = p.del ? COLORS.del : p.ok ? COLORS.ok : COLORS.unchecked;
+    if (p.del) ctx.setLineDash([6, 4]);
+    ctx.lineWidth = p.id === S.sel ? 3 : 1.6; ctx.strokeRect(x, y, w, h); ctx.setLineDash([]);
+    const t = p.text && S.texts[p.text];
+    if (t && !t.del && !p.del) {
+      const [a, b] = toScr(cx(p.box), cy(p.box)), [c, d] = toScr(cx(t.box), cy(t.box));
+      ctx.strokeStyle = COLORS.link; ctx.lineWidth = p.id === S.sel ? 2.5 : 1.2; ctx.beginPath(); ctx.moveTo(a, b); ctx.lineTo(c, d); ctx.stroke();
+    }
+    if (showLabels && !p.del) {
+      const lab = (p.cls >= 0 ? CLS[p.cls] : p.cls === -1 ? "ignore" : "?");
+      ctx.font = "11px JetBrains Mono, monospace"; const tw = ctx.measureText(lab).width;
+      ctx.fillStyle = "rgba(11,14,17,.8)"; ctx.fillRect(x, y - 14, tw + 6, 14);
+      ctx.fillStyle = p.ok ? COLORS.ok : COLORS.unchecked; ctx.fillText(lab, x + 3, y - 3);
+    }
+  }
+  if (S.sel && S.parts[S.sel]) {
+    const p = S.parts[S.sel], [x, y] = toScr(p.box[0], p.box[1]), w = (p.box[2] - p.box[0]) * v.z, h = (p.box[3] - p.box[1]) * v.z;
+    ctx.strokeStyle = COLORS.sel; ctx.lineWidth = 1; ctx.strokeRect(x - 4, y - 4, w + 8, h + 8);
+  }
+  if (S.drag && S.drag.rect) { const [a, b, c, d] = S.drag.rect; const [x, y] = toScr(a, b); ctx.strokeStyle = COLORS.sel; ctx.setLineDash([5, 4]); ctx.lineWidth = 2; ctx.strokeRect(x, y, (c - a) * v.z, (d - b) * v.z); ctx.setLineDash([]); }
+  $("hudZoom").textContent = `zoom ${(v.z * 100).toFixed(1)}%`;
+}
+
+// ---------- side rail ----------
+function refresh() {
+  if (!S.base) return;
+  const live = Object.values(S.parts).filter(p => !p.del), ok = live.filter(p => p.ok).length;
+  $("progTxt").textContent = `${ok} / ${live.length}`; $("progBar").style.width = live.length ? (100 * ok / live.length) + "%" : "0";
+  const p = cur();
+  const modeTxt = { link: "LINK: click a text box", box: "REDRAW: drag the new box", newpart: "NEW PART: drag a box", newtext: "NEW TEXT: drag a box" }[S.mode];
+  $("hudMode").hidden = !modeTxt; $("hudMode").textContent = modeTxt || "";
+  document.querySelectorAll("#classBtns button").forEach(b => b.classList.toggle("on", !!p && +b.dataset.c === p.cls));
+  if (p) {
+    const t = p.text && S.texts[p.text];
+    $("selTitle").textContent = (t && !t.del ? t.str : "no label") + "  ·  " + (p.cls >= 0 ? CLS[p.cls] : p.cls === -1 ? "ignore" : "class not set");
+    $("selTags").innerHTML = (p.ok ? '<span class="tag ok">checked</span> ' : "") + (p.del ? '<span class="tag del">not a part</span> ' : "") + (p.src === "new" ? '<span class="tag new">added</span>' : "");
+    if (document.activeElement !== $("textInput")) $("textInput").value = t && !t.del ? t.str : "";
+    const b = bomOf(t && t.str);
+    $("bomInfo").innerHTML = b ? `BoM: <span class="mono">${esc(t.str.toUpperCase())}</span> ${esc(b.value || "")} — ${esc(b.desc || "")} <span class="mono">[${esc(b.raw)}]</span>${b.dni ? " (DNI in BoM)" : ""}`
+      : (t && !t.del ? "This text matches no BoM designator. Fix the text above if OCR misread it." : `Detector said: ${CLS[p.det_cls] || "?"}${p.score ? " (" + p.score + ")" : ""}`);
+  } else {
+    $("selTitle").textContent = S.selText ? "Text box selected" : "No part selected"; $("selTags").innerHTML = "";
+    const t = S.selText && S.texts[S.selText];
+    if (document.activeElement !== $("textInput")) $("textInput").value = t ? t.str : "";
+    $("bomInfo").textContent = t ? "Edit the text and press Enter to fix an OCR misread. X deletes this text box." : "Click a part, or press Space to start at the first unchecked part.";
+  }
+  const linked = new Set(Object.values(S.parts).filter(q => !q.del && q.text && S.texts[q.text] && !S.texts[q.text].del).map(q => S.texts[q.text].str.toUpperCase()));
+  const other = S.otherLinked[card()] || new Set();
+  const miss = Object.entries(S.pre.bom[card()] || {}).filter(([r, b]) => !b.dni && !linked.has(r) && !(other.has(r) && !S.thisBase.has(r))).map(([r]) => r).sort(natural);
+  $("missing").textContent = miss.length ? `${miss.length}: ` + miss.join(" ") : "none";
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const natural = (a, b) => a.localeCompare(b, undefined, { numeric: true });
+
+// ---------- mouse ----------
+function hitPart(x, y) { let best = null, ba = Infinity; for (const p of Object.values(S.parts)) { const b = p.box; if (x >= b[0] && x <= b[2] && y >= b[1] && y <= b[3]) { const a = (b[2] - b[0]) * (b[3] - b[1]); if (a < ba) { ba = a; best = p; } } } return best; }
+function hitText(x, y) { let best = null, ba = Infinity; for (const t of Object.values(S.texts)) { if (t.del) continue; const b = t.box; if (x >= b[0] && x <= b[2] && y >= b[1] && y <= b[3]) { const a = (b[2] - b[0]) * (b[3] - b[1]); if (a < ba) { ba = a; best = t; } } } return best; }
+cv.addEventListener("pointerdown", e => {
+  cv.setPointerCapture(e.pointerId); const r = cv.getBoundingClientRect(), sx = e.clientX - r.left, sy = e.clientY - r.top, [ix, iy] = toImg(sx, sy);
+  if (["box", "newpart", "newtext"].includes(S.mode)) S.drag = { draw: true, x0: ix, y0: iy, rect: [ix, iy, ix, iy] };
+  else S.drag = { pan: true, sx, sy, vx: S.view.x, vy: S.view.y, moved: false, ix, iy };
+});
+cv.addEventListener("pointermove", e => {
+  if (!S.drag) return; const r = cv.getBoundingClientRect(), sx = e.clientX - r.left, sy = e.clientY - r.top;
+  if (S.drag.draw) { const [ix, iy] = toImg(sx, sy); S.drag.rect = [Math.min(S.drag.x0, ix), Math.min(S.drag.y0, iy), Math.max(S.drag.x0, ix), Math.max(S.drag.y0, iy)]; draw(); }
+  else { const dx = sx - S.drag.sx, dy = sy - S.drag.sy; if (Math.abs(dx) + Math.abs(dy) > 4) S.drag.moved = true; if (S.drag.moved) { S.view.x = S.drag.vx + dx; S.view.y = S.drag.vy + dy; draw(); } }
+});
+cv.addEventListener("pointerup", () => {
+  const d = S.drag; S.drag = null; if (!d) return;
+  if (d.draw) {
+    const b = d.rect.map(v => Math.round(v * 10) / 10); if (b[2] - b[0] < 3 || b[3] - b[1] < 3) { draw(); return; }
+    if (S.mode === "box" && cur()) save("parts", S.sel, { box: b });
+    else if (S.mode === "newpart") { const id = "n" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); save("parts", id, { box: b, cls: -2, text: null, del: false, ok: false }); S.order.push(id); S.sel = id; status("New part added. Set its class (1-9 or 0), link its text (L), then Space."); }
+    else if (S.mode === "newtext") { const id = "n" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); const grp = Math.random(); save("texts", id, { box: b, str: "", del: false }, grp); if (cur()) linkText(id, grp); else S.selText = id; status("Type the printed text in the box on the right, then press Enter."); setTimeout(() => $("textInput").focus(), 0); }
+    S.mode = null; refresh(); draw(); return;
+  }
+  if (d.moved) return;
+  if (S.mode === "link") { const t = hitText(d.ix, d.iy); if (t) { linkText(t.id); S.mode = null; refresh(); draw(); } else status("No text box there. Click inside an orange or grey dashed box, or press Esc."); return; }
+  const p = hitPart(d.ix, d.iy), t = hitText(d.ix, d.iy);
+  if (p && (!t || (p.box[2] - p.box[0]) * (p.box[3] - p.box[1]) <= (t.box[2] - t.box[0]) * (t.box[3] - t.box[1]) * 4)) select(p.id, false);
+  else if (t) { S.sel = null; S.selText = t.id; refresh(); draw(); }
+  else { S.sel = null; S.selText = null; refresh(); draw(); }
+});
+cv.addEventListener("wheel", e => {
+  e.preventDefault(); const r = cv.getBoundingClientRect(), sx = e.clientX - r.left, sy = e.clientY - r.top, [ix, iy] = toImg(sx, sy);
+  const f = Math.exp(-e.deltaY * 0.0015); S.view.z = Math.min(4, Math.max(0.01, S.view.z * f)); S.view.x = sx - ix * S.view.z; S.view.y = sy - iy * S.view.z; draw();
+}, { passive: false });
+
+// ---------- keys ----------
+document.addEventListener("keydown", e => {
+  if (e.target === $("textInput")) {
+    if (e.key === "Enter") { e.preventDefault(); commitText(); $("textInput").blur(); }
+    if (e.key === "Escape") { $("textInput").blur(); refresh(); }
+    return;
+  }
+  if (e.target.tagName === "SELECT") return;
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); undo(); return; }
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = e.key;
+  if (k === " ") { e.preventDefault(); if (!S.sel) { const f = S.order.find(id => !S.parts[id].ok && !S.parts[id].del); if (f) select(f, true); } else confirmNext(); }
+  else if (/^[1-9]$/.test(k)) setCls(+k - 1);
+  else if (k === "0") setCls(-1);
+  else if (k === "l" || k === "L") { if (cur()) setMode("link"); }
+  else if (k === "n" || k === "N") { const p = cur(); if (p) save("parts", p.id, { text: null }); }
+  else if (k === "d" || k === "D") { const p = cur(); if (p) save("parts", p.id, { del: !p.del, ok: false }); }
+  else if (k === "e" || k === "E") { if (cur()) setMode("box"); }
+  else if (k === "p" || k === "P") setMode("newpart");
+  else if (k === "t" || k === "T") setMode("newtext");
+  else if (k === "x" || k === "X") { if (S.selText) { const id = S.selText; S.selText = null; save("texts", id, { del: true }); } }
+  else if (k === "ArrowRight") { e.preventDefault(); step(1); }
+  else if (k === "ArrowLeft") { e.preventDefault(); step(-1); }
+  else if (k === "f" || k === "F") fit();
+  else if (k === "Escape") { S.mode = null; S.drag = null; refresh(); draw(); }
+});
+function commitText() {
+  const s = $("textInput").value.trim(), p = cur();
+  const tid = p ? p.text : S.selText; if (!tid || !S.texts[tid]) { status("Link a text box first (L), or draw one (T)."); return; }
+  const grp = Math.random(); save("texts", tid, { str: s }, grp);
+  const b = bomOf(s); if (p && b) save("parts", p.id, { cls: b.cls }, grp);
+}
+$("bOk").onclick = confirmNext; $("bLink").onclick = () => cur() && setMode("link"); $("bNone").onclick = () => cur() && save("parts", S.sel, { text: null });
+$("bDel").onclick = () => { const p = cur(); if (p) save("parts", p.id, { del: !p.del, ok: false }); }; $("bBox").onclick = () => cur() && setMode("box");
+$("bNewPart").onclick = () => setMode("newpart"); $("bNewText").onclick = () => setMode("newtext"); $("bUndo").onclick = undo; $("bFit").onclick = fit;
+$("photoSel").onchange = e => { try { localStorage.setItem("pcb21.photo", e.target.value); } catch (_) {} loadPhoto(e.target.value); };
+window.addEventListener("resize", resize);
+
+// ---------- boot ----------
+(async () => {
+  try { S.pre = await (await fetch("pre21.json")).json(); }
+  catch (e) { status("pre21.json did not load. Reload the page.", true); return; }
+  // designators the pre-labels linked on the other photo of the same board (so the missing list stays per side)
+  S.otherLinked = {}; S.baseLinked = {};
+  for (const [st, v] of Object.entries(S.pre.photos)) {
+    const set = new Set(v.parts.filter(p => p.text).map(p => (v.texts[+p.text.slice(1)] || {}).str).filter(Boolean).map(s => s.toUpperCase()));
+    S.baseLinked[st] = set; const c = st.split("_")[0]; S.otherLinked[c] = S.otherLinked[c] || new Set(); set.forEach(r => S.otherLinked[c].add(r));
+  }
+  const names = Object.keys(S.pre.photos).sort(natural);
+  names.forEach(n => { const o = document.createElement("option"); o.value = n; o.textContent = n; $("photoSel").appendChild(o); });
+  let start = names[0]; try { const s = localStorage.getItem("pcb21.photo"); if (s && S.pre.photos[s]) start = s; } catch (_) {}
+  $("photoSel").value = start;
+  const origLoad = loadPhoto;
+  loadPhoto = st => { S.thisBase = S.baseLinked[st] || new Set(); origLoad(st); };
+  resize(); loadPhoto(start);
+  const db = await claude.use("db");
+  if (!db) { status("Saving is not available in this view. Open the page signed in to claude.ai to label.", true); return; }
+  S.db = db; subscribe(); status("Connected. Press Space to start at the first unchecked part.");
+})();
+</script>

@@ -1,0 +1,651 @@
+{
+ "Card10_DRV2605EVMCT_T": {
+  "n": 65,
+  "labels": {
+   "IC": 5,
+   "connector": 12,
+   "capacitor": 12,
+   "inductor": 3,
+   "resistor": 22,
+   "diode": 10,
+   "ignore": 1
+  },
+  "A": [
+   {
+    "ref": "R31",
+    "label": "connector",
+    "bom_class": "resistor",
+    "bom_raw": "resistor",
+    "value": "",
+    "desc": "R0402_DNP"
+   },
+   {
+    "ref": "R36",
+    "label": "capacitor",
+    "bom_class": "resistor",
+    "bom_raw": "resistor",
+    "value": "",
+    "desc": "ZEROOHMJUMPERSMT04020OHM 1/16W,5%ROHS"
+   },
+   {
+    "ref": "B4",
+    "label": "ignore",
+    "bom_class": "diode",
+    "bom_raw": "diode/LED",
+    "value": "",
+    "desc": "LED,BLUE3.3VSMD0805ROHS"
+   }
+  ],
+  "B": [],
+  "C": [],
+  "D": []
+ },
+ "Card11_DAC8760EMCEVM_T": {
+  "n": 42,
+  "labels": {
+   "IC": 2,
+   "diode": 5,
+   "resistor": 4,
+   "capacitor": 26,
+   "connector": 3,
+   "inductor": 2
+  },
+  "A": [
+   {
+    "ref": "FB2",
+    "label": "diode",
+    "bom_class": "inductor",
+    "bom_raw": "inductor",
+    "value": "",
+    "desc": "3AFerriteBead,600ohm@100MHz,SMD"
+   }
+  ],
+  "B": [],
+  "C": [],
+  "D": []
+ },
+ "Card12_EVALCN0399SDPZ_DSX1000x1_T": {
+  "n": 25,
+  "labels": {
+   "capacitor": 9,
+   "IC": 4,
+   "resistor": 11,
+   "inductor": 1
+  },
+  "A": [
+   {
+    "ref": "CSB",
+    "label": "IC",
+    "bom_class": "ignore",
+    "bom_raw": "testpoint/mech",
+    "value": "5001",
+    "desc": "CONN-PCB TST PNT BLK"
+   },
+   {
+    "ref": "R17",
+    "label": "IC",
+    "bom_class": "resistor",
+    "bom_raw": "resistor",
+    "value": "0",
+    "desc": "RES FILM SMD 0603"
+   },
+   {
+    "ref": "CONSTB",
+    "label": "resistor",
+    "bom_class": "ignore",
+    "bom_raw": "testpoint/mech",
+    "value": "5001",
+    "desc": "CONN-PCB TST PNT BLK"
+   },
+   {
+    "ref": "VRMS",
+    "label": "IC",
+    "bom_class": "ignore",
+    "bom_raw": "testpoint/mech",
+    "value": "5001",
+    "desc": "CONN-PCB TST PNT BLK"
+   },
+   {
+    "ref": "SCLK",
+    "label": "capacitor",
+    "bom_class": "ignore",
+    "bom_raw": "testpoint/mech",
+    "value": "5001",
+    "desc": "CONN-PCB TST PNT BLK"
+   },
+   {
+    "ref": "RFIN",
+    "label": "capacitor",
+    "bom_class": "connector",
+    "bom_raw": "connector",
+    "value": "142-0801-811",
+    "desc": "CONN-PCB END LAUNCH JACK RCPT"
+   }
+  ],
+  "B": [],
+  "C": [],
+  "D": []
+ },
+ "Card13_EVALCN0254SDPZ_T": {
+  "n": 135,
+  "labels": {
+   "diode": 20,
+   "IC": 6,
+   "capacitor": 47,
+   "resistor": 46,
+   "connector": 4,
+   "inductor": 11,
+   "ignore": 1
+  },
+  "A": [
+   {
+    "ref": "R31",
+    "label": "connector",
+    "bom_class": "resistor",
+    "bom_raw": "resistor",
+    "value": "210K",
+    "desc": "R0603 210K 1% 1/10W  100ppm ERJ-3EKF2103V PANASONIC"
+   },
+   {
+    "ref": "R95",
+    "label": "diode",
+    "bom_class": "resistor",
+    "bom_raw": "resistor",
+    "value": "22.0",
+    "desc": "R0603 22 1% 1/10W  100ppm ERJ-3GEYJ220V PANASONIC"
+   }
+  ],
+  "B": [],
+  "C": [],
+  "D": []
+ },
+ "Card14_EVALAD71244SDZ_T": {
+  "n": 146,
+  "labels": {
+   "IC": 9,
+   "resistor": 69,
+   "capacitor": 43,
+   "transistor": 1,
+   "connector": 19,
+   "diode": 4,
+   "inductor": 1
+  },
+  "A": [
+   {
+    "ref": "S1",
+    "label": "IC",
+    "bom_class": "ignore",
+    "bom_raw": "testpoint/mech",
+    "value": "",
+    "desc": "Test point, not inserted, keep hole clear of solder"
+   },
+   {
+    "ref": "C9",
+    "label": "resistor",
+    "bom_class": "capacitor",
+    "bom_raw": "capacitor",
+    "value": "",
+    "desc": "Ceramic capacitor, not inserted, 0402"
+   },
+   {
+    "ref": "STAR3",
+    "label": "connector",
+    "bom_class": "ignore",
+    "bom_raw": "other",
+    "value": "",
+    "desc": "Ground link"
+   },
+   {
+    "ref": "Q2",
+    "label": "resistor",
+    "bom_class": "transistor",
+    "bom_raw": "transistor",
+    "value": "",
+    "desc": "Transistor, NPN, SOT-23"
+   }
+  ],
+  "B": [],
+  "C": [],
+  "D": []
+ },
+ "Card15_EVALCN0229SDPZ_T": {
+  "n": 210,
+  "labels": {
+   "IC": 11,
+   "resistor": 34,
+   "connector": 24,
+   "diode": 55,
+   "capacitor": 59,
+   "inductor": 15,
+   "ignore": 11,
+   "switch": 1
+  },
+  "A": [],
+  "B": [],
+  "C": [],
+  "D": []
+ },
+ "Card16_EVALCN0272SDPZ_T": {
+  "n": 111,
+  "labels": {
+   "resistor": 31,
+   "capacitor": 53,
+   "connector": 5,
+   "diode": 7,
+   "IC": 10,
+   "ignore": 1,
+   "inductor": 2,
+   "transistor": 1,
+   "oscillator": 1
+  },
+  "A": [],
+  "B": [],
+  "C": [],
+  "D": []
+ },
+ "Card17_EVALCN0321SDPZ_T": {
+  "n": 152,
+  "labels": {
+   "capacitor": 58,
+   "diode": 13,
+   "connector": 3,
+   "inductor": 8,
+   "resistor": 60,
+   "ignore": 1,
+   "IC": 9
+  },
+  "A": [],
+  "B": [],
+  "C": [],
+  "D": []
+ },
+ "Card18_EVALCN0385FMCZ_DSX1000x1_T": {
+  "n": 227,
+  "labels": {
+   "IC": 17,
+   "inductor": 7,
+   "capacitor": 79,
+   "resistor": 102,
+   "connector": 7,
+   "diode": 12,
+   "switch": 1,
+   "transistor": 1,
+   "ignore": 1
+  },
+  "A": [],
+  "B": [],
+  "C": [],
+  "D": []
+ },
+ "Card19_TMDSIDK437X_DSX1000x1_B": {
+  "n": 600,
+  "labels": {
+   "capacitor": 238,
+   "resistor": 301,
+   "IC": 32,
+   "inductor": 16,
+   "transistor": 5,
+   "diode": 3,
+   "connector": 2,
+   "oscillator": 3
+  },
+  "A": [],
+  "B": [],
+  "C": [],
+  "D": []
+ },
+ "Card19_TMDSIDK437X_DSX1000x1_T": {
+  "n": 458,
+  "labels": {
+   "capacitor": 113,
+   "connector": 15,
+   "IC": 25,
+   "resistor": 265,
+   "diode": 21,
+   "oscillator": 1,
+   "ignore": 1,
+   "inductor": 10,
+   "transistor": 5,
+   "switch": 2
+  },
+  "A": [
+   {
+    "ref": "R245",
+    "label": "connector",
+    "bom_class": "resistor",
+    "bom_raw": "resistor",
+    "value": "0",
+    "desc": "Resistor Zero ohm Jumper 0402"
+   }
+  ],
+  "B": [],
+  "C": [],
+  "D": []
+ },
+ "Card1_BQ24780SEVM583_B": {
+  "n": 30,
+  "labels": {
+   "resistor": 18,
+   "capacitor": 7,
+   "IC": 1,
+   "diode": 2,
+   "transistor": 2
+  },
+  "A": [
+   {
+    "ref": "L1",
+    "label": "transistor",
+    "bom_class": "inductor",
+    "bom_raw": "inductor",
+    "value": "3.3uH",
+    "desc": "Inductor,Shielded,PowderedIron,3.3uH, 9.2A,17.7ohm,SMD 3.3uH"
+   },
+   {
+    "ref": "Q7",
+    "label": "diode",
+    "bom_class": "transistor",
+    "bom_raw": "transistor",
+    "value": "50V",
+    "desc": "MOSFET,N-CH,50V,0.2A,SOT-323 50V"
+   }
+  ],
+  "B": [],
+  "C": [],
+  "D": []
+ },
+ "Card1_BQ24780SEVM583_T": {
+  "n": 59,
+  "labels": {
+   "IC": 1,
+   "resistor": 22,
+   "connector": 9,
+   "capacitor": 21,
+   "transistor": 5,
+   "inductor": 1
+  },
+  "A": [
+   {
+    "ref": "L1",
+    "label": "capacitor",
+    "bom_class": "inductor",
+    "bom_raw": "inductor",
+    "value": "3.3uH",
+    "desc": "Inductor,Shielded,PowderedIron,3.3uH, 9.2A,17.7ohm,SMD 3.3uH"
+   },
+   {
+    "ref": "C17",
+    "label": "transistor",
+    "bom_class": "capacitor",
+    "bom_raw": "capacitor",
+    "value": "1uF",
+    "desc": "CAP,CERM,1uF,25V,+/-10%,X7R,0603 1uF"
+   }
+  ],
+  "B": [],
+  "C": [],
+  "D": []
+ },
+ "Card20_TPS2378EVM602_B": {
+  "n": 60,
+  "labels": {
+   "resistor": 26,
+   "capacitor": 15,
+   "inductor": 2,
+   "transistor": 5,
+   "diode": 7,
+   "IC": 5
+  },
+  "A": [],
+  "B": [],
+  "C": [],
+  "D": []
+ },
+ "Card20_TPS2378EVM602_T": {
+  "n": 99,
+  "labels": {
+   "IC": 4,
+   "resistor": 34,
+   "connector": 8,
+   "capacitor": 26,
+   "diode": 15,
+   "inductor": 4,
+   "transistor": 8
+  },
+  "A": [],
+  "B": [],
+  "C": [],
+  "D": []
+ },
+ "Card21_BQ25895EVM664_B": {
+  "n": 28,
+  "labels": {
+   "capacitor": 7,
+   "resistor": 18,
+   "diode": 1,
+   "IC": 2
+  },
+  "A": [],
+  "B": [],
+  "C": [],
+  "D": []
+ },
+ "Card21_BQ25895EVM664_T": {
+  "n": 32,
+  "labels": {
+   "switch": 2,
+   "IC": 1,
+   "capacitor": 7,
+   "connector": 18,
+   "inductor": 1,
+   "resistor": 3
+  },
+  "A": [],
+  "B": [],
+  "C": [],
+  "D": []
+ },
+ "Card2_BTMSPAUDSOURCE_T": {
+  "n": 92,
+  "labels": {
+   "IC": 5,
+   "switch": 3,
+   "connector": 18,
+   "diode": 5,
+   "resistor": 27,
+   "capacitor": 31,
+   "inductor": 2,
+   "oscillator": 1
+  },
+  "A": [
+   {
+    "ref": "J3",
+    "label": "inductor",
+    "bom_class": "connector",
+    "bom_raw": "connector",
+    "value": "LI-POL BAT HEADER",
+    "desc": "LI-ION BATTERY HEADER STD JST-PH"
+   },
+   {
+    "ref": "SHLD1",
+    "label": "IC",
+    "bom_class": "ignore",
+    "bom_raw": "testpoint/mech",
+    "value": "RF SHIELD FRAME",
+    "desc": "BOARD SHIELD .65X.65\" FRAME"
+   },
+   {
+    "ref": "ANT1",
+    "label": "inductor",
+    "bom_class": "ignore",
+    "bom_raw": "other",
+    "value": "2.4-2.5 GHz",
+    "desc": "PCB ANTENNA"
+   }
+  ],
+  "B": [],
+  "C": [],
+  "D": []
+ },
+ "Card3_DC1574A_T": {
+  "n": 40,
+  "labels": {
+   "connector": 12,
+   "resistor": 16,
+   "capacitor": 10,
+   "inductor": 1,
+   "IC": 1
+  },
+  "A": [],
+  "B": [],
+  "C": [],
+  "D": []
+ },
+ "Card4_DC1885A_T": {
+  "n": 27,
+  "labels": {
+   "resistor": 16,
+   "connector": 4,
+   "IC": 1,
+   "capacitor": 6
+  },
+  "A": [],
+  "B": [],
+  "C": [],
+  "D": []
+ },
+ "Card5_TPS65982EVM_B": {
+  "n": 102,
+  "labels": {
+   "capacitor": 41,
+   "connector": 3,
+   "diode": 2,
+   "inductor": 4,
+   "transistor": 10,
+   "resistor": 38,
+   "IC": 4
+  },
+  "A": [
+   {
+    "ref": "C38",
+    "label": "connector",
+    "bom_class": "capacitor",
+    "bom_raw": "capacitor",
+    "value": "120pF",
+    "desc": "CAP,CERM,120pF,50V,+/-5%,C0G/NP0,0402 120pF"
+   }
+  ],
+  "B": [],
+  "C": [],
+  "D": []
+ },
+ "Card5_TPS65982EVM_T": {
+  "n": 52,
+  "labels": {
+   "connector": 3,
+   "resistor": 33,
+   "capacitor": 3,
+   "diode": 8,
+   "switch": 2,
+   "IC": 3
+  },
+  "A": [],
+  "B": [],
+  "C": [],
+  "D": []
+ },
+ "Card6_EVALCN0540ARDZ_B": {
+  "n": 55,
+  "labels": {
+   "IC": 5,
+   "capacitor": 20,
+   "inductor": 2,
+   "connector": 4,
+   "resistor": 24
+  },
+  "A": [],
+  "B": [],
+  "C": [],
+  "D": []
+ },
+ "Card6_EVALCN0540ARDZ_T": {
+  "n": 97,
+  "labels": {
+   "IC": 8,
+   "capacitor": 31,
+   "diode": 4,
+   "inductor": 3,
+   "connector": 8,
+   "resistor": 39,
+   "switch": 1,
+   "ignore": 2,
+   "oscillator": 1
+  },
+  "A": [],
+  "B": [],
+  "C": [],
+  "D": []
+ },
+ "Card7_EVALCN0395ARDZ_T": {
+  "n": 100,
+  "labels": {
+   "IC": 11,
+   "capacitor": 34,
+   "diode": 8,
+   "connector": 7,
+   "transistor": 1,
+   "resistor": 38,
+   "switch": 1
+  },
+  "A": [],
+  "B": [],
+  "C": [],
+  "D": []
+ },
+ "Card8_EVALCN0506FMCZ_B": {
+  "n": 77,
+  "labels": {
+   "capacitor": 47,
+   "diode": 2,
+   "resistor": 16,
+   "IC": 8,
+   "oscillator": 2,
+   "connector": 2
+  },
+  "A": [],
+  "B": [],
+  "C": [],
+  "D": []
+ },
+ "Card8_EVALCN0506FMCZ_T": {
+  "n": 87,
+  "labels": {
+   "capacitor": 24,
+   "diode": 5,
+   "inductor": 4,
+   "connector": 3,
+   "resistor": 43,
+   "IC": 7,
+   "oscillator": 1
+  },
+  "A": [],
+  "B": [],
+  "C": [],
+  "D": []
+ },
+ "Card9_EVALCN0216SDPZ_T": {
+  "n": 66,
+  "labels": {
+   "resistor": 19,
+   "capacitor": 27,
+   "diode": 4,
+   "connector": 5,
+   "IC": 9,
+   "inductor": 1,
+   "ignore": 1
+  },
+  "A": [],
+  "B": [],
+  "C": [],
+  "D": []
+ }
+}

@@ -1,0 +1,225 @@
+{
+ "summary": {
+  "photo": "Card7_EVALCN0395ARDZ_T",
+  "design_side": "top",
+  "side_swapped": false,
+  "design_parts": 101,
+  "prelabel_parts": 104,
+  "part_pairs": 64,
+  "text_pairs": 79,
+  "aligned": true,
+  "residual_px": 3.5,
+  "median_part_px": 263.6,
+  "residual_part_sizes": 0.013,
+  "counts": {
+   "wrong": 21,
+   "class_wrong": 10,
+   "right": 46,
+   "none": 32,
+   "missed": 2,
+   "extra": 5
+  },
+  "box_recall": 0.98,
+  "designator_right_of_matched": 0.465,
+  "class_right_of_matched": 0.899
+ },
+ "wrong": [
+  [
+   "R5",
+   "A1"
+  ],
+  [
+   "C15",
+   "C16"
+  ],
+  [
+   "C31",
+   "C28"
+  ],
+  [
+   "C2",
+   "C31"
+  ],
+  [
+   "U2",
+   "D2"
+  ],
+  [
+   "AGND",
+   "P1"
+  ],
+  [
+   "VH",
+   "P2"
+  ],
+  [
+   "P5",
+   "P4"
+  ],
+  [
+   "IOREF",
+   "P5"
+  ],
+  [
+   "P2",
+   "P8"
+  ],
+  [
+   "R36",
+   "R1"
+  ],
+  [
+   "R38",
+   "R12"
+  ],
+  [
+   "R10",
+   "R13"
+  ],
+  [
+   "R12",
+   "R14"
+  ],
+  [
+   "U1",
+   "R3"
+  ],
+  [
+   "R13",
+   "R36"
+  ],
+  [
+   "R3",
+   "R5"
+  ],
+  [
+   "TP2",
+   "S2"
+  ],
+  [
+   "A1",
+   "U1"
+  ],
+  [
+   "Q1",
+   "U7"
+  ],
+  [
+   "S2",
+   "U8"
+  ]
+ ],
+ "class": [
+  {
+   "ref": "A1",
+   "pre": 0,
+   "bom": "IC"
+  },
+  {
+   "ref": "D2",
+   "pre": 7,
+   "bom": "diode/LED"
+  },
+  {
+   "ref": "D3",
+   "pre": 0,
+   "bom": "diode/LED"
+  },
+  {
+   "ref": "D4",
+   "pre": 0,
+   "bom": "diode/LED"
+  },
+  {
+   "ref": "D7",
+   "pre": 7,
+   "bom": "diode/LED"
+  },
+  {
+   "ref": "Q1",
+   "pre": 7,
+   "bom": "transistor"
+  },
+  {
+   "ref": "R3",
+   "pre": 7,
+   "bom": "resistor"
+  },
+  {
+   "ref": "S2",
+   "pre": -1,
+   "bom": "switch"
+  },
+  {
+   "ref": "U7",
+   "pre": 6,
+   "bom": "IC"
+  },
+  {
+   "ref": "U8",
+   "pre": 5,
+   "bom": "IC"
+  }
+ ],
+ "missed": [
+  "P3",
+  "U2"
+ ],
+ "extra": [
+  {
+   "box": [
+    404.7,
+    4280.0,
+    724.5,
+    4621.3
+   ],
+   "ref": null,
+   "cls": 0,
+   "score": 0.344
+  },
+  {
+   "box": [
+    127.8,
+    389.6,
+    465.9,
+    688.0
+   ],
+   "ref": "D3",
+   "cls": 4,
+   "score": 0.281
+  },
+  {
+   "box": [
+    2339.1,
+    1618.3,
+    2517.3,
+    1927.9
+   ],
+   "ref": null,
+   "cls": 4,
+   "score": 0.256
+  },
+  {
+   "box": [
+    1182.4,
+    3366.2,
+    2096.2,
+    4328.6
+   ],
+   "ref": "M1",
+   "cls": -1,
+   "score": 0.14
+  },
+  {
+   "box": [
+    4717.9,
+    1654.7,
+    4980.6,
+    1784.3
+   ],
+   "ref": "C23",
+   "cls": 1,
+   "score": 0.057
+  }
+ ]
+}

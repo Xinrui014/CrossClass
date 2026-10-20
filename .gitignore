@@ -22,3 +22,11 @@ page/errors/errors.json
 page/errors/placement.json
 page/linkcheck/*.jpg
 wandb/
+page/label21/img/
+page/label21/pre21.json
+page/ref21/img/
+page/ref21/own/
+page/ref21/assy/
+page/c_errors/
+# per-machine Claude Code settings (communication hook); also in the desktop global ignore, not in the L40 one
+.claude/settings.local.json

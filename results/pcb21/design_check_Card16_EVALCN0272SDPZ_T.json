@@ -1,0 +1,169 @@
+{
+ "summary": {
+  "photo": "Card16_EVALCN0272SDPZ_T",
+  "design_side": "top",
+  "side_swapped": false,
+  "design_parts": 113,
+  "prelabel_parts": 116,
+  "part_pairs": 78,
+  "text_pairs": 82,
+  "aligned": true,
+  "residual_px": 3.0,
+  "median_part_px": 251.6,
+  "residual_part_sizes": 0.012,
+  "counts": {
+   "missed": 2,
+   "right": 63,
+   "none": 36,
+   "wrong": 12,
+   "class_wrong": 6,
+   "extra": 5
+  },
+  "box_recall": 0.982,
+  "designator_right_of_matched": 0.568,
+  "class_right_of_matched": 0.946
+ },
+ "missed": [
+  "R26",
+  "R3"
+ ],
+ "wrong": [
+  [
+   "R26",
+   "R23"
+  ],
+  [
+   "C1",
+   "C11"
+  ],
+  [
+   "C35",
+   "C29"
+  ],
+  [
+   "C27",
+   "C20"
+  ],
+  [
+   "C18",
+   "C21"
+  ],
+  [
+   "C21",
+   "C22"
+  ],
+  [
+   "C17",
+   "C18"
+  ],
+  [
+   "C30",
+   "C31"
+  ],
+  [
+   "C31",
+   "C30"
+  ],
+  [
+   "T1",
+   "U6"
+  ],
+  [
+   "C38",
+   "C35"
+  ],
+  [
+   "C22",
+   "C34"
+  ]
+ ],
+ "class": [
+  {
+   "ref": "D7",
+   "pre": 3,
+   "bom": "diode/LED"
+  },
+  {
+   "ref": "C39",
+   "pre": 3,
+   "bom": "capacitor"
+  },
+  {
+   "ref": "D6",
+   "pre": 0,
+   "bom": "diode/LED"
+  },
+  {
+   "ref": "U6",
+   "pre": 6,
+   "bom": "IC"
+  },
+  {
+   "ref": "Y1",
+   "pre": 4,
+   "bom": "oscillator/crystal"
+  },
+  {
+   "ref": "R15",
+   "pre": 1,
+   "bom": "resistor"
+  }
+ ],
+ "extra": [
+  {
+   "box": [
+    3520.0,
+    3768.5,
+    3687.2,
+    4155.6
+   ],
+   "ref": null,
+   "cls": 4,
+   "score": 0.735
+  },
+  {
+   "box": [
+    2483.3,
+    608.6,
+    2803.1,
+    1015.3
+   ],
+   "ref": "D7",
+   "cls": 4,
+   "score": 0.351
+  },
+  {
+   "box": [
+    3617.7,
+    667.5,
+    3738.1,
+    915.4
+   ],
+   "ref": null,
+   "cls": 4,
+   "score": 0.262
+  },
+  {
+   "box": [
+    3618.3,
+    668.2,
+    3737.8,
+    916.0
+   ],
+   "ref": "C39",
+   "cls": 1,
+   "score": 0.192
+  },
+  {
+   "box": [
+    6075.9,
+    3680.4,
+    7363.3,
+    5039.2
+   ],
+   "ref": "R6",
+   "cls": 0,
+   "score": 0.175
+  }
+ ]
+}

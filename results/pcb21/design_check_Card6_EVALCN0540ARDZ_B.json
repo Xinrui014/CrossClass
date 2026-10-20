@@ -1,0 +1,133 @@
+{
+ "summary": {
+  "photo": "Card6_EVALCN0540ARDZ_B",
+  "design_side": "bottom",
+  "side_swapped": false,
+  "design_parts": 55,
+  "prelabel_parts": 58,
+  "part_pairs": 50,
+  "text_pairs": 52,
+  "aligned": true,
+  "residual_px": 2.7,
+  "median_part_px": 244.7,
+  "residual_part_sizes": 0.011,
+  "counts": {
+   "wrong": 10,
+   "class_wrong": 6,
+   "right": 45,
+   "extra": 3
+  },
+  "box_recall": 1.0,
+  "designator_right_of_matched": 0.818,
+  "class_right_of_matched": 0.891
+ },
+ "wrong": [
+  [
+   "A3",
+   "A2"
+  ],
+  [
+   "C50",
+   "A3"
+  ],
+  [
+   "R39",
+   "C51"
+  ],
+  [
+   "R6",
+   "P5"
+  ],
+  [
+   "P5",
+   "R5"
+  ],
+  [
+   "R48",
+   "R39"
+  ],
+  [
+   "C49",
+   "R46"
+  ],
+  [
+   "R49",
+   "R48"
+  ],
+  [
+   "Y1",
+   "R53"
+  ],
+  [
+   "R5",
+   "R55"
+  ]
+ ],
+ "class": [
+  {
+   "ref": "A3",
+   "pre": 1,
+   "bom": "IC"
+  },
+  {
+   "ref": "C51",
+   "pre": 0,
+   "bom": "capacitor"
+  },
+  {
+   "ref": "P5",
+   "pre": 0,
+   "bom": "connector"
+  },
+  {
+   "ref": "R5",
+   "pre": 3,
+   "bom": "resistor"
+  },
+  {
+   "ref": "R46",
+   "pre": 1,
+   "bom": "resistor"
+  },
+  {
+   "ref": "R53",
+   "pre": 8,
+   "bom": "resistor"
+  }
+ ],
+ "extra": [
+  {
+   "box": [
+    4532.5,
+    3575.7,
+    4695.5,
+    3654.2
+   ],
+   "ref": "R45",
+   "cls": 0,
+   "score": 0.583
+  },
+  {
+   "box": [
+    788.7,
+    827.6,
+    1550.0,
+    4201.7
+   ],
+   "ref": "S1",
+   "cls": 5,
+   "score": 0.409
+  },
+  {
+   "box": [
+    6996.4,
+    2032.3,
+    7185.8,
+    2133.4
+   ],
+   "ref": "R67",
+   "cls": 0,
+   "score": 0.109
+  }
+ ]
+}

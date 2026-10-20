@@ -1,0 +1,40 @@
+{
+ "summary": {
+  "photo": "Card9_EVALCN0216SDPZ_T",
+  "design_side": "top",
+  "side_swapped": false,
+  "design_parts": 67,
+  "prelabel_parts": 67,
+  "part_pairs": 46,
+  "text_pairs": 49,
+  "aligned": true,
+  "residual_px": 2.4,
+  "median_part_px": 259.4,
+  "residual_part_sizes": 0.009,
+  "counts": {
+   "right": 45,
+   "none": 21,
+   "missed": 1,
+   "extra": 1
+  },
+  "box_recall": 0.985,
+  "designator_right_of_matched": 0.682,
+  "class_right_of_matched": 1.0
+ },
+ "missed": [
+  "JP2"
+ ],
+ "extra": [
+  {
+   "box": [
+    5652.3,
+    1359.5,
+    6128.6,
+    2303.8
+   ],
+   "ref": "JP2",
+   "cls": 3,
+   "score": 0.762
+  }
+ ]
+}
