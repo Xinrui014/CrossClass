@@ -30,3 +30,4 @@ page/ref21/assy/
 page/c_errors/
 # per-machine Claude Code settings (communication hook); also in the desktop global ignore, not in the L40 one
 .claude/settings.local.json
+page/text_review/img/

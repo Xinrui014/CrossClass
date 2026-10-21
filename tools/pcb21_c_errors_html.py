@@ -17,13 +17,15 @@ src = src.replace('rec = dict(st=st, gt=NM[g[4]], des=des, det=NM[pd], C=NM[pc],
                   'rec = dict(st=st, gt=NM[g[4]], des=des, det=NM[pd], C=NM[pc], box=dets[k][:4], link=link, mass=round(mass, 2), '
                   'texts=sorted(r["texts"], key=lambda x: -x[1])[:3] if r else [], none=round(r["none"], 3) if r else 1.0, P=P.tolist(), d=d.tolist())')
 exec(src)
-ORDER = ["OCR misread", "prefix not in table", "wrong text linked", "no link (detector fallback)", "other (no GT designator)", "naming (own label, table class differs)"]
-EXPL = {"OCR misread": "The right label is linked, but PARSeq reads it wrong (rotated / tiny text): no known prefix, C falls back to the detector.",
-        "prefix not in table": "A readable designator whose prefix the fixed table does not know (B, F, TVS, FL, M ...): C falls back to the detector.",
-        "wrong text linked": "The strongest link goes to another part's label (dense rows / columns).",
-        "no link (detector fallback)": "Link mass < 0.5 (label hidden, far, or not printed): C mostly keeps the detector class.",
-        "other (no GT designator)": "The GT part has no designator, so the cause cannot be checked automatically.",
-        "naming (own label, table class differs)": "The part's own label is read, but the prefix table class differs from the GT class."}
+ORDER = ["right label, OCR misread", "right label, prefix not in table", "right label, table class differs", "wrong text linked",
+         "label found, linker said none", "label missed by OCR", "no printed label"]
+EXPL = {"right label, OCR misread": "The part's own label is linked (checked against the link GT), but PARSeq reads it wrong (rotated / tiny text): no known prefix, C falls back to the detector.",
+        "right label, prefix not in table": "The own label is linked and read as a designator whose prefix the fixed table does not know (B, F, TVS, FL, M ...): C falls back to the detector.",
+        "right label, table class differs": "The own label is linked and read, but the prefix table class differs from the GT class (T, JP ...).",
+        "wrong text linked": "The strongest link goes to another box than the part's label (link GT).",
+        "label found, linker said none": "An OCR box covers the part's label, but the link mass is below 0.5: C keeps the detector class.",
+        "label missed by OCR": "The part has a label, but no OCR box covers it, so nothing can be linked: C keeps the detector class.",
+        "no printed label": "The part has no label on the board (link GT none): C keeps the detector class, or links a wrong text."}
 font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 15); cache = {}
 errs.sort(key=lambda e: (ORDER.index(e["cause"]), e["st"], e["gt"]))
 for n, e in enumerate(errs):
@@ -60,6 +62,6 @@ page = f'''<!doctype html><html><head><meta charset="utf-8"><meta name="viewport
 a{{color:#7cc7ff}}.dim{{color:#93a0ab}}.bad{{color:#ff8a80;font-weight:600}}.sus{{background:#5a4a00;color:#ffd54a;padding:1px 6px;border-radius:4px;font-size:12px}}.grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}}
 .card{{background:#1d2226;border:1px solid #2c343a;border-radius:8px;overflow:hidden}}.card img{{width:100%;display:block}}.t{{padding:6px 8px 0}}.m{{padding:2px 8px;font-size:12.5px;color:#c3ccd3}}.card .m:last-child{{padding-bottom:8px}}
 nav{{position:sticky;top:0;background:#14171a;padding:6px 0;border-bottom:1px solid #2c343a}}</style></head><body>
-<h1>21PCB: all {len(errs)} errors of the soft cascade C</h1><p class="dim">Yellow tag 'possible GT error' = the linked text is a real BoM designator whose class equals the answer of C (19 of the 30 'wrong text' cases): check whether the ground truth is wrong. Parts the detector found (IoU &ge; 0.5, score &ge; 0.25) whose top-1 class under C is wrong. Magenta = part box, cyan = linked texts with link probability. Click an image for a 3x wider view.</p>
+<h1>21PCB: all {len(errs)} errors of the soft cascade C</h1><p class="dim">Causes checked against the owner's link GT (2026-10-21). Yellow tag 'possible GT error' = a wrong-text case whose linked text is a real BoM designator with the class C answered. Parts the detector found (IoU &ge; 0.5, score &ge; 0.25) whose top-1 class under C is wrong. Magenta = part box, cyan = linked texts with link probability. Click an image for a 3x wider view.</p>
 <nav>{nav}</nav>{"".join(sec)}</body></html>'''
 open(OUTD/"index.html", "w").write(page); print(len(errs), "errors ->", OUTD/"index.html")

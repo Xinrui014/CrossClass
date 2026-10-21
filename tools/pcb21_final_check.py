@@ -9,10 +9,13 @@ Checks per photo:
   C. the same designator on two boxes
   D. two component boxes overlapping (IoU > 0.7)
   E. label counts vs BoM populated counts for the side (rough: a BoM covers both sides)
-  pcb21_final_check.py -> results/pcb21/final_check.json + printed report"""
+  pcb21_final_check.py -> results/pcb21/final_check.json + printed report
+Env PCB21_SRC = one folder under data/21pcb with all 28 component files (e.g. owner_final3/pcb21_final, the owner's GT check of
+2026-10-20) instead of the owner_final2 batch folders."""
 import json, os, re, collections
 from pathlib import Path
 ROOT = Path(os.environ.get("CROSSCLASS", Path.home()/"projects/crossclass")); D = ROOT/"data/21pcb"; R = ROOT/"results/pcb21"
+SRC = os.environ.get("PCB21_SRC", "")
 CLS = ["resistor", "capacitor", "inductor", "connector", "diode", "switch", "transistor", "IC", "oscillator"]
 IC28 = sorted(p.stem for p in (Path.home()/"projects/tcassi/data/21PCBs/IC_annotation").glob("*.json"))
 
@@ -25,7 +28,7 @@ def iou(a, b):
 
 PL = json.load(open(D/"prelabel.json")); out = {}; tot = collections.Counter()
 for st in IC28:
-    f = D/"owner_final2/pcb21_batch1_class"/f"{st}.json"
+    f = D/SRC/f"{st}.json" if SRC else D/"owner_final2/pcb21_batch1_class"/f"{st}.json"
     if not f.exists(): f = D/"owner_final2/pcb21_batch2"/f"{st}.json"
     S = [s for s in json.load(open(f))["shapes"] if s["label"] != "text"]; bom = PL["bom"][st.split("_")[0]]
     A, B, C, Dd = [], [], [], []; seen = collections.defaultdict(list)

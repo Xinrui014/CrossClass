@@ -8,16 +8,20 @@
 Outputs: data/21pcb/final_v1/labelme/<stem>.{json,jpg} (owner's files + cleared designators + texts merged) and
 data/21pcb/final_v1/gt9_21pcb.json = {stem: {"W", "H", "boxes": [[x1,y1,x2,y2, cls9 (-1 = ignore), label, designator]],
 "texts": [[x1,y1,x2,y2, string]]}} in native photo pixels (same box format as gdino_fewshot/err9/build_gt9.py).
-  pcb21_build_final.py"""
+  pcb21_build_final.py
+Env PCB21_SRC as in tools/pcb21_final_check.py (run that first with the same value): components from one folder
+(2026-10-20: owner_final3/pcb21_final, the owner's GT check; it overwrites final_v1, owner's choice)."""
 import json, os, shutil
 from pathlib import Path
 ROOT = Path(os.environ.get("CROSSCLASS", Path.home()/"projects/crossclass")); D = ROOT/"data/21pcb"; OUT = D/"final_v1"
+SRC = os.environ.get("PCB21_SRC", "")
 CLS = ["resistor", "capacitor", "inductor", "connector", "diode", "switch", "transistor", "IC", "oscillator"]
 KEEP = {("Card2_BTMSPAUDSOURCE_T", "J3")}
 CHK = json.load(open(ROOT/"results/pcb21/final_check.json")); PL = json.load(open(D/"prelabel.json"))["photos"]
 (OUT/"labelme").mkdir(parents=True, exist_ok=True); gt = {}; n_clear = 0
 for st, chk in CHK.items():
     b1 = D/"owner_final2/pcb21_batch1_class"/f"{st}.json"; src = b1 if b1.exists() else D/"owner_final2/pcb21_batch2"/f"{st}.json"
+    if SRC: src = D/SRC/f"{st}.json"
     doc = json.load(open(src)); wrong = {a["ref"] for a in chk["A"] if (st, a["ref"]) not in KEEP}
     comps = [s for s in doc["shapes"] if s["label"] != "text"]
     for s in comps:

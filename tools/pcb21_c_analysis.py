@@ -2,14 +2,16 @@
 """Analysis of the soft cascade C on 21PCB (the method that shows the LinkFormer + OCR part most directly). C = soft links of
 v2d2_I_noise05_100k on the rule boxes x PARSeq prefix probabilities, detector scores only as the fallback (no link / no prefix).
 Per GT part found by the detector (IoU >= 0.5, score >= 0.25), top-1 class of the detector and of C (one class per box).
-Error causes for C (from the strongest link of the part):
-  no link      : link mass sum_j a_ij < 0.5 -> C falls back to the detector
-  wrong text   : the linked text reads a designator that is not the part's own (GT designator known and different prefix/number)
-  naming       : the linked text reads the part's own designator (or one with the same prefix) but the prefix table maps it to
-                 another class (e.g. T = transformer, JP = 0-ohm resistor)
-  prefix not in table : a readable designator whose prefix the fixed table does not know (B, F, TVS, FL, M ...)
-  OCR misread  : the reading starts with a digit or is garbage (e.g. D15 read as 015, rotated text)
-  other        : the part has no GT designator to check against
+Error causes for C, checked against the owner's link GT (data/21pcb/link_gt_v1.json, 2026-10-21; before that a prefix comparison
+with the GT designator was used): the part's GT label box vs the OCR box of its strongest link (same box = IoU >= 0.3 or a centre
+inside the other box); link = strongest link with link mass sum_j a_ij >= 0.5.
+  no printed label            : the part has no label on the board (GT none); C keeps the detector class, or links a wrong text
+  label missed by OCR         : the part has a label, but no OCR box covers it, so it cannot be linked
+  label found, linker said none : an OCR box covers the label, but the link mass is < 0.5 -> detector fallback
+  wrong text linked           : the strongest link goes to another box than the part's label
+  right label, OCR misread    : the right box is linked, but PARSeq's reading has no known prefix (digits first, garbage)
+  right label, prefix not in table : the right box is linked and read as a designator whose prefix the table does not know (B, F, TVS ...)
+  right label, table class differs : the right box is linked and read, but the prefix table maps it to another class (T, JP ...)
 Outputs results/pcb21/c_analysis.json and page/report21/img/c_err.jpg, c_fix.jpg (part box magenta, linked text box cyan).
   pcb21_c_analysis.py   (env ~/venvs/gdino_fewshot, CPU)"""
 import json, os, re, sys, collections, random
@@ -23,6 +25,10 @@ from assoc_lib import pfx_class, PFX
 os.chdir(E); from analyze9 import iou
 NM = ["resistor", "capacitor", "inductor", "connector", "diode", "switch", "transistor", "IC", "oscillator"]
 P9 = json.load(open(LD/"preds_cls9.json")); G = json.load(open(E/"gt9_21pcb.json")); GD = json.load(open(E/"21pcb/final_v1/gt9_21pcb.json"))
+LG = json.load(open(E/"21pcb/link_gt_v1.json"))       # parts in the same order as the class GT boxes (tools/pcb21_sync_class_gt.py)
+def same_box(a, b):
+    ca, cb = ((a[0]+a[2])/2, (a[1]+a[3])/2), ((b[0]+b[2])/2, (b[1]+b[3])/2)
+    return float(iou(np.array([a]), np.array([b]))[0][0]) >= 0.3 or (b[0] <= ca[0] <= b[2] and b[1] <= ca[1] <= b[3]) or (a[0] <= cb[0] <= a[2] and a[1] <= cb[1] <= a[3])
 B = {b["id"]: b for b in json.load(open(LD/"e2e_boards_all.json"))}; Z = np.load(LD/"e2e_tf_all.npz"); SOFT = json.load(open(LD/"soft_noise05_infil.json"))
 CH = "#0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ?"
 read = lambda st, j: "".join(CH[c] for c in Z[st][j][:304].astype(np.float32).reshape(8, 38).argmax(1)).split("#")[0]
@@ -49,11 +55,15 @@ for st in sorted(G):
         des = GD[st]["boxes"][gi][6]
         rec = dict(st=st, gt=NM[g[4]], des=des, det=NM[pd], C=NM[pc], box=dets[k][:4], link=link, mass=round(mass, 2))
         if pc != g[4]:
-            if mass < 0.5 or link is None: c = "no link (detector fallback)"
-            elif pfx_class(link[1]) is None: c = "prefix not in table" if re.match(r"[A-Z]{1,4}\d", link[1]) else "OCR misread"
-            elif not des: c = "other (no GT designator)"
-            elif pre(link[1]) == pre(des): c = "naming (own label, table class differs)"
-            else: c = "wrong text linked"
+            lp = LG[st]["parts"][gi]; gtb = LG[st]["texts"][lp["text"]]["box"] if lp["text"] >= 0 else None
+            linked = link is not None and mass >= 0.5
+            if gtb is None: c = "no printed label"
+            elif linked and same_box(B[st]["texts"][link[0]]["box"], gtb):
+                if pfx_class(link[1]) is None: c = "right label, prefix not in table" if re.match(r"[A-Z]{1,4}\d", link[1]) else "right label, OCR misread"
+                else: c = "right label, table class differs"
+            elif linked: c = "wrong text linked"
+            elif any(same_box(t["box"], gtb) for t in B[st]["texts"]): c = "label found, linker said none"
+            else: c = "label missed by OCR"
             rec["cause"] = c; cause[c] += 1; cause_by_cls[NM[g[4]]][c] += 1; errs.append(rec)
         elif pd != g[4]: fixes.append(rec)
 
