@@ -5,37 +5,12 @@
    "IC": 5,
    "connector": 12,
    "capacitor": 12,
-   "inductor": 3,
+   "inductor": 2,
    "resistor": 22,
-   "diode": 10,
+   "diode": 11,
    "ignore": 1
   },
-  "A": [
-   {
-    "ref": "R31",
-    "label": "connector",
-    "bom_class": "resistor",
-    "bom_raw": "resistor",
-    "value": "",
-    "desc": "R0402_DNP"
-   },
-   {
-    "ref": "R36",
-    "label": "capacitor",
-    "bom_class": "resistor",
-    "bom_raw": "resistor",
-    "value": "",
-    "desc": "ZEROOHMJUMPERSMT04020OHM 1/16W,5%ROHS"
-   },
-   {
-    "ref": "B4",
-    "label": "ignore",
-    "bom_class": "diode",
-    "bom_raw": "diode/LED",
-    "value": "",
-    "desc": "LED,BLUE3.3VSMD0805ROHS"
-   }
-  ],
+  "A": [],
   "B": [],
   "C": [],
   "D": []
@@ -50,16 +25,7 @@
    "connector": 3,
    "inductor": 2
   },
-  "A": [
-   {
-    "ref": "FB2",
-    "label": "diode",
-    "bom_class": "inductor",
-    "bom_raw": "inductor",
-    "value": "",
-    "desc": "3AFerriteBead,600ohm@100MHz,SMD"
-   }
-  ],
+  "A": [],
   "B": [],
   "C": [],
   "D": []
@@ -72,56 +38,7 @@
    "resistor": 11,
    "inductor": 1
   },
-  "A": [
-   {
-    "ref": "CSB",
-    "label": "IC",
-    "bom_class": "ignore",
-    "bom_raw": "testpoint/mech",
-    "value": "5001",
-    "desc": "CONN-PCB TST PNT BLK"
-   },
-   {
-    "ref": "R17",
-    "label": "IC",
-    "bom_class": "resistor",
-    "bom_raw": "resistor",
-    "value": "0",
-    "desc": "RES FILM SMD 0603"
-   },
-   {
-    "ref": "CONSTB",
-    "label": "resistor",
-    "bom_class": "ignore",
-    "bom_raw": "testpoint/mech",
-    "value": "5001",
-    "desc": "CONN-PCB TST PNT BLK"
-   },
-   {
-    "ref": "VRMS",
-    "label": "IC",
-    "bom_class": "ignore",
-    "bom_raw": "testpoint/mech",
-    "value": "5001",
-    "desc": "CONN-PCB TST PNT BLK"
-   },
-   {
-    "ref": "SCLK",
-    "label": "capacitor",
-    "bom_class": "ignore",
-    "bom_raw": "testpoint/mech",
-    "value": "5001",
-    "desc": "CONN-PCB TST PNT BLK"
-   },
-   {
-    "ref": "RFIN",
-    "label": "capacitor",
-    "bom_class": "connector",
-    "bom_raw": "connector",
-    "value": "142-0801-811",
-    "desc": "CONN-PCB END LAUNCH JACK RCPT"
-   }
-  ],
+  "A": [],
   "B": [],
   "C": [],
   "D": []
@@ -130,8 +47,8 @@
   "n": 135,
   "labels": {
    "diode": 20,
-   "IC": 6,
-   "capacitor": 47,
+   "IC": 7,
+   "capacitor": 46,
    "resistor": 46,
    "connector": 4,
    "inductor": 11,
@@ -139,20 +56,12 @@
   },
   "A": [
    {
-    "ref": "R31",
-    "label": "connector",
-    "bom_class": "resistor",
-    "bom_raw": "resistor",
-    "value": "210K",
-    "desc": "R0603 210K 1% 1/10W  100ppm ERJ-3EKF2103V PANASONIC"
-   },
-   {
-    "ref": "R95",
-    "label": "diode",
-    "bom_class": "resistor",
-    "bom_raw": "resistor",
-    "value": "22.0",
-    "desc": "R0603 22 1% 1/10W  100ppm ERJ-3GEYJ220V PANASONIC"
+    "ref": "B3",
+    "label": "IC",
+    "bom_class": "inductor",
+    "bom_raw": "inductor",
+    "value": "330@100MHz",
+    "desc": "B0805 330@100MHz 1.5A BLM21PG331SN1D MURATA"
    }
   ],
   "B": [],
@@ -162,46 +71,22 @@
  "Card14_EVALAD71244SDZ_T": {
   "n": 146,
   "labels": {
-   "IC": 9,
+   "IC": 8,
    "resistor": 69,
    "capacitor": 43,
-   "transistor": 1,
+   "transistor": 2,
    "connector": 19,
    "diode": 4,
    "inductor": 1
   },
   "A": [
    {
-    "ref": "S1",
-    "label": "IC",
-    "bom_class": "ignore",
-    "bom_raw": "testpoint/mech",
+    "ref": "U3",
+    "label": "transistor",
+    "bom_class": "IC",
+    "bom_raw": "IC",
     "value": "",
-    "desc": "Test point, not inserted, keep hole clear of solder"
-   },
-   {
-    "ref": "C9",
-    "label": "resistor",
-    "bom_class": "capacitor",
-    "bom_raw": "capacitor",
-    "value": "",
-    "desc": "Ceramic capacitor, not inserted, 0402"
-   },
-   {
-    "ref": "STAR3",
-    "label": "connector",
-    "bom_class": "ignore",
-    "bom_raw": "other",
-    "value": "",
-    "desc": "Ground link"
-   },
-   {
-    "ref": "Q2",
-    "label": "resistor",
-    "bom_class": "transistor",
-    "bom_raw": "transistor",
-    "value": "",
-    "desc": "Transistor, NPN, SOT-23"
+    "desc": "Quad voltage monitor and sequencer"
    }
   ],
   "B": [],
@@ -295,12 +180,12 @@
   "D": []
  },
  "Card19_TMDSIDK437X_DSX1000x1_T": {
-  "n": 458,
+  "n": 457,
   "labels": {
    "capacitor": 113,
    "connector": 15,
    "IC": 25,
-   "resistor": 265,
+   "resistor": 264,
    "diode": 21,
    "oscillator": 1,
    "ignore": 1,
@@ -308,16 +193,7 @@
    "transistor": 5,
    "switch": 2
   },
-  "A": [
-   {
-    "ref": "R245",
-    "label": "connector",
-    "bom_class": "resistor",
-    "bom_raw": "resistor",
-    "value": "0",
-    "desc": "Resistor Zero ohm Jumper 0402"
-   }
-  ],
+  "A": [],
   "B": [],
   "C": [],
   "D": []
@@ -331,24 +207,7 @@
    "diode": 2,
    "transistor": 2
   },
-  "A": [
-   {
-    "ref": "L1",
-    "label": "transistor",
-    "bom_class": "inductor",
-    "bom_raw": "inductor",
-    "value": "3.3uH",
-    "desc": "Inductor,Shielded,PowderedIron,3.3uH, 9.2A,17.7ohm,SMD 3.3uH"
-   },
-   {
-    "ref": "Q7",
-    "label": "diode",
-    "bom_class": "transistor",
-    "bom_raw": "transistor",
-    "value": "50V",
-    "desc": "MOSFET,N-CH,50V,0.2A,SOT-323 50V"
-   }
-  ],
+  "A": [],
   "B": [],
   "C": [],
   "D": []
@@ -363,24 +222,7 @@
    "transistor": 5,
    "inductor": 1
   },
-  "A": [
-   {
-    "ref": "L1",
-    "label": "capacitor",
-    "bom_class": "inductor",
-    "bom_raw": "inductor",
-    "value": "3.3uH",
-    "desc": "Inductor,Shielded,PowderedIron,3.3uH, 9.2A,17.7ohm,SMD 3.3uH"
-   },
-   {
-    "ref": "C17",
-    "label": "transistor",
-    "bom_class": "capacitor",
-    "bom_raw": "capacitor",
-    "value": "1uF",
-    "desc": "CAP,CERM,1uF,25V,+/-10%,X7R,0603 1uF"
-   }
-  ],
+  "A": [],
   "B": [],
   "C": [],
   "D": []
@@ -464,22 +306,6 @@
     "bom_raw": "connector",
     "value": "LI-POL BAT HEADER",
     "desc": "LI-ION BATTERY HEADER STD JST-PH"
-   },
-   {
-    "ref": "SHLD1",
-    "label": "IC",
-    "bom_class": "ignore",
-    "bom_raw": "testpoint/mech",
-    "value": "RF SHIELD FRAME",
-    "desc": "BOARD SHIELD .65X.65\" FRAME"
-   },
-   {
-    "ref": "ANT1",
-    "label": "inductor",
-    "bom_class": "ignore",
-    "bom_raw": "other",
-    "value": "2.4-2.5 GHz",
-    "desc": "PCB ANTENNA"
    }
   ],
   "B": [],
@@ -524,16 +350,7 @@
    "resistor": 38,
    "IC": 4
   },
-  "A": [
-   {
-    "ref": "C38",
-    "label": "connector",
-    "bom_class": "capacitor",
-    "bom_raw": "capacitor",
-    "value": "120pF",
-    "desc": "CAP,CERM,120pF,50V,+/-5%,C0G/NP0,0402 120pF"
-   }
-  ],
+  "A": [],
   "B": [],
   "C": [],
   "D": []

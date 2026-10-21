@@ -1,118 +1,128 @@
 {
- "n_found": 3050,
+ "n_found": 3053,
  "acc": {
-  "det": 0.9032786885245901,
-  "C": 0.9455737704918032
+  "det": 0.9037012774320341,
+  "C": 0.9462823452341959
  },
  "per_class": {
   "det": {
    "resistor": 97.9,
    "capacitor": 97.8,
-   "inductor": 21.2,
+   "inductor": 21.4,
    "connector": 96.2,
-   "diode": 55.1,
+   "diode": 56.1,
    "switch": 92.3,
-   "transistor": 32.6,
-   "IC": 85.6,
-   "oscillator": 10.0
+   "transistor": 31.8,
+   "IC": 86.1,
+   "oscillator": 9.1
   },
   "C": {
    "resistor": 97.6,
-   "capacitor": 98.5,
-   "inductor": 48.5,
+   "capacitor": 98.6,
+   "inductor": 49.0,
    "connector": 96.2,
-   "diode": 81.6,
+   "diode": 82.1,
    "switch": 100.0,
-   "transistor": 62.8,
-   "IC": 96.9,
-   "oscillator": 80.0
+   "transistor": 63.6,
+   "IC": 97.4,
+   "oscillator": 72.7
   }
  },
- "n_err": 166,
- "n_fix": 169,
+ "n_err": 164,
+ "n_fix": 170,
  "causes": {
-  "OCR misread": 50,
-  "prefix not in table": 32,
-  "wrong text linked": 30,
-  "no link (detector fallback)": 28,
-  "other (no GT designator)": 18,
-  "naming (own label, table class differs)": 8
+  "right label, OCR misread": 49,
+  "wrong text linked": 31,
+  "right label, prefix not in table": 30,
+  "right label, table class differs": 18,
+  "label missed by OCR": 14,
+  "label found, linker said none": 12,
+  "no printed label": 10
  },
  "causes_by_class": {
   "inductor": {
-   "prefix not in table": 26,
-   "no link (detector fallback)": 8,
-   "wrong text linked": 2,
-   "OCR misread": 13,
-   "naming (own label, table class differs)": 2
+   "right label, prefix not in table": 24,
+   "label found, linker said none": 2,
+   "label missed by OCR": 7,
+   "right label, OCR misread": 13,
+   "wrong text linked": 3,
+   "right label, table class differs": 1
   },
   "connector": {
-   "no link (detector fallback)": 3,
-   "other (no GT designator)": 2,
-   "wrong text linked": 2
+   "label found, linker said none": 2,
+   "no printed label": 1,
+   "wrong text linked": 4
   },
   "diode": {
-   "no link (detector fallback)": 6,
-   "prefix not in table": 6,
-   "wrong text linked": 2,
-   "OCR misread": 21,
-   "naming (own label, table class differs)": 2,
-   "other (no GT designator)": 1
+   "label found, linker said none": 2,
+   "right label, prefix not in table": 6,
+   "no printed label": 2,
+   "right label, OCR misread": 21,
+   "label missed by OCR": 3,
+   "right label, table class differs": 3,
+   "wrong text linked": 1
   },
   "resistor": {
-   "other (no GT designator)": 10,
-   "wrong text linked": 12,
-   "no link (detector fallback)": 4,
-   "naming (own label, table class differs)": 2,
-   "OCR misread": 2
+   "wrong text linked": 11,
+   "right label, table class differs": 8,
+   "no printed label": 5,
+   "label found, linker said none": 4,
+   "right label, OCR misread": 2
   },
   "capacitor": {
-   "other (no GT designator)": 2,
-   "no link (detector fallback)": 3,
    "wrong text linked": 9,
-   "OCR misread": 2
-  },
-  "IC": {
-   "wrong text linked": 2,
-   "other (no GT designator)": 1,
-   "OCR misread": 3
+   "no printed label": 1,
+   "right label, table class differs": 2,
+   "label found, linker said none": 1,
+   "right label, OCR misread": 1,
+   "label missed by OCR": 1
   },
   "oscillator": {
-   "no link (detector fallback)": 2
+   "label missed by OCR": 2,
+   "right label, table class differs": 1
+  },
+  "IC": {
+   "no printed label": 1,
+   "wrong text linked": 1,
+   "right label, OCR misread": 3
   },
   "transistor": {
-   "other (no GT designator)": 2,
-   "OCR misread": 9,
-   "no link (detector fallback)": 2,
-   "wrong text linked": 1,
-   "naming (own label, table class differs)": 2
+   "right label, table class differs": 3,
+   "right label, OCR misread": 9,
+   "label found, linker said none": 1,
+   "wrong text linked": 2,
+   "label missed by OCR": 1
   }
  },
  "sheet_causes": [
-  "OCR misread",
-  "OCR misread",
-  "OCR misread",
-  "OCR misread",
-  "prefix not in table",
-  "prefix not in table",
-  "prefix not in table",
-  "prefix not in table",
+  "right label, OCR misread",
+  "right label, OCR misread",
+  "right label, OCR misread",
+  "right label, OCR misread",
   "wrong text linked",
   "wrong text linked",
   "wrong text linked",
   "wrong text linked",
-  "no link (detector fallback)",
-  "no link (detector fallback)",
-  "no link (detector fallback)",
-  "no link (detector fallback)",
-  "other (no GT designator)",
-  "other (no GT designator)",
-  "other (no GT designator)",
-  "other (no GT designator)",
-  "naming (own label, table class differs)",
-  "naming (own label, table class differs)",
-  "naming (own label, table class differs)",
-  "naming (own label, table class differs)"
+  "right label, prefix not in table",
+  "right label, prefix not in table",
+  "right label, prefix not in table",
+  "right label, prefix not in table",
+  "right label, table class differs",
+  "right label, table class differs",
+  "right label, table class differs",
+  "right label, table class differs",
+  "label missed by OCR",
+  "label missed by OCR",
+  "label missed by OCR",
+  "label missed by OCR",
+  "label found, linker said none",
+  "label found, linker said none",
+  "label found, linker said none",
+  "label found, linker said none",
+  "no printed label",
+  "no printed label",
+  "no printed label",
+  "no printed label"
  ],
  "broken": 40
 }

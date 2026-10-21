@@ -1,0 +1,397 @@
+{
+ "all": {
+  "linkformer": {
+   "acc": 0.908,
+   "prec": 0.9242,
+   "f1": 0.916,
+   "linkable": 3196,
+   "right": 2902,
+   "links": 3140
+  },
+  "nearest": {
+   "acc": 0.6223,
+   "prec": 0.6088,
+   "f1": 0.6155,
+   "linkable": 3196,
+   "right": 1989,
+   "links": 3267
+  },
+  "photos": 28
+ },
+ "batch1": {
+  "linkformer": {
+   "acc": 0.9413,
+   "prec": 0.9621,
+   "f1": 0.9516,
+   "linkable": 1941,
+   "right": 1827,
+   "links": 1899
+  },
+  "nearest": {
+   "acc": 0.7517,
+   "prec": 0.7509,
+   "f1": 0.7513,
+   "linkable": 1941,
+   "right": 1459,
+   "links": 1943
+  },
+  "photos": 12
+ },
+ "batch2": {
+  "linkformer": {
+   "acc": 0.8566,
+   "prec": 0.8662,
+   "f1": 0.8614,
+   "linkable": 1255,
+   "right": 1075,
+   "links": 1241
+  },
+  "nearest": {
+   "acc": 0.4223,
+   "prec": 0.4003,
+   "f1": 0.411,
+   "linkable": 1255,
+   "right": 530,
+   "links": 1324
+  },
+  "photos": 16
+ },
+ "per_photo": {
+  "Card10_DRV2605EVMCT_T": {
+   "linkformer": {
+    "linkable": 56,
+    "right": 49,
+    "links": 56
+   },
+   "nearest": {
+    "linkable": 56,
+    "right": 34,
+    "links": 65
+   }
+  },
+  "Card11_DAC8760EMCEVM_T": {
+   "linkformer": {
+    "linkable": 42,
+    "right": 40,
+    "links": 42
+   },
+   "nearest": {
+    "linkable": 42,
+    "right": 21,
+    "links": 42
+   }
+  },
+  "Card12_EVALCN0399SDPZ_DSX1000x1_T": {
+   "linkformer": {
+    "linkable": 25,
+    "right": 24,
+    "links": 24
+   },
+   "nearest": {
+    "linkable": 25,
+    "right": 12,
+    "links": 25
+   }
+  },
+  "Card13_EVALCN0254SDPZ_T": {
+   "linkformer": {
+    "linkable": 135,
+    "right": 120,
+    "links": 129
+   },
+   "nearest": {
+    "linkable": 135,
+    "right": 43,
+    "links": 135
+   }
+  },
+  "Card14_EVALAD71244SDZ_T": {
+   "linkformer": {
+    "linkable": 99,
+    "right": 89,
+    "links": 116
+   },
+   "nearest": {
+    "linkable": 99,
+    "right": 53,
+    "links": 144
+   }
+  },
+  "Card15_EVALCN0229SDPZ_T": {
+   "linkformer": {
+    "linkable": 210,
+    "right": 130,
+    "links": 202
+   },
+   "nearest": {
+    "linkable": 210,
+    "right": 60,
+    "links": 210
+   }
+  },
+  "Card16_EVALCN0272SDPZ_T": {
+   "linkformer": {
+    "linkable": 110,
+    "right": 107,
+    "links": 109
+   },
+   "nearest": {
+    "linkable": 110,
+    "right": 73,
+    "links": 111
+   }
+  },
+  "Card17_EVALCN0321SDPZ_T": {
+   "linkformer": {
+    "linkable": 149,
+    "right": 135,
+    "links": 139
+   },
+   "nearest": {
+    "linkable": 149,
+    "right": 122,
+    "links": 153
+   }
+  },
+  "Card18_EVALCN0385FMCZ_DSX1000x1_T": {
+   "linkformer": {
+    "linkable": 227,
+    "right": 210,
+    "links": 220
+   },
+   "nearest": {
+    "linkable": 227,
+    "right": 116,
+    "links": 227
+   }
+  },
+  "Card19_TMDSIDK437X_DSX1000x1_B": {
+   "linkformer": {
+    "linkable": 597,
+    "right": 569,
+    "links": 590
+   },
+   "nearest": {
+    "linkable": 597,
+    "right": 480,
+    "links": 588
+   }
+  },
+  "Card19_TMDSIDK437X_DSX1000x1_T": {
+   "linkformer": {
+    "linkable": 455,
+    "right": 424,
+    "links": 449
+   },
+   "nearest": {
+    "linkable": 455,
+    "right": 326,
+    "links": 454
+   }
+  },
+  "Card1_BQ24780SEVM583_B": {
+   "linkformer": {
+    "linkable": 30,
+    "right": 29,
+    "links": 29
+   },
+   "nearest": {
+    "linkable": 30,
+    "right": 9,
+    "links": 30
+   }
+  },
+  "Card1_BQ24780SEVM583_T": {
+   "linkformer": {
+    "linkable": 63,
+    "right": 60,
+    "links": 61
+   },
+   "nearest": {
+    "linkable": 63,
+    "right": 27,
+    "links": 63
+   }
+  },
+  "Card20_TPS2378EVM602_B": {
+   "linkformer": {
+    "linkable": 60,
+    "right": 58,
+    "links": 60
+   },
+   "nearest": {
+    "linkable": 60,
+    "right": 24,
+    "links": 60
+   }
+  },
+  "Card20_TPS2378EVM602_T": {
+   "linkformer": {
+    "linkable": 99,
+    "right": 96,
+    "links": 99
+   },
+   "nearest": {
+    "linkable": 99,
+    "right": 36,
+    "links": 99
+   }
+  },
+  "Card21_BQ25895EVM664_B": {
+   "linkformer": {
+    "linkable": 28,
+    "right": 25,
+    "links": 26
+   },
+   "nearest": {
+    "linkable": 28,
+    "right": 23,
+    "links": 28
+   }
+  },
+  "Card21_BQ25895EVM664_T": {
+   "linkformer": {
+    "linkable": 34,
+    "right": 31,
+    "links": 33
+   },
+   "nearest": {
+    "linkable": 34,
+    "right": 18,
+    "links": 34
+   }
+  },
+  "Card2_BTMSPAUDSOURCE_T": {
+   "linkformer": {
+    "linkable": 96,
+    "right": 78,
+    "links": 90
+   },
+   "nearest": {
+    "linkable": 96,
+    "right": 44,
+    "links": 95
+   }
+  },
+  "Card3_DC1574A_T": {
+   "linkformer": {
+    "linkable": 24,
+    "right": 17,
+    "links": 29
+   },
+   "nearest": {
+    "linkable": 24,
+    "right": 6,
+    "links": 40
+   }
+  },
+  "Card4_DC1885A_T": {
+   "linkformer": {
+    "linkable": 27,
+    "right": 19,
+    "links": 25
+   },
+   "nearest": {
+    "linkable": 27,
+    "right": 4,
+    "links": 27
+   }
+  },
+  "Card5_TPS65982EVM_B": {
+   "linkformer": {
+    "linkable": 98,
+    "right": 88,
+    "links": 95
+   },
+   "nearest": {
+    "linkable": 98,
+    "right": 76,
+    "links": 102
+   }
+  },
+  "Card5_TPS65982EVM_T": {
+   "linkformer": {
+    "linkable": 52,
+    "right": 46,
+    "links": 52
+   },
+   "nearest": {
+    "linkable": 52,
+    "right": 20,
+    "links": 52
+   }
+  },
+  "Card6_EVALCN0540ARDZ_B": {
+   "linkformer": {
+    "linkable": 55,
+    "right": 54,
+    "links": 55
+   },
+   "nearest": {
+    "linkable": 55,
+    "right": 51,
+    "links": 55
+   }
+  },
+  "Card6_EVALCN0540ARDZ_T": {
+   "linkformer": {
+    "linkable": 97,
+    "right": 89,
+    "links": 89
+   },
+   "nearest": {
+    "linkable": 97,
+    "right": 82,
+    "links": 97
+   }
+  },
+  "Card7_EVALCN0395ARDZ_T": {
+   "linkformer": {
+    "linkable": 100,
+    "right": 97,
+    "links": 98
+   },
+   "nearest": {
+    "linkable": 100,
+    "right": 64,
+    "links": 100
+   }
+  },
+  "Card8_EVALCN0506FMCZ_B": {
+   "linkformer": {
+    "linkable": 77,
+    "right": 75,
+    "links": 75
+   },
+   "nearest": {
+    "linkable": 77,
+    "right": 48,
+    "links": 77
+   }
+  },
+  "Card8_EVALCN0506FMCZ_T": {
+   "linkformer": {
+    "linkable": 85,
+    "right": 79,
+    "links": 84
+   },
+   "nearest": {
+    "linkable": 85,
+    "right": 71,
+    "links": 87
+   }
+  },
+  "Card9_EVALCN0216SDPZ_T": {
+   "linkformer": {
+    "linkable": 66,
+    "right": 64,
+    "links": 64
+   },
+   "nearest": {
+    "linkable": 66,
+    "right": 46,
+    "links": 67
+   }
+  }
+ }
+}

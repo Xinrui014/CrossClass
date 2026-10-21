@@ -41,19 +41,20 @@ img.sheet { width: 100%; height: auto; border-radius: 6px; border: 1px solid var
 
 <main>
 <h1>21PCB Class Results</h1>
-<p class="sub">Who decides the class of a detected part, on a second photo set: 21 lab-photographed evaluation boards, test set = the 28 photos with IC annotation, 3,274 labelled parts. Same checkpoints and rules as on WACV; nothing tuned on 21PCB. Main metric: one class per box (standard detection output).</p>
+<p class="sub">Who decides the class of a detected part, on a second photo set: 21 lab-photographed evaluation boards, test set = the 28 photos with IC annotation, 3,278 labelled parts, each linked by hand to its printed label (or marked as having none). Same checkpoints and rules as on WACV; nothing tuned on 21PCB. Main metric: one class per box (standard detection output).</p>
 <div class="kpis">
-  <div class="kpi"><b>0.633 → 0.820</b><span>mAP50, detector → C (one class per box)</span></div>
-  <div class="kpi"><b>0.405 → 0.728</b><span>APr: switch, inductor, transistor, oscillator</span></div>
+  <div class="kpi"><b>0.633 → 0.810</b><span>mAP50, detector → C (one class per box)</span></div>
+  <div class="kpi"><b>0.394 → 0.701</b><span>APr: switch, inductor, transistor, oscillator</span></div>
   <div class="kpi"><b>65 → 86 %</b><span>balanced class accuracy on found parts</span></div>
-  <div class="kpi"><b>169 / 40</b><span>parts fixed / broken by C vs the detector (of 3,050 found)</span></div>
+  <div class="kpi"><b>170 / 40</b><span>parts fixed / broken by C vs the detector (of 3,053 found)</span></div>
+  <div class="kpi"><b>90.8 %</b><span>link accuracy, GT parts + GT labels (WACV clean41: 92.7 %)</span></div>
 </div>
 
 <h2>1. Test set</h2>
-<p>28 photos (21 top + 7 bottom sides with ICs), 87.8 px/mm. Every box and class was checked by hand, starting from detector + OCR + BoM pre-labels and, on 12 photos, the vendors' design files. Class rules: fuse → ignore; ferrite bead, EMI filter, transformer → inductor; LED, TVS → diode; 0-Ω link → resistor; test points, holes, fiducials, empty pads not labelled.</p>
+<p>28 photos (21 top + 7 bottom sides with ICs), 87.8 px/mm. Every box and class was checked by hand, starting from detector + OCR + BoM pre-labels and, on 12 photos, the vendors' design files. On 2026-10-21 the owner also linked every part to its label in an offline tool (pre-links without our linker), fixing boxes on the way: 3,196 parts have a printed label, 82 have none; 6,773 text boxes. Class rules: fuse → ignore; ferrite bead, EMI filter, transformer → inductor; LED, TVS → diode; 0-Ω link → resistor; test points, holes, fiducials, empty pads not labelled.</p>
 <div class="tbl"><table>
 <thead><tr><th>class</th><th>resistor</th><th>capacitor</th><th>diode</th><th>IC</th><th>connector</th><th>inductor</th><th>transistor</th><th>switch</th><th>oscillator</th><th>ignore</th></tr></thead>
-<tbody><tr><td>parts</td><td>1,375</td><td>1,094</td><td>213</td><td>206</td><td>198</td><td>101</td><td>44</td><td>13</td><td>10</td><td>20</td></tr></tbody>
+<tbody><tr><td>parts</td><td>1,371</td><td>1,090</td><td>220</td><td>206</td><td>199</td><td>101</td><td>45</td><td>13</td><td>12</td><td>21</td></tr></tbody>
 </table></div>
 
 <h2>2. Methods</h2>
@@ -79,7 +80,7 @@ img.sheet { width: 100%; height: auto; border-radius: 6px; border: 1px solid var
 <rect x="6" y="12" width="120" height="34" rx="5" fill="none" stroke="currentColor"/><text x="66" y="27" text-anchor="middle">link softmax a_ij</text><text x="66" y="40" text-anchor="middle" font-size="10">texts + none</text>
 <rect x="6" y="70" width="120" height="34" rx="5" fill="none" stroke="currentColor"/><text x="66" y="85" text-anchor="middle">PARSeq char probs</text><text x="66" y="98" text-anchor="middle" font-size="10">→ q_j(class)</text>
 <rect x="168" y="40" width="190" height="38" rx="5" fill="none" stroke="currentColor"/><text x="263" y="56" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11">Σ a_ij q_j(c)</text><text x="263" y="71" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11">+ (a_none + Σ a_ij q_j(∅)) d(c)</text>
-<rect x="400" y="40" width="94" height="38" rx="5" fill="none" stroke="#0f7a5c" stroke-width="2"/><text x="447" y="56" text-anchor="middle">P(class)</text><text x="447" y="70" text-anchor="middle" font-size="10">top-3 per box</text>
+<rect x="400" y="40" width="94" height="38" rx="5" fill="none" stroke="#0f7a5c" stroke-width="2"/><text x="447" y="56" text-anchor="middle">P(class)</text><text x="447" y="70" text-anchor="middle" font-size="10">one class per box</text>
 <line x1="126" y1="29" x2="166" y2="52" stroke="currentColor" marker-end="url(#a3)"/><line x1="126" y1="87" x2="166" y2="68" stroke="currentColor" marker-end="url(#a3)"/><line x1="358" y1="59" x2="398" y2="59" stroke="currentColor" marker-end="url(#a3)"/>
 <text x="263" y="110" text-anchor="middle" font-size="10.5">uncertain link or reading falls back to the detector scores d</text></g></svg>
 <p>Noise-trained LinkFormer (v2d2_I_noise05_100k) on the off-part OCR boxes; PARSeq character probabilities; fixed prefix table. The cleanest view of linker + OCR.</p></div>
@@ -106,45 +107,58 @@ img.sheet { width: 100%; height: auto; border-radius: 6px; border: 1px solid var
 <p>One class per box (standard detection output); score = detector box score × P(class). Same detector boxes for all rows. <b>C + LLM prefix table</b> = C, with the fixed prefix → class table replaced per board by a blind LLM agent's decisions (inference only, no BoM or ground truth).</p>
 <h3>WACV (42 test photos, 5,585 parts)</h3>
 <div class="tbl"><table><thead><tr><th>method</th><th>mAP50</th><th>mAP50-95</th><th>prec</th><th>recall</th><th>F1</th><th>macro-F1</th><th>APf</th><th>APc</th><th>APr</th><th>bal. acc</th></tr></thead><tbody><tr><td>Detector</td><td>0.541</td><td>0.359</td><td>0.814</td><td>0.661</td><td>0.729</td><td>0.604</td><td>0.632</td><td>0.699</td><td>0.394</td><td>67.4 %</td></tr><tr><td>C (soft cascade)</td><td>0.608</td><td>0.402</td><td>0.864</td><td>0.657</td><td>0.746</td><td>0.658</td><td>0.638</td><td>0.730</td><td>0.525</td><td>76.5 %</td></tr><tr><td>C + LLM prefix table</td><td>0.626</td><td>0.414</td><td>0.867</td><td>0.659</td><td>0.749</td><td>0.674</td><td>0.637</td><td>0.760</td><td>0.550</td><td>78.1 %</td></tr><tr class="best"><td>B-head</td><td>0.641</td><td>0.428</td><td>0.882</td><td>0.672</td><td>0.763</td><td>0.710</td><td>0.644</td><td>0.781</td><td>0.568</td><td>82.7 %</td></tr></tbody></table></div>
-<h3>21PCB (28 photos, 3,274 parts)</h3>
-<div class="tbl"><table><thead><tr><th>method</th><th>mAP50</th><th>mAP50-95</th><th>prec</th><th>recall</th><th>F1</th><th>macro-F1</th><th>APf</th><th>APc</th><th>APr</th><th>bal. acc</th></tr></thead><tbody><tr><td>Detector</td><td>0.633</td><td>0.588</td><td>0.865</td><td>0.856</td><td>0.860</td><td>0.638</td><td>0.887</td><td>0.709</td><td>0.405</td><td>65.4 %</td></tr><tr><td>C (soft cascade)</td><td>0.820</td><td>0.761</td><td>0.925</td><td>0.880</td><td>0.902</td><td>0.825</td><td>0.914</td><td>0.865</td><td>0.728</td><td>86.2 %</td></tr><tr class="best"><td>C + LLM prefix table</td><td>0.836</td><td>0.777</td><td>0.935</td><td>0.890</td><td>0.912</td><td>0.854</td><td>0.921</td><td>0.869</td><td>0.756</td><td>87.6 %</td></tr><tr><td>B-head</td><td>0.793</td><td>0.741</td><td>0.926</td><td>0.887</td><td>0.906</td><td>0.834</td><td>0.911</td><td>0.827</td><td>0.688</td><td>83.2 %</td></tr></tbody></table></div>
+<h3>21PCB (28 photos, 3,278 parts)</h3>
+<div class="tbl"><table><thead><tr><th>method</th><th>mAP50</th><th>mAP50-95</th><th>prec</th><th>recall</th><th>F1</th><th>macro-F1</th><th>APf</th><th>APc</th><th>APr</th><th>bal. acc</th></tr></thead><tbody><tr><td>Detector</td><td>0.633</td><td>0.584</td><td>0.866</td><td>0.857</td><td>0.862</td><td>0.637</td><td>0.883</td><td>0.734</td><td>0.394</td><td>65.4 %</td></tr><tr><td>C (soft cascade)</td><td>0.810</td><td>0.750</td><td>0.927</td><td>0.881</td><td>0.904</td><td>0.819</td><td>0.909</td><td>0.882</td><td>0.701</td><td>85.5 %</td></tr><tr class="best"><td>C + LLM prefix table</td><td>0.826</td><td>0.766</td><td>0.936</td><td>0.891</td><td>0.913</td><td>0.847</td><td>0.916</td><td>0.883</td><td>0.729</td><td>86.9 %</td></tr><tr><td>B-head</td><td>0.780</td><td>0.726</td><td>0.927</td><td>0.887</td><td>0.907</td><td>0.824</td><td>0.907</td><td>0.849</td><td>0.651</td><td>82.4 %</td></tr></tbody></table></div>
 <p style="font-size:13.5px;color:var(--dim)">Groups by the detector's training frequency (LVIS style): APf = R, C, connector; APc = IC, diode; APr = switch, inductor, transistor, oscillator. Precision / recall / F1 at score 0.25, class-aware. On WACV (blurry labels) B-head is best: it uses the detector's appearance. On 21PCB (sharp labels) C is better than B-head: B-head over-trusts the detector (section 5).</p>
 <h2>4. Analysis of C (linker + OCR)</h2>
+<h3>Link accuracy (oracle track)</h3>
+<p>GT parts and the owner's label boxes, same counting as WACV-clean (accuracy = parts linked to their own label / parts that have one; Hungarian, one-to-one, none allowed). Same linker as in C (v2d2_I_noise05_100k, trained on KiCad only). Batch 2 is harder: its candidate labels are the OCR boxes the owner kept, junk included.</p>
+<div class="tbl"><table>
+<thead><tr><th>photos</th><th>n</th><th>LinkFormer acc</th><th>LinkFormer prec</th><th>nearest text acc</th></tr></thead>
+<tbody>
+<tr class="best"><td>all 21PCB</td><td>28</td><td>90.8 % (2,902 / 3,196)</td><td>92.4 %</td><td>62.2 %</td></tr>
+<tr><td>batch 1 (design-aligned, owner-checked label boxes)</td><td>12</td><td>94.1 %</td><td>96.2 %</td><td>75.2 %</td></tr>
+<tr><td>batch 2 (labels = OCR boxes)</td><td>16</td><td>85.7 %</td><td>86.6 %</td><td>42.2 %</td></tr>
+<tr><td>WACV clean41 (reference)</td><td>41</td><td>92.7 %</td><td>–</td><td>–</td></tr>
+</tbody></table></div>
+<p style="font-size:13.5px;color:var(--dim)">Nearest text = Hungarian on the edge gap in part sizes (gap &lt; 2), no learning.</p>
 <h3>Accuracy on found parts</h3>
-<p>Top class on the 3,050 parts the detector found (IoU ≥ 0.5, score ≥ 0.25). The printed label fixes the classes that look alike to the detector; R / C / connector stay where they were.</p>
+<p>Top class on the 3,053 parts the detector found (IoU ≥ 0.5, score ≥ 0.25). The printed label fixes the classes that look alike to the detector; R / C / connector stay where they were.</p>
 <div class="tbl"><table>
 <thead><tr><th>method</th><th>R</th><th>C</th><th>inductor</th><th>conn</th><th>diode</th><th>switch</th><th>transistor</th><th>IC</th><th>osc.</th><th>all</th></tr></thead>
 <tbody>
-<tr><td>parts</td><td>1,228</td><td>1,071</td><td>99</td><td>185</td><td>207</td><td>13</td><td>43</td><td>194</td><td>10</td><td>3,050</td></tr>
-<tr><td>Detector</td><td>97.9</td><td>97.8</td><td>21.2</td><td>96.2</td><td>55.1</td><td>92.3</td><td>32.6</td><td>85.6</td><td>10.0</td><td>90.3</td></tr>
-<tr class="best"><td>C</td><td>97.6</td><td>98.5</td><td>48.5</td><td>96.2</td><td>81.6</td><td>100</td><td>62.8</td><td>96.9</td><td>80.0</td><td>94.6</td></tr>
+<tr><td>parts</td><td>1,229</td><td>1,069</td><td>98</td><td>183</td><td>212</td><td>13</td><td>44</td><td>194</td><td>11</td><td>3,053</td></tr>
+<tr><td>Detector</td><td>97.9</td><td>97.8</td><td>21.4</td><td>96.2</td><td>56.1</td><td>92.3</td><td>31.8</td><td>86.1</td><td>9.1</td><td>90.4</td></tr>
+<tr class="best"><td>C</td><td>97.6</td><td>98.6</td><td>49.0</td><td>96.2</td><td>82.1</td><td>100</td><td>63.6</td><td>97.4</td><td>72.7</td><td>94.6</td></tr>
 </tbody></table></div>
-<figure><img class="sheet" src="img/c_fix.jpg" alt="12 parts the detector got wrong and C got right"><figcaption>Fixed by C (12 random of 169). Magenta = part, cyan = linked label. Ferrite beads, diodes, transistors and ICs read from their label.</figcaption></figure>
+<figure><img class="sheet" src="img/c_fix.jpg" alt="12 parts the detector got wrong and C got right"><figcaption>Fixed by C (12 random of 170). Magenta = part, cyan = linked label. Ferrite beads, diodes, transistors and ICs read from their label.</figcaption></figure>
 
-<h3>Why C still fails: 166 errors</h3>
+<h3>Why C still fails: 164 errors, checked against the link GT</h3>
+<p>For each error, the strongest link is compared with the part's own label box from the owner's link GT (before the link GT, the cause was guessed from the designator prefix).</p>
 <div class="tbl"><table>
 <thead><tr><th>cause</th><th>errors</th><th>what happens</th><th>fix direction</th></tr></thead>
 <tbody>
-<tr><td><b>OCR misread</b></td><td>50</td><td>Right label linked, but read wrong: D15 read as "015", rotated or tiny text.</td><td>Better reader (orientation, resolution)</td></tr>
-<tr><td><b>Prefix not in table</b></td><td>32</td><td>Readable designator with a board-specific prefix: B (beads), F (filters / fuses), TVS, FL, M.</td><td>World knowledge: the blind LLM prefix table raises C to 0.878 (top-3)</td></tr>
-<tr><td>Wrong text linked</td><td>30</td><td>Dense rows and columns: the neighbour's label wins (R92 → C38, C237 → R464).</td><td>Linker</td></tr>
-<tr><td>No link</td><td>28</td><td>Label hidden, far away or not printed → C falls back to the detector.</td><td>Appearance model</td></tr>
-<tr><td>No GT designator</td><td>18</td><td>Part without a designator in the ground truth, cause not checkable.</td><td>–</td></tr>
-<tr><td>Naming / class definition</td><td>8</td><td>Own label read correctly, but the table class differs from the GT: T2 (transformer module, GT transistor), JP3 (0-Ω resistor), J3, U2 (LED).</td><td>Class rules / GT review</td></tr>
+<tr><td><b>Right label, OCR misread</b></td><td>49</td><td>The own label is linked, but read wrong: D15 read as "015", rotated or tiny text.</td><td>Better reader (orientation, resolution)</td></tr>
+<tr><td><b>Right label, prefix not in table</b></td><td>30</td><td>Own label linked and read, with a board-specific prefix: B (beads), F (filters / fuses), TVS, FL, M.</td><td>World knowledge: C + LLM prefix table (0.826)</td></tr>
+<tr><td>Right label, table class differs</td><td>18</td><td>Own label read, but the table class differs from the GT: T (transformer module), JP (0-Ω link), U (LED) ...</td><td>Class rules / per-board naming</td></tr>
+<tr><td><b>Wrong text linked</b></td><td>31</td><td>Dense rows and columns: the neighbour's label wins.</td><td>Linker</td></tr>
+<tr><td>Label found, linker said none</td><td>12</td><td>An OCR box covers the label, but the link mass is below 0.5 → detector fallback.</td><td>Linker</td></tr>
+<tr><td>Label missed by OCR</td><td>14</td><td>The label is printed, but no OCR box covers it, so it cannot be linked.</td><td>Text detector</td></tr>
+<tr><td>No printed label</td><td>10</td><td>The part has no label on the board (link GT: none) → only appearance can help.</td><td>Appearance model</td></tr>
 </tbody></table></div>
-<p>So about half of C's errors are reading and naming (82), not linking (30). C also breaks 40 parts the detector had right, mostly R ↔ C swaps from a neighbour's label.</p>
-<p>All 166 errors, grouped as in this table, are in a separate browser served on the L40 (http://localhost:8766 after <span class="mono">ssh -L 8766:localhost:8766 l40</span>).</p>
-<figure><img class="sheet" src="img/c_err.jpg" alt="Examples of C errors, four per cause"><figcaption>Four examples per cause, in the order of the table (OCR misread, prefix not in table, wrong text, no link, no GT designator, naming).</figcaption></figure>
+<p>So 97 of the 164 errors (59 %) happen after the right label was linked: reading (49 + 30) and naming (18). Linking causes 43 (wrong text 31, none 12), text detection 14, and 10 parts have no label at all. C also breaks 40 parts the detector had right, mostly R ↔ C swaps from a neighbour's label.</p>
+<p>All 164 errors, grouped as in this table, are in a separate browser served on the L40 (http://localhost:8766 after <span class="mono">ssh -L 8766:localhost:8766 l40</span>).</p>
+<figure><img class="sheet" src="img/c_err.jpg" alt="Examples of C errors, four per cause"><figcaption>Four random examples per cause, most frequent first (OCR misread, wrong text, prefix not in table, table class differs, missed by OCR, linker said none, no printed label).</figcaption></figure>
 
 <h2>5. B-head: two key cases</h2>
-<p>B-head relies too much on the detector scores in its input. With the detector scores removed, the same model scores 0.801 on 21PCB (vs 0.793 with them) but 0.554 on WACV (vs 0.641): on sharp labels the detector disturbs it, on blurry labels it needs the detector. Its training data (KiCad) has only simulated detector scores, which are almost never confidently wrong, so the head learned "a confident detector is right".</p>
+<p>B-head relies too much on the detector scores in its input. With the detector scores removed, the same model scores 0.801 on 21PCB (vs 0.793 with them; GT of 2026-10-19) but 0.554 on WACV (vs 0.641): on sharp labels the detector disturbs it, on blurry labels it needs the detector. Its training data (KiCad) has only simulated detector scores, which are almost never confidently wrong, so the head learned "a confident detector is right".</p>
 <figure><img class="sheet" src="img/b_cases.jpg" alt="Two cases where the link and reading are right but B-head copies the detector"><figcaption>Left: R289, link and reading correct, C = resistor 0.95, but the detector says capacitor 0.99 and B-head copies it (1.00). Right: FB16, read correctly, C = inductor, B-head = resistor 1.00 (beads look like resistors).</figcaption></figure>
 
 <h2>6. Caveats</h2>
 <div class="note"><ul style="margin:0">
-<li>The ground truth is the owner's: every box was kept, deleted, added or re-classed by hand. But the starting boxes came from this same detector, and 3,029 of 3,274 GT boxes (92.5 %) keep the detector's geometry (IoU &gt; 0.95). Box-level numbers (recall 0.86–0.89) therefore favour this detector. The three methods share the same boxes and differ only in the class, so the class comparison stands.</li>
-<li>Rare classes are small (switch 13, oscillator 10, transistor 44).</li>
+<li>The ground truth is the owner's: every box was kept, deleted, added or re-classed by hand. But the starting boxes came from this same detector, and about 92.5 % of the GT boxes keep the detector's geometry (IoU &gt; 0.95, counted 2026-10-19). Box-level numbers (recall 0.86–0.89) therefore favour this detector. The three methods share the same boxes and differ only in the class, so the class comparison stands.</li>
+<li>Rare classes are small (switch 13, oscillator 12, transistor 45): two new oscillator boxes alone lowered APr by about 0.04 on 2026-10-21.</li>
 <li>Detector inference: each photo scaled so the median R/C is 29.2 px, then 1280-px tiles. Reading = PARSeq only.</li>
 </ul></div>
-<p style="color:var(--dim);font-size:13px;margin-top:24px">Scripts: tools/pcb21_detect9.py, pcb21_e2e_prep.py, pcb21_e2e_score.py, pcb21_c_analysis.py, trust_sweep.py · results/pcb21/ · GT data/21pcb/final_v1/gt9_21pcb.json.</p>
+<p style="color:var(--dim);font-size:13px;margin-top:24px">Scripts: tools/pcb21_detect9.py, pcb21_e2e_prep.py, pcb21_e2e_score.py, pcb21_c_analysis.py, trust_sweep.py, pcb21_link_merge.py, pcb21_link_eval.py · results/pcb21/ · GT data/21pcb/final_v1/gt9_21pcb.json, link GT data/21pcb/link_gt_v1.json.</p>
 </main>
