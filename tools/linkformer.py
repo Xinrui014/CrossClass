@@ -2,6 +2,10 @@
 """Whole-board transformer linker (LINKING.md §10: input = two object sets, output = score matrix + none column -> Hungarian).
 Tokens: one per part and one per text. Content: type, log width / height, orientation (E1); + prefix and digits of the string (E2).
 Position (box centre, in units of the board's median part size) enters only through 2D rotary embeddings (RoPE) in self-attention.
+--pos abs / none (2026-10-23, RoPE control): no RoPE; abs = SuperGlue-style KeypointEncoder MLP (2-32-64-128-256-d) of the box centre,
+normalised as (centre - board centre) / (0.7 max(board w, h)) over the union of the board's boxes, added once to every input token.
+--pos rope4 (2026-10-23, owner's trunk principle): RoPE over the 4 box corners (x1, y1, x2, y2) instead of the centre; --nosize: the
+token geometry input keeps only the token type (no size), so all geometry is in the rope4 rotation.
 Head: s_ij = <W_q h_i, W_k h_j> / sqrt(d) for part i, text j; one 'none' score per part. Loss: per-part softmax over texts + none,
 target = every text whose string equals the part's designator (or none; WACV-clean boards give an explicit 'link' instead, and
 parts marked 'ign' are left out of loss and scores). Decoding: Hungarian on -log p, own none column per part.
@@ -17,11 +21,14 @@ padded forward (identical math, ~3x faster); --bps N = N boards per step, sorted
 --size_ratio, <= --tok_budget padded tokens), gradients accumulated so every board weighs 1 / N; evaluation then also runs in groups.
 Results JSON keeps per-image counts so any image subset
 (e.g. the 42 test images) can be scored afterwards (tools/linkformer_report.py). --wandb <project> logs loss, lr, eval and final scores.
+Run identity (2026-10-22, tools/run_meta.py): ckpts and the results JSON carry 'meta' (code md5 + git, argv, host, times, full md5 of
+every input read, kept / dropped boards); ckpts also tag and step. A run is refused at start when results/linkformer/<tag>.json or the
+--save ckpt (or its _step ckpts) exists, unless --overwrite.
 Usage: linkformer.py --train dev3 --eval dev3 --size L --tokens E1 --steps 1000 [--device cuda] [--tag name]
   board sets: dev3, test42, all45, fold<k>train, fold<k>test, kicad199, kicadtrain, kicadval, kicad300, kicad1000;
   with --data CrossClass_data_v1: ktrain, kval, kvalsub (~25 % of kval), kdense (train sides with WACV density 2.1-11.2),
   clean_dev3 / clean_test41 / clean_all44 (WACV-clean v1, tools/wacv_clean.py)"""
-import argparse, json, math, os, re, sys, time, hashlib, random
+import argparse, json, math, os, re, shutil, sys, time, hashlib, random
 from pathlib import Path
 import numpy as np, torch, torch.nn as nn, torch.nn.functional as F
 from scipy.optimize import linear_sum_assignment
@@ -35,6 +42,13 @@ AUGP = (0.15, 0.05)                                   # (p label dropped, fake l
 NONE_W = 1.0                                          # loss weight of parts whose target is none (batched dot head); set by --none_w
 IGN_MESSY = False                                     # training: no loss on parts whose label is printed nearer another part; --ign_messy
 IMG_DIM = 0                                           # > 0: tokens carry an image feature ("img" in each part / text dict); set by --imgfeat
+ZLOSS = 0.0                                           # --zloss: weight of the z-loss (logsumexp^2 of the link and class logits)
+PART_TERMS = ("link", "cls", "tcls", "link_lab", "link_none", "zloss", "lse")   # model._parts / the log lines
+NVTX = False                                          # --profile: NVTX ranges (nv() below) for Nsight Systems; no effect on the math
+def nv(name):
+    from contextlib import nullcontext
+    return torch.cuda.nvtx.range(name) if NVTX else nullcontext()
+PIMG_DIM = 0                                          # > 0: part tokens carry a part image feature ("pimg" in each part dict; detector RoI); --pimgfeat
 TXT_DIM = 0                                           # > 0: text tokens carry a text-image (PARSeq) feature ("tf" in each text dict); --txtfeat
 AUG_ROT = True                                        # augment(): random 90-degree rotation and mirror; off with --aug_norot
 DISTRACT, PREFIX_DROP, CLS_W, TCLS_W = 0.0, 0.0, 1.0, 0.5   # --distract, --prefix_drop, --cls_w, --tcls_w
@@ -108,6 +122,16 @@ class Vocab:
         if m: return self.idx.get(m.group(1), 1)
         if s and NUMS.match(s): return self.idx.get("<NUM>", 1)                # digits only (letters lost)
         return self.idx.get("<TXT>", 1) if s else 1                            # other text / empty
+
+def attach_pimg(boards, path):
+    """Part image features from an npz with one (n parts, D) array per board id, in the boards' parts order (tools/part_roi.py photo);
+    boards without a matching array keep no image (the model then uses its no-image vector). Returns the number of boards matched."""
+    Z = np.load(path); k = 0
+    for b in boards:
+        if b["id"] in Z.files and len(Z[b["id"]]) == len(b["parts"]):
+            for pp, v in zip(b["parts"], Z[b["id"]]): pp["pimg"] = v
+            k += 1
+    return k
 
 def det_sample(c, rng):
     """A real detector class-score vector (9) of a val9 part of true class c (any class when c is unknown / other)."""
@@ -206,6 +230,11 @@ def encode(b, vocab, as_numpy=False):
         for k, pp in enumerate(b["parts"]):
             if "ds" in pp: ds[k] = pp["ds"]
         extra["ds"] = ds
+    if PIMG_DIM:                                     # part image feature + has-image flag (pok 0: texts, parts without image)
+        pimg = np.zeros((n+m, PIMG_DIM), np.float32); pok = np.zeros((n+m, 1), np.float32)
+        for k, pp in enumerate(b["parts"]):
+            if pp.get("pimg") is not None: pimg[k] = pp["pimg"]; pok[k] = 1.0
+        extra["pimg"], extra["pok"] = pimg, pok
     if as_numpy:
         return dict(id=b["id"], n=n, m=m, feats=feats.astype(np.float32), pos=pos.astype(np.float32), pref=pref.astype(np.int64), dig=dig.astype(np.int64),
                     box=B.astype(np.float32), tmask=tmask, tgt=tgt, ign=ign, strs=strs, des=[p["des"] for p in b["parts"]], **extra)
@@ -213,10 +242,22 @@ def encode(b, vocab, as_numpy=False):
     return dict(id=b["id"], n=n, m=m, feats=f(feats), pos=f(pos), pref=f(pref, torch.long), dig=f(dig, torch.long), box=f(B), tmask=torch.from_numpy(tmask),
                 tgt=tgt, ign=ign, strs=strs, des=[p["des"] for p in b["parts"]], **{k: f(v, torch.long if v.dtype == np.int64 else torch.float32) for k, v in extra.items()})
 
+ARCH = ("size", "tokens", "head", "geobias", "strrel", "glayers", "local", "imgdim", "clshead", "txtdim", "clsmode", "rankrel", "detdim", "arhead", "pos", "nosize", "pimgdim", "clshead_tf", "qknorm")
+ARCH_LATE = {"pos": "rope", "nosize": False, "pimgdim": 0, "clshead_tf": 2, "qknorm": False}   # added 2026-10-23 after meta ckpts existed (absmlp runs: pos only; rope4 runs: no pimgdim)
+OLD_WARNED = set()                                    # old ckpts (no meta) already warned about
+
 def load_model(path, dev):
-    """A saved checkpoint -> (model in eval mode, vocab, its training args)."""
-    ck = torch.load(path, map_location="cpu"); A = ck["args"]; vocab = Vocab(ck["vocab"]); d, L = SIZES[A["size"]]
-    m = LinkFormer(d, L, len(vocab.idx)+2, A["tokens"] == "E2", 0.0, A.get("head", "dot"), A.get("geobias", False), A.get("strrel", False), A.get("glayers", False), A.get("local", 0.0), A.get("imgdim", 0), A.get("clshead", False), A.get("txtdim", 0), A.get("clsmode", "parallel"), A.get("rankrel", False), A.get("detdim", 0), A.get("arhead", False))
+    """A saved checkpoint -> (model in eval mode, vocab, its training args). A ckpt with meta (tools/run_meta.py) must carry every
+    architecture key; an old ckpt (no meta) keeps the defaults below for the keys it lacks, with one warning per ckpt."""
+    ck = torch.load(path, map_location="cpu"); A = ck["args"]; vocab = Vocab(ck["vocab"]); miss = [k for k in ARCH if k not in A]
+    if "meta" in ck:                                   # keys added after meta ckpts existed may be missing (code that knew a key always saves it)
+        assert not [k for k in miss if k not in ARCH_LATE], f"{path}: ckpt with meta lacks architecture keys {miss}"
+        if miss and str(path) not in OLD_WARNED:
+            OLD_WARNED.add(str(path)); print(f"WARNING: {path}: keys newer than its code, old defaults: {[(k, ARCH_LATE[k]) for k in miss]}", file=sys.stderr, flush=True)
+    elif str(path) not in OLD_WARNED:
+        OLD_WARNED.add(str(path)); print(f"WARNING: {path} is an old ckpt (no meta); defaults for missing keys: {miss or 'none missing'}", file=sys.stderr, flush=True)
+    d, L = SIZES[A["size"]]
+    m = LinkFormer(d, L, len(vocab.idx)+2, A["tokens"] == "E2", 0.0, A.get("head", "dot"), A.get("geobias", False), A.get("strrel", False), A.get("glayers", False), A.get("local", 0.0), A.get("imgdim", 0), A.get("clshead", False), A.get("txtdim", 0), A.get("clsmode", "parallel"), A.get("rankrel", False), A.get("detdim", 0), A.get("arhead", False), pos=A.get("pos", "rope"), nosize=A.get("nosize", False), pimgdim=A.get("pimgdim", 0), clshead_tf=A.get("clshead_tf", 2), qknorm=A.get("qknorm", False))
     m.load_state_dict(ck["model"]); return m.to(dev).eval(), vocab, A
 
 def messy(b, margin=0.5):
@@ -236,6 +277,13 @@ def messy(b, margin=0.5):
         g = G[j].copy(); own = g[i]; g[i] = np.inf; out.append(bool(own - g.min() >= margin))
     return out
 
+def disk_ok(path, min_gb, tag):
+    """--min_free_gb: False (and a DISK ALERT line) when the file system of path has less free space than min_gb GB; 0 = always True."""
+    if not min_gb: return True
+    free = shutil.disk_usage(Path(path).parent).free / 2**30
+    if free >= min_gb: return True
+    print(f"[{tag}] DISK ALERT: {free:.1f} GB free < --min_free_gb {min_gb:g}: {path} NOT saved", flush=True); return False
+
 def from_numpy(e): return {k: (torch.from_numpy(v) if isinstance(v, np.ndarray) else v) for k, v in e.items()}
 
 class BoardStream(torch.utils.data.IterableDataset):
@@ -249,7 +297,7 @@ class BoardStream(torch.utils.data.IterableDataset):
             e = encode(augment(b, rng, *AUGP) if (self.aug or mix) else b, self.vocab, as_numpy=True)
             if e["n"] and e["m"]: yield e
 
-def dense_batch(es, dev, targets=False):
+def dense_batch(es, dev, targets=False, pin=False):
     """Training boards (encode(..., as_numpy=True) dicts) -> one padded batch on dev, one non-blocking host->device copy per field:
     tokens padded to the largest board, valid-token mask, part counts n; with targets, tm (B, max parts, N+1) = target cells per part
     (text tokens at their token index, none at column N; padded part rows all True = no loss, like 'ign' rows)."""
@@ -267,7 +315,7 @@ def dense_batch(es, dev, targets=False):
         tc = np.full((B, N), -1, np.int64)                # class named by each text token (mix / pool class heads)
         for b, e in enumerate(es): tc[b, e["n"]:e["n"]+e["m"]] = e["tcls"]
         out["tc"] = tc
-    for key in ("img", "tf", "ds"):
+    for key in ("img", "tf", "ds", "pimg", "pok"):
         if key in es[0]:
             arr = np.zeros((B, N, es[0][key].shape[1]), np.float32)
             for b, (e, k) in enumerate(zip(es, Ns)): arr[b, :k] = e[key]
@@ -282,17 +330,20 @@ def dense_batch(es, dev, targets=False):
             for b, e in enumerate(es):
                 t = e["tmask"]; w[b, :e["n"]][t[:, -1] & ~t[:, :-1].any(1) & ~np.array(e["ign"], bool)] = NONE_W
             out["w"] = w
+    if pin: return {k: torch.from_numpy(v).pin_memory().to(dev, non_blocking=True) for k, v in out.items()}   # --prefetch: truly async copies
     return {k: torch.from_numpy(v).to(dev, non_blocking=True) for k, v in out.items()}
 
 def rope_cs(pos, freqs):
-    """cos / sin of the 2D RoPE angles per axis, (..., 1, N, q): computed once per forward, shared by q, k and all layers."""
-    return [(torch.cos(ang), torch.sin(ang)) for ang in ((pos[..., a:a+1] * freqs).unsqueeze(-3) for a in (0, 1))]
+    """cos / sin of the RoPE angles per coordinate, (..., 1, N, q): computed once per forward, shared by q, k and all layers.
+    pos (..., N, K): K = 2 (centre x, y; --pos rope) or 4 (corners x1, y1, x2, y2; --pos rope4)."""
+    return [(torch.cos(ang), torch.sin(ang)) for ang in ((pos[..., a:a+1] * freqs).unsqueeze(-3) for a in range(pos.shape[-1]))]
 
 def rope_apply(x, cs):
-    """Same rotation as rope_2d, with precomputed cos / sin."""
-    hd = x.shape[-1]; out = []
-    for (c, s), half in zip(cs, (x[..., :hd//2], x[..., hd//2:])):
-        x1, x2 = half[..., 0::2], half[..., 1::2]; out += [torch.stack([x1*c - x2*s, x1*s + x2*c], -1).flatten(-2)]
+    """Same rotation as rope_2d, with precomputed cos / sin: the head dim is cut into len(cs) equal blocks, block a rotated by
+    coordinate a (2 blocks = rope_2d; 4 blocks of 16 = rope4, like FLUX EmbedND with axes_dim [16, 16, 16, 16]). v is not rotated."""
+    w = x.shape[-1] // len(cs); out = []
+    for a, (c, s) in enumerate(cs):
+        blk = x[..., a*w:(a+1)*w]; x1, x2 = blk[..., 0::2], blk[..., 1::2]; out += [torch.stack([x1*c - x2*s, x1*s + x2*c], -1).flatten(-2)]
     return torch.cat(out, -1)
 
 def rope_2d(x, pos, freqs):
@@ -307,12 +358,15 @@ def rope_2d(x, pos, freqs):
     return torch.cat(out, -1)
 
 class Block(nn.Module):
-    def __init__(self, d, heads, dropout=0.0):
+    def __init__(self, d, heads, dropout=0.0, qknorm=False):
         super().__init__(); self.h = heads; self.n1 = nn.LayerNorm(d); self.n2 = nn.LayerNorm(d); self.p = dropout; self.drop = nn.Dropout(dropout)
+        self.qn = nn.LayerNorm(d // heads) if qknorm else None; self.kn = nn.LayerNorm(d // heads) if qknorm else None   # --qknorm: per head, before RoPE
         self.qkv = nn.Linear(d, 3*d); self.o = nn.Linear(d, d); self.mlp = nn.Sequential(nn.Linear(d, 4*d), nn.GELU(), nn.Linear(4*d, d))
-    def forward(self, x, pos, freqs, bias=None):
+    def forward(self, x, pos, freqs, bias=None, cs=None):
         N, d = x.shape; q, k, v = self.qkv(self.n1(x)).view(N, 3, self.h, d//self.h).permute(1, 2, 0, 3)
-        q, k = rope_2d(q, pos, freqs), rope_2d(k, pos, freqs)
+        if self.qn is not None: q, k = self.qn(q), self.kn(k)
+        if cs is not None: q, k = rope_apply(q, cs), rope_apply(k, cs)               # --pos rope4 (precomputed tables)
+        elif freqs is not None: q, k = rope_2d(q, pos, freqs), rope_2d(k, pos, freqs)   # freqs None: no RoPE (--pos abs / none)
         am = bias[None].to(q.dtype) if bias is not None else None                  # (1, heads, N, N), added to the attention scores
         a = F.scaled_dot_product_attention(q[None], k[None], v[None], attn_mask=am, dropout_p=self.p if self.training else 0.0)[0].permute(1, 0, 2).reshape(N, d)
         x = x + self.drop(self.o(a)); return x + self.drop(self.mlp(self.n2(x)))
@@ -320,7 +374,8 @@ class Block(nn.Module):
         """Padded batch: x (B, N, d), cs = rope_cs(pos), am (B, heads or 1, 1 or N, N) additive mask / bias (-inf on padded keys), already
         in the attention dtype."""
         B, N, d = x.shape; q, k, v = self.qkv(self.n1(x)).view(B, N, 3, self.h, d//self.h).permute(2, 0, 3, 1, 4)
-        q, k = rope_apply(q, cs), rope_apply(k, cs)
+        if self.qn is not None: q, k = self.qn(q), self.kn(k)
+        if cs is not None: q, k = rope_apply(q, cs), rope_apply(k, cs)          # cs None: no RoPE (--pos abs / none)
         a = F.scaled_dot_product_attention(q, k, v, attn_mask=am, dropout_p=self.p if self.training else 0.0).transpose(1, 2).reshape(B, N, d)
         x = x + self.drop(self.o(a)); return x + self.drop(self.mlp(self.n2(x)))
 
@@ -396,8 +451,12 @@ class ARHead(nn.Module):
         out = torch.empty_like(rows); out[order] = rows; return out
 
 class LinkFormer(nn.Module):
-    def __init__(self, d, layers, n_prefix, use_string, dropout=0.0, head="dot", geobias=False, strrel=False, glayers=False, local=0.0, imgdim=0, clshead=False, txtdim=0, clsmode="parallel", rankrel=False, detdim=0, arhead=False):
-        super().__init__(); self.use_string = use_string; hd = 64; heads = d // hd; self.head = head; self.geobias = geobias; self.rankrel = rankrel
+    def __init__(self, d, layers, n_prefix, use_string, dropout=0.0, head="dot", geobias=False, strrel=False, glayers=False, local=0.0, imgdim=0, clshead=False, txtdim=0, clsmode="parallel", rankrel=False, detdim=0, arhead=False, pos="rope", nosize=False, pimgdim=0, clshead_tf=2, qknorm=False):
+        super().__init__(); self.use_string = use_string
+        assert pos in ("rope", "abs", "none", "rope4"), f"--pos {pos}"; self.pos = pos; self.nosize = bool(nosize)
+        if nosize: self.register_buffer("fmask", torch.tensor([1.0, 0.0, 0.0, 0.0]), persistent=False)   # token geometry = type only
+        if pos == "rope4": self.register_buffer("freqs4", 2*math.pi/torch.logspace(math.log10(0.5), math.log10(512), 8), persistent=False)
+        hd = 64; heads = d // hd; self.head = head; self.geobias = geobias; self.rankrel = rankrel
         self.strrel, self.glayers, self.heads, self.local, self.imgdim, self.clshead = strrel, glayers, heads, local, imgdim, clshead
         self.clsmode = clsmode if clshead else ""
         if clshead and clsmode == "parallel": self.cls = nn.Linear(d, 9)         # end-to-end class of each part (9 WACV classes)
@@ -410,7 +469,7 @@ class LinkFormer(nn.Module):
         if imgdim: self.img = nn.Linear(imgdim, d); nn.init.zeros_(self.img.weight); nn.init.zeros_(self.img.bias)   # starts as the model without images
         self.inp = nn.Sequential(nn.Linear(4, d), nn.GELU(), nn.Linear(d, d))
         self.pref = nn.Embedding(n_prefix, d); self.dig = nn.ModuleList([nn.Embedding(11, d) for _ in range(4)])
-        self.blocks = nn.ModuleList([Block(d, heads, dropout) for _ in range(layers)]); self.nf = nn.LayerNorm(d)
+        self.blocks = nn.ModuleList([Block(d, heads, dropout, qknorm) for _ in range(layers)]); self.nf = nn.LayerNorm(d)
         self.wq = nn.Linear(d, d); self.wk = nn.Linear(d, d)
         if head == "lg": self.ms = nn.Linear(d, 1); self.mt = nn.Linear(d, 1)          # matchability of parts / texts
         else: self.none = nn.Linear(d, 1)
@@ -421,31 +480,96 @@ class LinkFormer(nn.Module):
         self.register_buffer("freqs", 2*math.pi/lam)
         self.arhead = arhead
         if arhead: self.ar = ARHead(d, heads)                              # causal link head on top of the matrix head
+        if pos == "abs":                                                   # created last: the other weights get the same init as with rope
+            ch = [2, 32, 64, 128, 256]                                     # SuperGlue KeypointEncoder; LayerNorm instead of BatchNorm (padding)
+            self.kenc = nn.Sequential(*[m for a, b in zip(ch, ch[1:]) for m in (nn.Linear(a, b), nn.LayerNorm(b), nn.ReLU())], nn.Linear(ch[-1], d))
+            nn.init.zeros_(self.kenc[-1].bias)
+        self.board_log = False                                             # --gradlog: keep the per-board losses of each training batch
+        self.pimgdim = pimgdim; self.img_drop = 0.0                        # img_drop: set by the trainer (--img_drop), training only
+        if pimgdim:                                                        # part image feature (detector RoI): created last, as kenc
+            self.pimp = nn.Sequential(nn.Linear(pimgdim, d), nn.GELU(), nn.Linear(d, d))
+            self.noimg = nn.Parameter(torch.randn(d) * 0.02)               # learned "no image" vector (DiT / MAE style)
+        assert clsmode in ("parallel", "mix", "pool", "sel") and not (clshead and clsmode == "sel" and head != "dot"), (clsmode, head)
+        self.clshead_tf = int(clshead_tf); self.cls_link = "gt"; self.cls_frac = 0.0   # cls_link / cls_frac: set by the trainer
+        self.cls_detach_text = False                                       # --cls_detach_text: set by the trainer
+        if clshead and clsmode == "sel":                                   # class head on the selected link (owner design 2026-10-23), created last
+            self.cin = nn.Linear(2*d + 1, d); self.enone = nn.Parameter(torch.randn(d) * 0.02); self.cout = nn.Linear(d, 9)
+            if self.clshead_tf:                                            # K transformer blocks over the board's class tokens
+                self.cblocks = nn.ModuleList([Block(d, heads, 0.1, qknorm) for _ in range(self.clshead_tf)]); self.cnf = nn.LayerNorm(d)
+    def cls_sel(self, x, box, pos, npart, jt):
+        """--clsmode sel: c_i = W_in [h_i ; h_j(i) or e_none ; none_i]; K Blocks over the board's class tokens with the trunk's position
+        encoding on the part boxes (K = 0: GELU only) -> LayerNorm -> W_out, 9 logits. x (B, N, D) final trunk states; box, pos (B, N, .);
+        npart (B,) parts per board; jt (B, P) token index of the selected text, -1 = none (an index: no gradient through the selection)."""
+        B, P = jt.shape; hp = x[:, :P]; none = jt < 0
+        ht = torch.gather(x, 1, jt.clamp_min(0)[..., None].expand(-1, -1, x.shape[2]))
+        if self.cls_detach_text: ht = ht.detach()                          # no class-loss gradient into the trunk through the text token
+        ht = torch.where(none[..., None], self.enone.to(ht.dtype).expand_as(ht), ht)
+        c = self.cin(torch.cat([hp, ht, none[..., None].to(hp.dtype)], -1))
+        if not self.clshead_tf: return self.cout(F.gelu(c)).float()
+        pv = torch.arange(P, device=x.device)[None] < npart[:, None]; bx, ps = box[:, :P], pos[:, :P]
+        if self.pos == "abs": c = c + self.abs_pos(bx, pv)
+        am = torch.zeros(B, 1, 1, P, device=x.device).masked_fill(~pv[:, None, None, :], float("-inf")).to(c.dtype)
+        cs = self.rope_tab(bx, ps)
+        for blk in self.cblocks: c = blk.forward_b(c, cs, am)
+        return self.cout(self.cnf(c)).float()
+    def part_img(self, d):
+        """--pimgfeat: part tokens get (1 - d_i) MLP(f_i) + d_i e_noimg; d_i = 1 without an image (pok 0), else Bernoulli(img_drop) in
+        training only; text tokens get nothing. (B, N, d) addend."""
+        part = 1 - d["feats"][..., :1]; ok = d["pok"] if "pok" in d else torch.zeros_like(part)
+        if self.training and self.img_drop > 0: ok = ok * (torch.rand_like(ok) >= self.img_drop).to(ok.dtype)
+        f = self.pimp(d["pimg"]) if "pimg" in d else 0.0
+        return part * (ok * f + (1 - ok) * self.noimg)
+    def tok(self, feats):
+        """Token geometry input: (is_text, log w, log h, w >= h); --nosize keeps only is_text (the size enters through rope4 only)."""
+        return feats * self.fmask if self.nosize else feats
+    def rope_tab(self, box, pos):
+        """cos / sin tables of the RoPE in use: rope = box centres; rope4 = corners (x1, y1, x2, y2) in the same median-part units and
+        frame as the centres (board mean of the centres subtracted); None = no RoPE (--pos abs / none)."""
+        if self.pos == "rope": return rope_cs(pos, self.freqs)
+        if self.pos == "rope4":
+            m = (box[..., :2] + box[..., 2:]) / 2 - pos                    # board mean of the centres (0 on padded tokens)
+            return rope_cs(box - torch.cat([m, m], -1), self.freqs4)
+        return None
+    def abs_pos(self, box, valid):
+        """--pos abs: KeypointEncoder of the box centres, (c - board centre) / (0.7 max(board w, h)), board = union of the valid boxes."""
+        v = valid[..., None]; big = 1e9
+        lo = torch.where(v, box[..., :2], big).amin(-2, keepdim=True); hi = torch.where(v, box[..., 2:], -big).amax(-2, keepdim=True)
+        s = 0.7 * (hi - lo).amax(-1, keepdim=True).clamp_min(1e-6)
+        return self.kenc(((box[..., :2] + box[..., 2:]) / 2 - (lo + hi) / 2) / s)
     def forward(self, e):
         if isinstance(e, list): return self.forward_batch(e)
         if "tm" in e: return self.train_loss(e)
-        if self.strrel or self.rankrel or self.glayers or self.local or self.imgdim or self.clshead or self.txtdim or self.detdim: return self.forward_batch([e])[0]   # dense() only
-        x = self.inp(e["feats"])
+        if self.strrel or self.rankrel or self.glayers or self.local or self.imgdim or self.clshead or self.txtdim or self.detdim or self.pimgdim: return self.forward_batch([e])[0]   # dense() only
+        x = self.inp(self.tok(e["feats"]))
         if self.use_string: x = x + self.pref(e["pref"]) + sum(emb(e["dig"][:, k]) for k, emb in enumerate(self.dig))
+        if self.pos == "abs": x = x + self.abs_pos(e["box"], torch.ones(x.shape[0], dtype=torch.bool, device=x.device))
         bias = self.gb(pair_geometry(e["box"], e["feats"][:, 0])).permute(2, 0, 1) if self.geobias else None   # (heads, N, N)
-        for blk in self.blocks: x = blk(x, e["pos"], self.freqs, bias)
+        cs = self.rope_tab(e["box"], e["pos"]) if self.pos == "rope4" else None
+        for blk in self.blocks: x = blk(x, e["pos"], self.freqs if self.pos == "rope" else None, bias, cs=cs)
         return self.head_out(self.nf(x), e["n"])
-    def forward_batch(self, es, with_cls=False):
+    def forward_batch(self, es, with_cls=False, gt_links=None):
         """Several boards in one padded batch (same math as one forward per board; padded tokens are masked out as keys).
-        with_cls (class head): also return each board's (n parts, 9) class logits."""
+        with_cls (class head): also return each board's (n parts, 9) class logits. --clsmode sel: the head gets the Hungarian link of
+        each part (decode()); gt_links (one {part: text index or None} per board) also gives self._cls_gt, the head with the true link."""
         Ns = [e["feats"].shape[0] for e in es]; N = max(Ns); B = len(es)
-        if self.strrel or self.rankrel or self.glayers or self.local or self.imgdim or self.clshead or self.txtdim or self.detdim:   # through dense(): pad as dense_batch does
+        if self.strrel or self.rankrel or self.glayers or self.local or self.imgdim or self.clshead or self.txtdim or self.detdim or self.pimgdim:   # through dense(): pad as dense_batch does
             pad = lambda t, v=0: F.pad(t, (0, 0)*(t.dim()-1) + (0, N-t.shape[0]), value=v)
             d = dict(feats=torch.stack([pad(e["feats"]) for e in es]), pos=torch.stack([pad(e["pos"]) for e in es]), box=torch.stack([pad(e["box"]) for e in es]),
                      pref=torch.stack([pad(e["pref"]) for e in es]), dig=torch.stack([pad(e["dig"], 10) for e in es]),
                      valid=torch.stack([torch.arange(N, device=es[0]["feats"].device) < n for n in Ns]))
-            for key in ("img", "tf", "ds"):
+            for key in ("img", "tf", "ds", "pimg", "pok"):
                 if key in es[0]: d[key] = torch.stack([pad(e[key]) for e in es])
             x = self.dense(d); outs = [self.head_out(x[b, :n], e["n"]) for b, (e, n) in enumerate(zip(es, Ns))]
             if self.arhead and not self.training:                               # causal head: step logits (one-to-one by construction)
                 outs = [self.ar.greedy(x[b, :e["n"]].float(), x[b, e["n"]:n].float(), o.float()) if e["n"] and n > e["n"] else o
                         for b, (e, n, o) in enumerate(zip(es, Ns, outs))]
             if not with_cls: return outs
+            if self.clsmode == "sel":                                            # Hungarian link -> selected text -> class head
+                P = max(e["n"] for e in es); npart = torch.tensor([e["n"] for e in es], device=x.device)
+                pick = lambda Ls: torch.tensor([[(e["n"] + Lb[i]) if Lb.get(i) is not None else -1 for i in range(P)] for e, Lb in zip(es, Ls)], device=x.device)
+                self._links = [decode(o) for o in outs]; c = self.cls_sel(x, d["box"], d["pos"], npart, pick(self._links))
+                if gt_links is not None: self._cls_gt = self.cls_sel(x, d["box"], d["pos"], npart, pick(gt_links))
+                return outs, [c[b, :e["n"]] for b, e in enumerate(es)]
             if self.clsmode == "parallel": return outs, [self.cls(x[b, :e["n"]]).float() for b, e in enumerate(es)]
             cls = []
             for b, (e, o) in enumerate(zip(es, outs)):                           # link probs over the board's texts + none
@@ -455,30 +579,35 @@ class LinkFormer(nn.Module):
         pad = lambda t, v=0: F.pad(t, (0, 0)*(t.dim()-1) + (0, N-t.shape[0]), value=v)
         valid = torch.zeros(B, N, dtype=torch.bool, device=es[0]["feats"].device)
         for b, n in enumerate(Ns): valid[b, :n] = True
-        x = self.inp(torch.stack([pad(e["feats"]) for e in es])); pos = torch.stack([pad(e["pos"]) for e in es])
+        x = self.inp(self.tok(torch.stack([pad(e["feats"]) for e in es]))); pos = torch.stack([pad(e["pos"]) for e in es])
         if self.use_string:
             dig = torch.stack([pad(e["dig"], 10) for e in es])
             x = x + self.pref(torch.stack([pad(e["pref"]) for e in es])) + sum(emb(dig[..., k]) for k, emb in enumerate(self.dig))
+        if self.pos == "abs": x = x + self.abs_pos(torch.stack([pad(e["box"]) for e in es]), valid)
         am = torch.zeros(B, 1, 1, N, device=x.device).masked_fill(~valid[:, None, None, :], float("-inf"))
         if self.geobias:
             am = am + torch.stack([F.pad(self.gb(pair_geometry(e["box"], e["feats"][:, 0])).permute(2, 0, 1), (0, N-n, 0, N-n)) for e, n in zip(es, Ns)])
-        am = am.to(torch.get_autocast_dtype("cuda") if torch.is_autocast_enabled("cuda") else x.dtype).contiguous(); cs = rope_cs(pos, self.freqs)
+        am = am.to(torch.get_autocast_dtype("cuda") if torch.is_autocast_enabled("cuda") else x.dtype).contiguous()
+        cs = self.rope_tab(torch.stack([pad(e["box"]) for e in es]), pos)
         for blk in self.blocks: x = blk.forward_b(x, cs, am)
         x = self.nf(x)
         return [self.head_out(x[b, :n], e["n"]) for b, (e, n) in enumerate(zip(es, Ns))]
     def dense(self, d):
         """Padded batch from dense_batch -> final token features (B, N, d). Same math as forward_batch, without per-board loops.
         The bias must be contiguous: a permuted (strided) attn_mask makes SDPA fall back from the memory-efficient kernel to the slow math path."""
-        B, N = d["valid"].shape; x = self.inp(d["feats"])
+        B, N = d["valid"].shape; x = self.inp(self.tok(d["feats"]))
         if self.use_string: x = x + self.pref(d["pref"]) + sum(emb(d["dig"][..., k]) for k, emb in enumerate(self.dig))
         if self.imgdim and "img" in d: x = x + self.img(d["img"])                  # image feature of each box (zero-initialised adapter)
         if self.txtdim and "tf" in d: x = x + self.tfp(d["tf"]) * d["feats"][..., :1]   # text tokens only
         if self.detdim and "ds" in d: x = x + self.dsp(d["ds"]) * (1 - d["feats"][..., :1])   # part tokens only
+        if self.pos == "abs": x = x + self.abs_pos(d["box"], d["valid"])           # absolute position, once at the input
+        if self.pimgdim: x = x + self.part_img(d)                                  # part image feature or the no-image vector
         am = torch.zeros(B, 1, 1, N, device=x.device).masked_fill(~d["valid"][:, None, None, :], float("-inf"))
         if self.local:   # local attention: a real token sees only tokens whose centre is within `local` median part sizes (padded rows: all)
             far = (torch.cdist(d["pos"], d["pos"]) > self.local) & d["valid"][:, :, None]
             am = am.masked_fill(far[:, None], float("-inf"))
-        dt = torch.get_autocast_dtype("cuda") if torch.is_autocast_enabled("cuda") else x.dtype; cs = rope_cs(d["pos"], self.freqs)
+        dt = torch.get_autocast_dtype("cuda") if torch.is_autocast_enabled("cuda") else x.dtype
+        cs = self.rope_tab(d["box"], d["pos"])
         if self.geobias:
             pf = pair_geometry(d["box"], d["feats"][..., 0])
             if self.strrel: pf = torch.cat([pf, pair_strings(d["pref"], d["dig"], d["feats"][..., 0])], -1)
@@ -495,13 +624,18 @@ class LinkFormer(nn.Module):
         return self.nf(x)
     def train_loss(self, d):
         """Sum over the boards of loss_fn (mean over each board's parts), in one padded batch: part rows x (text tokens + none)."""
-        x = self.dense(d); B, N, D = x.shape; P = d["tm"].shape[1]; hp = x[:, :P]; n = d["n"][:, None]
+        with nv("trunk"): x = self.dense(d)
+        B, N, D = x.shape; P = d["tm"].shape[1]; hp = x[:, :P]; n = d["n"][:, None]
         L = torch.cat([self.wq(hp) @ self.wk(x).transpose(1, 2) / math.sqrt(D), self.none(hp)], 2).float()      # (B, P, N+1)
         col = torch.cat([(torch.arange(N, device=x.device)[None] >= n) & d["valid"], d["valid"].new_ones(B, 1)], 1)   # text tokens + none
         L = L.masked_fill(~col[:, None, :], float("-inf"))
         per = torch.logsumexp(L, 2) - torch.logsumexp(L.masked_fill(~d["tm"], float("-inf")), 2)                # padded part rows: 0
         if "w" in d: per = per * d["w"]
-        lk = (per.sum(1) / d["n"]).sum(); loss = lk; lc_ = lt_ = lk.new_zeros(())
+        pb = per.sum(1) / d["n"]; lk = pb.sum(); loss = lk; lc_ = lt_ = lk.new_zeros(()); cb = None   # pb / cb: per-board link / class loss
+        rowv = torch.arange(P, device=x.device)[None] < n; nonet = d["tm"][..., N] & rowv                      # part rows; rows whose target is none
+        lk_none = ((per * nonet).sum(1) / d["n"]).sum(); lk_lab = lk - lk_none                                  # link loss on none / labelled parts
+        lse = torch.logsumexp(L, 2).masked_fill(~rowv, 0.0); lse_b = (lse.sum(1) / d["n"]).sum()               # link-logit logsumexp (log)
+        zl = ((lse**2).sum(1) / d["n"]).sum()                                                                    # z-loss term (link logits)
         if self.arhead:                                                          # causal head, teacher forcing in base-confidence order
             la = lk.new_zeros(()); Nv = d["valid"].sum(1)
             for b in range(B):
@@ -516,13 +650,22 @@ class LinkFormer(nn.Module):
             loss = (la if AR_ONLY else loss + la); lt_ = la                     # logged in the 3rd loss slot
             self._parts = torch.stack([lk, lc_, lt_]).detach(); return loss
         if self.clshead and "pc" in d:                                           # + class loss per part (mean over the board's parts)
-            lc = self.cls(hp).float() if self.clsmode == "parallel" else self.class_through_link(torch.softmax(L, 2), hp, x)
+            if self.clsmode == "sel":                                            # selected link: gt = first target text (none if the none column
+                tm = d["tm"]; gt = torch.where(tm[..., -1], -1, tm[..., :-1].int().argmax(2))   # is a target); pred = argmax of the link logits; -1 = the none column (not N: --compile keeps N dynamic)
+                pr = L.detach().argmax(2); pr = torch.where(pr == N, -1, pr)
+                use_pred = self.cls_link == "pred" or (self.cls_link == "mix" and self.cls_frac >= 0.5)
+                jt = torch.where(torch.rand(pr.shape, device=pr.device) < 0.5, pr, gt) if self.cls_link == "mix" and use_pred else (pr if use_pred else gt)
+                lc = self.cls_sel(x, d["box"], d["pos"], d["n"], jt)
+            else: lc = self.cls(hp).float() if self.clsmode == "parallel" else self.class_through_link(torch.softmax(L, 2), hp, x)
             ce = F.cross_entropy(lc.transpose(1, 2), d["pc"], ignore_index=-1, reduction="none")
-            lc_ = (ce.sum(1) / d["n"]).sum(); loss = loss + CLS_W * lc_
+            cb = ce.sum(1) / d["n"]; lc_ = cb.sum(); loss = loss + CLS_W * lc_
+            zl = zl + ((torch.logsumexp(lc, -1).masked_fill(~rowv, 0.0)**2).sum(1) / d["n"]).sum()             # z-loss term (class logits)
             if self.clsmode in ("mix", "pool") and "tc" in d:                    # + class named by each text (mean over the board's texts)
                 ct = F.cross_entropy(self.tcls(x).float().transpose(1, 2), d["tc"], ignore_index=-1, reduction="none")
                 nt = (d["tc"] >= 0).sum(1).clamp_min(1); lt_ = (ct.sum(1) / nt).sum(); loss = loss + TCLS_W * lt_
-        self._parts = torch.stack([lk, lc_, lt_]).detach()                       # unweighted link / class / text-class losses, for the log
+        if ZLOSS: loss = loss + ZLOSS * zl                                       # --zloss
+        self._parts = torch.stack([lk, lc_, lt_, lk_lab, lk_none, zl, lse_b]).detach()   # unweighted terms for the log (PART_TERMS)
+        if self.board_log: self._board_loss = torch.stack([pb, cb if cb is not None else torch.zeros_like(pb)], 1).detach()   # --gradlog
         return loss
     def class_through_link(self, A, hp, x):
         """mix: p_i(c) = sum_j a_ij q_j(c) + r_i(c) (a_i,none + sum_j a_ij q_j(not a designator)) -> log p;
@@ -593,9 +736,13 @@ def summarize(per):
     c = {k: sum(v[k] for v in per.values()) for k in ("linkable", "right", "links")}
     acc = c["right"]/max(c["linkable"], 1); prec = c["right"]/max(c["links"], 1)
     out = dict(acc=round(acc, 4), prec=round(prec, 4), f1=round(2*acc*prec/max(acc+prec, 1e-9), 4), **c)
+    for t in ("link", "cls"):                                                        # eval losses (mean per part), when evaluate() gave them
+        nn_ = sum(v.get(f"loss_{t}_n", 0) for v in per.values())
+        if nn_: out[f"loss_{t}"] = round(sum(v.get(f"loss_{t}_sum", 0.0) for v in per.values()) / nn_, 4)
     if any("cls_n" in v for v in per.values()):
         n = sum(v.get("cls_n", 0) for v in per.values())
         out.update(cls_head=round(sum(v.get("cls_head", 0) for v in per.values())/max(n, 1), 4), cls_rule=round(sum(v.get("cls_rule", 0) for v in per.values())/max(n, 1), 4), cls_n=n)
+        if any("cls_gt" in v for v in per.values()): out["cls_gt"] = round(sum(v.get("cls_gt", 0) for v in per.values())/max(out["cls_n"], 1), 4)   # sel: true link
     return out
 
 def to_dev(e, dev): return {k: (v.to(dev) if torch.is_tensor(v) else v) for k, v in e.items()}
@@ -616,13 +763,22 @@ def evaluate(model, encs, dev, mode="hung"):
     model.eval(); per = {}
     if BATCH_EVAL:
         for g in size_groups([e for e in encs if e["n"] and e["m"]], cap=64):
-            ch = getattr(model, "clshead", False)
+            ch = getattr(model, "clshead", False); sel = getattr(model, "clsmode", "") == "sel"   # sel: also the head with the true link
+            gl = [{i: (t[0] if t and not (e.get("ign") and e["ign"][i]) else None) for i, t in enumerate(e["tgt"])} for e in g] if sel else None
             with torch.no_grad(), torch.autocast("cuda", dtype=torch.bfloat16, enabled=AMP and dev.type == "cuda"):
-                outs = model.forward_batch([to_dev(e, dev) for e in g], with_cls=True) if ch else model([to_dev(e, dev) for e in g])
+                outs = model.forward_batch([to_dev(e, dev) for e in g], with_cls=True, gt_links=gl) if ch else model([to_dev(e, dev) for e in g])
             if ch: outs, cls = outs
             for k, (e, o) in enumerate(zip(g, outs)):
                 L = decode(o, mode); per[e["id"]] = count(e, L)
+                if o.dim() == 2 and o.shape[1] == e["m"] + 1:                      # dot head: eval link loss (as loss_fn) and class loss per part
+                    tm_ = e["tmask"].to(o.device).bool(); ok_ = tm_.any(1) & torch.tensor([not (e.get("ign") and e["ign"][i]) for i in range(e["n"])], device=o.device)
+                    ll = (torch.logsumexp(o.float(), 1) - torch.logsumexp(o.float().masked_fill(~tm_, float("-inf")), 1))[ok_]
+                    per[e["id"]].update(loss_link_sum=float(ll.sum()), loss_link_n=int(ok_.sum()))
+                    if ch:
+                        y_ = e["pcls"].to(o.device); v_ = (y_ >= 0) & (y_ <= 8)
+                        if v_.any(): per[e["id"]].update(loss_cls_sum=float(F.cross_entropy(cls[k][:e["n"]].float()[v_], y_[v_], reduction="sum")), loss_cls_n=int(v_.sum()))
                 if ch: per[e["id"]].update(class_count(e, L, cls[k].argmax(1).cpu().numpy()))
+                if sel: per[e["id"]]["cls_gt"] = class_count(e, L, model._cls_gt[k, :e["n"]].argmax(1).cpu().numpy())["cls_head"]
         for e in encs:
             if not (e["n"] and e["m"]): per[e["id"]] = count(e, {})
         model.train(); return summarize(per), per
@@ -631,8 +787,84 @@ def evaluate(model, encs, dev, mode="hung"):
             per[e["id"]] = count(e, decode(model(to_dev(e, dev)), mode) if e["n"] and e["m"] else {})
     model.train(); return summarize(per), per
 
+CFG_SECTIONS = {   # only for reading the written config files; the keys stay flat
+    "run": ("tag", "seed", "device", "threads", "workers", "prefetch", "save", "init", "ckpt_every", "overwrite", "wandb", "wandb_group", "profile",
+            "timing", "gradlog", "gradlog_spike", "gradlog_window", "roll_every", "roll_keep", "roll_from", "roll_optim", "stop_at", "min_free_gb"),
+    "data": ("data", "train", "eval", "final_eval", "mix", "mix_p", "txtfeat", "txtfeat_wacv", "noise", "noise_dir", "imgfeat", "pimgfeat",
+             "pimgfeat_wacv", "txtfeat_wacv_raw", "pimgfeat_wacv_raw", "fptype", "detscore"),
+    "model": ("size", "tokens", "head", "pos", "nosize", "geobias", "rankrel", "strrel", "glayers", "local", "strtype", "arhead", "clshead",
+              "clsmode", "clshead_tf", "qknorm"),
+    "train": ("steps", "lr", "warmup", "cosine", "accum", "bps", "batched", "size_ratio", "tok_budget", "dropout", "wd", "amp", "compile",
+              "fused_adam", "beta2", "zloss", "zclip", "zclip_alpha", "zclip_warmup", "freeze_backbone", "img_lr_mult", "cls_w", "tcls_w", "cls_link", "cls_detach_text", "none_w", "ign_messy"),
+    "augment": ("aug", "aug_norot", "label_drop", "fake", "distract", "prefix_drop", "strnoise", "det_drop", "img_drop"),
+    "eval": ("eval_every",)}
+
+def parse_config_args(ap, argv=None):
+    """--config PATH: YAML file of flat keys = the argparse dest names. Precedence: argparse defaults < config file < explicit flags. Unknown
+    keys, values of the wrong type and values outside `choices` exit with an error (set_defaults alone checks neither). Returns (args, the
+    resolved dict of every key, to be written as <tag>.config.yaml)."""
+    argv = sys.argv[1:] if argv is None else argv
+    pre = argparse.ArgumentParser(add_help=False); pre.add_argument("--config", default=""); path = pre.parse_known_args(argv)[0].config
+    if path:
+        import yaml
+        C = yaml.safe_load(open(path)) or {}
+        if not isinstance(C, dict): ap.error(f"--config {path}: not a mapping of keys")
+        acts = {x.dest: x for x in ap._actions if x.dest not in ("help", "config", "show_config")}
+        bad = sorted(set(C) - set(acts))
+        if bad: ap.error(f"--config {path}: unknown key(s) {bad}")
+        for k, v in C.items():
+            x = acts[k]
+            if isinstance(x, (argparse._StoreTrueAction, argparse._StoreFalseAction)):
+                if not isinstance(v, bool): ap.error(f"--config {path}: {k} must be true / false, not {v!r}")
+            elif x.type in (int, float):
+                if isinstance(v, bool) or not isinstance(v, (int, float, str)): ap.error(f"--config {path}: {k} must be a number, not {v!r}")
+                try: f = float(v)                          # YAML 1.1 reads 2e-4 as a string
+                except ValueError: ap.error(f"--config {path}: {k} must be {x.type.__name__}, not {v!r}")
+                if x.type is int and f != int(f): ap.error(f"--config {path}: {k} must be an integer, not {v!r}")
+                C[k] = int(f) if x.type is int else f
+            elif not isinstance(v, str): ap.error(f"--config {path}: {k} must be a string, not {v!r}")
+            if x.choices is not None and C[k] not in x.choices: ap.error(f"--config {path}: {k} = {C[k]!r} not in {list(x.choices)}")
+        ap.set_defaults(**C)
+    a = ap.parse_args(argv)
+    return a, {k: v for k, v in vars(a).items() if k not in ("config", "show_config")}
+
+def dump_config(R, path):
+    """Write the resolved keys as YAML, grouped under section comments (keys outside CFG_SECTIONS under '# other')."""
+    import yaml
+    done, out = set(), [f"# resolved LinkFormer config (tools/linkformer.py --config); flat keys = argparse dest names\n"]
+    for sec, ks in list(CFG_SECTIONS.items()) + [("other", tuple(sorted(set(R) - {k for ks in CFG_SECTIONS.values() for k in ks})))]:
+        part = {k: R[k] for k in ks if k in R and k not in done}; done |= set(part)
+        if part: out.append(f"# {sec}\n" + yaml.safe_dump(part, sort_keys=False, default_flow_style=False))
+    if str(path) == "-": print("".join(out), end=""); return
+    Path(path).parent.mkdir(parents=True, exist_ok=True); open(path, "w").write("".join(out))
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
+    ap.add_argument("--config", default="", help="YAML file of flat keys = these argparse dest names (configs/*.yaml); explicit flags override it; "
+                    "the resolved config is written as <tag>.config.yaml next to the --save ckpt (or in results/linkformer/)")
+    ap.add_argument("--show_config", action="store_true", help="print the resolved config (defaults < --config < flags) and exit")
+    ap.add_argument("--prefetch", type=int, default=0, help="batched dot head: a background thread prepares this many optimizer steps ahead "
+                    "(same boards in the same order, same groups; padded batches in pinned memory, host->device copies started); 0 = off")
+    ap.add_argument("--gradlog", action="store_true", help="training: pre-clip grad norm per step (kept on the GPU, read every 250 steps): mean / median / "
+                    "max / clipped share / spikes in the 250-step line; spike steps (norm > 3 x the median of the previous 1,000 steps) and the "
+                    "top-5 steps of each 12.5k window with their boards (id, link / class loss, parts, texts) -> logs/linkformer/<tag>.spikes.jsonl")
+    ap.add_argument("--gradlog_spike", type=float, default=3.0, help="--gradlog: spike = grad norm > this x the median of the previous 1,000 steps")
+    ap.add_argument("--gradlog_window", type=int, default=12500, help="--gradlog: steps per window of the top-5 grad-norm rows")
+    ap.add_argument("--roll_every", type=int, default=0, help="rolling ckpt <save>_roll<step>.pt every this many steps from --roll_from on; only the "
+                    "last --roll_keep are kept (older ones deleted); 0 = off")
+    ap.add_argument("--roll_keep", type=int, default=3); ap.add_argument("--roll_from", type=int, default=0)
+    ap.add_argument("--min_free_gb", type=float, default=0.0, help="skip a ckpt save (with a DISK ALERT line) when its file system has less free space "
+                    "than this (GB); 0 = off")
+    ap.add_argument("--roll_optim", action="store_true", help="--roll_every: also save the AdamW and scheduler state (for a restart from that step)")
+    ap.add_argument("--stop_at", type=int, default=0, help="stop training after this step (the lr schedule still runs over --steps); 0 = off")
+    ap.add_argument("--beta2", type=float, default=0.999, help="AdamW beta2 (0.999 = the torch default of all runs before 2026-10-23)")
+    ap.add_argument("--zloss", type=float, default=0.0, help="weight of the z-loss: mean over parts of logsumexp^2 of the link logits (+ class logits)")
+    ap.add_argument("--qknorm", action="store_true", help="LayerNorm on q and k per head in every attention block (before RoPE)")
+    ap.add_argument("--zclip", type=float, default=0.0, help="ZClip: clip the grad norm to mean + this x std of its EMA (alpha --zclip_alpha) "
+                    "instead of the fixed clip 1.0; the first --zclip_warmup steps use the fixed clip and collect the statistics; 0 = off")
+    ap.add_argument("--zclip_alpha", type=float, default=0.97); ap.add_argument("--zclip_warmup", type=int, default=25)
+    ap.add_argument("--timing", action="store_true", help="add wall-clock timing to the 250-step lines: s/step, data wait, batch build + host->device "
+                    "copy, boards/s, peak GPU memory, eval time (no CUDA syncs added)")
     ap.add_argument("--train", default="dev3"); ap.add_argument("--eval", default="dev3"); ap.add_argument("--size", default="L")
     ap.add_argument("--tokens", default="E1"); ap.add_argument("--steps", type=int, default=1000, help="optimizer steps")
     ap.add_argument("--lr", type=float, default=3e-4); ap.add_argument("--warmup", type=int, default=100); ap.add_argument("--cosine", action="store_true")
@@ -659,8 +891,14 @@ if __name__ == "__main__":
     ap.add_argument("--freeze_backbone", action="store_true", help="with --imgfeat: train only the image adapter, every other weight fixed")
     ap.add_argument("--clshead", action="store_true", help="also predict each part's class (9 classes); eval reports cls_head and cls_rule")
     ap.add_argument("--cls_w", type=float, default=1.0, help="weight of the class loss")
-    ap.add_argument("--clsmode", default="parallel", choices=["parallel", "mix", "pool"], help="class head: parallel = linear on the part token; "
-                    "mix = link-weighted sum of per-text class predictions + fallback; pool = MLP on [part token, link-weighted text token, none prob]")
+    ap.add_argument("--clsmode", default="parallel", choices=["parallel", "mix", "pool", "sel"], help="class head: parallel = linear on the part token; "
+                    "mix = link-weighted sum of per-text class predictions + fallback; pool = MLP on [part token, link-weighted text token, none prob]; "
+                    "sel = W_in [part state; state of the SELECTED text or e_none; none flag] -> --clshead_tf blocks -> 9 (owner design 2026-10-23)")
+    ap.add_argument("--clshead_tf", type=int, default=2, help="--clsmode sel: transformer blocks over the class tokens (trunk position encoding); 0 = MLP")
+    ap.add_argument("--cls_detach_text", action="store_true", help="--clsmode sel, training: the selected text token enters the class token "
+                    "detached (h_text(i).detach()): the class loss reaches the trunk only through the part token; values unchanged")
+    ap.add_argument("--cls_link", default="gt", choices=["gt", "pred", "mix"], help="--clsmode sel, training: the selected text = the true link (gt), "
+                    "the argmax of the link logits (pred), or gt for the first half of the steps then pred with p 0.5 (mix); eval / test: Hungarian")
     ap.add_argument("--tcls_w", type=float, default=0.5, help="mix / pool: weight of the per-text class loss")
     ap.add_argument("--distract", type=float, default=0.0, help="augment: non-designator texts (values, net names, numbers) per label")
     ap.add_argument("--noise", type=float, default=0.0, help="augment: real noise boxes per label (vias, print, non-component pads of the side; "
@@ -689,28 +927,62 @@ if __name__ == "__main__":
     ap.add_argument("--fused_adam", action="store_true", help="fused AdamW kernel (same update rule)")
     ap.add_argument("--profile", default="", help="'A:B': NVTX ranges per phase and a CUDA profiler range (nsys --capture-range=cudaProfilerApi) "
                     "over steps A..B-1, print s/step, then exit")
-    a = ap.parse_args(); torch.set_num_threads(a.threads)
+    ap.add_argument("--overwrite", action="store_true", help="run although results/linkformer/<tag>.json, the --save ckpt or its _step ckpts exist")
+    ap.add_argument("--pos", default="rope", choices=["rope", "abs", "none", "rope4"], help="position: rope = 2D RoPE in attention (default, all "
+                    "runs before 2026-10-23); abs = no RoPE, SuperGlue-style MLP of the normalised box centre added at the input; none = no RoPE, no "
+                    "abs; rope4 = 4D corner RoPE (x1, y1, x2, y2; 4 blocks of 16 dims per head, 8 frequencies, wavelengths 0.5-512 median parts)")
+    ap.add_argument("--nosize", action="store_true", help="token geometry input = token type only (no log w, log h, w >= h); with --pos rope4")
+    ap.add_argument("--pimgfeat", default="", help="dir of part image features per KiCad side, <id>.npz {feat (n parts, D), ok (n)} in kicad.json "
+                    "order (tools/part_roi.py render); part tokens get MLP(feat) or the learned no-image vector")
+    ap.add_argument("--pimgfeat_wacv", default="", help="npz of part image features of the WACV-clean boards, one (n parts, D) array per board id "
+                    "(tools/part_roi.py photo: data/partfeat_photo/wacv_annot.npz)")
+    ap.add_argument("--txtfeat_wacv_raw", default="", help="npz {board id: (texts, 688)} PARSeq features of the RAW WACV boards (no \"clean\" key: dev3 / all45 / test42; tools/text_features.py boxes); eval only (2026-10-23)")
+    ap.add_argument("--pimgfeat_wacv_raw", default="", help="npz {board id: (parts, D)} part image features of the RAW WACV boards (tools/part_roi.py boxes); eval only (2026-10-23)")
+    ap.add_argument("--img_drop", type=float, default=0.1, help="training: share of part images replaced by the no-image vector (with --pimgfeat)")
+    a, CFG = parse_config_args(ap)
+    if a.show_config: dump_config(CFG, "-"); sys.exit(0)
+    torch.set_num_threads(a.threads)
     if a.strnoise: STRNOISE = (0.30, 0.15)
     AUGP, NONE_W, IGN_MESSY, AUG_ROT = (a.label_drop, a.fake), a.none_w, a.ign_messy, not a.aug_norot
-    DISTRACT, PREFIX_DROP, CLS_W, TCLS_W, NOISE, DET_DROP = a.distract, a.prefix_drop, a.cls_w, a.tcls_w, a.noise, a.det_drop
+    DISTRACT, PREFIX_DROP, CLS_W, TCLS_W, NOISE, DET_DROP = a.distract, a.prefix_drop, a.cls_w, a.tcls_w, a.noise, a.det_drop; ZLOSS = a.zloss
     assert not a.noise or a.txtfeat, "--noise needs --txtfeat (noise boxes carry only a text-image feature)"
     if a.bps: a.accum, a.batched = a.bps, True
     if a.batched: BATCH_EVAL = True
     world, rank, local = int(os.environ.get("WORLD_SIZE", 1)), int(os.environ.get("RANK", 0)), int(os.environ.get("LOCAL_RANK", 0)); is_main = rank == 0
     torch.manual_seed(a.seed); np.random.seed(a.seed)
+    a.tag = a.tag or f"{a.train}_{a.size}_{a.tokens}"     # the tag is known from the start and saved in the args (owner 2026-10-22)
+    old = [ROOT/"results/linkformer"/f"{a.tag}.json"] + ([Path(a.save)] + sorted(Path(a.save).parent.glob(Path(a.save).stem + "_step*.pt")) if a.save else [])
+    old = [str(p) for p in old if p.exists()]
+    if old and not a.overwrite: sys.exit(f"[{a.tag}] refused at start: {', '.join(old)} exist(s); choose another --tag / --save or pass --overwrite")
+    CFG["tag"] = a.tag
+    META = {}
+    if is_main:                                       # run identity + full-md5 fingerprints of every input this run reads (tools/run_meta.py)
+        import run_meta as RM
+        META = RM.start()
+        cfg_out = (Path(a.save).parent if a.save else ROOT/"results/linkformer")/f"{a.tag}.config.yaml"; dump_config(CFG, cfg_out)
+        META["config"] = dict(file=a.config or None, md5=a.config and RM.md5_file(a.config), resolved=str(cfg_out))
+        ins = dict(data=ROOT/"linkdata"/a.data) if a.data else {f"data:{f}": ROOT/"linkdata"/f for f in ("wacv.json", "folds.json", "kicad199.json", "kicad_all.json")}
+        ins.update(txtfeat=a.txtfeat and ROOT/a.txtfeat, txtfeat_wacv=a.txtfeat and a.txtfeat_wacv and ROOT/a.txtfeat_wacv,
+                   noise_dir=a.noise and ROOT/a.noise_dir, noise_feat=a.noise and ROOT/(a.noise_dir.rstrip("/")+"feat"), fptype=a.fptype and ROOT/a.fptype,
+                   detscore=a.detscore and ROOT/a.detscore, detscore_preds=a.detscore and ROOT/"data/preds_wacv_1280_cls9.json",
+                   imgfeat=a.imgfeat and ROOT/a.imgfeat, init=a.init and Path(a.init),
+                   pimgfeat=a.pimgfeat and ROOT/a.pimgfeat, pimgfeat_wacv=a.pimgfeat_wacv and ROOT/a.pimgfeat_wacv,
+                   txtfeat_wacv_raw=a.txtfeat_wacv_raw and ROOT/a.txtfeat_wacv_raw, pimgfeat_wacv_raw=a.pimgfeat_wacv_raw and ROOT/a.pimgfeat_wacv_raw)
+        META["inputs"] = RM.fingerprints(ins); META["fingerprint_seconds"] = round(sum(v["sec"] for v in META["inputs"].values()), 1)
+        print(f"[{a.tag}] fingerprints {META['fingerprint_seconds']} s: " + ", ".join(f"{k} {v['sec']} s" for k, v in META["inputs"].items()), flush=True)
     sets = load_sets(a.data); AMP = a.amp
     a.imgdim = 0; a.txtdim = 0
     if a.txtfeat:                                     # PARSeq features: KiCad sides from <dir>/<side id>.npy, WACV-clean from --txtfeat_wacv
         D = ROOT/a.txtfeat; nk = nw = 0
         for name in list(sets):
-            keep = []
+            keep = []; nc = META.setdefault("board_filter", {})[name] = dict(boards=len(sets[name]), dropped_no_feat=0, dropped_len=0)
             for b in sets[name]:
                 if "clean" in b: keep.append(b); continue
                 if b.get("source") != "kicad": keep.append(b); continue
                 f = D/f"{b['id']}.npy"
-                if not f.exists(): continue                                           # side not rendered / not aligned: left out
+                if not f.exists(): nc["dropped_no_feat"] += 1; continue               # side not rendered / not aligned: left out
                 F_ = np.load(f)
-                if len(F_) != len(b["texts"]): continue
+                if len(F_) != len(b["texts"]): nc["dropped_len"] += 1; continue
                 if "tf" not in b["texts"][0]:
                     for t, v in zip(b["texts"], F_): t["tf"] = v.astype(np.float32)
                     nk += 1
@@ -721,7 +993,7 @@ if __name__ == "__main__":
                         nb_, nf_ = json.load(open(fb))["boxes"], np.load(ff)
                         if len(nb_) == len(nf_): b["noise"] = [dict(box=bx, text="", angle=None, noise=True, tf=v) for bx, v in zip(nb_, nf_)]
                 keep.append(b)
-            sets[name] = keep
+            sets[name] = keep; nc["kept"] = len(keep)
         if a.txtfeat_wacv:
             Z = np.load(ROOT/a.txtfeat_wacv); seen = set()
             for bs in sets.values():
@@ -729,6 +1001,15 @@ if __name__ == "__main__":
                     if "clean" in b and f"{b['id']}__t" in Z and id(b) not in seen:
                         seen.add(id(b)); nw += 1
                         for t, v in zip(b["texts"], Z[f"{b['id']}__t"]): t["tf"] = v.astype(np.float32)
+        if a.txtfeat_wacv_raw:                        # raw WACV boards (no "clean" key): their own PARSeq features, eval only
+            Zr = np.load(ROOT/a.txtfeat_wacv_raw); seen = set(); nr = [0, 0]
+            for bs in sets.values():
+                for b in bs:
+                    if "clean" in b or b.get("source") == "kicad" or id(b) in seen: continue
+                    seen.add(id(b)); ok_ = b["id"] in Zr.files and len(Zr[b["id"]]) == len(b["texts"]); nr[ok_] += 1
+                    if ok_:
+                        for t, v in zip(b["texts"], Zr[b["id"]]): t["tf"] = v.astype(np.float32)
+            if is_main: print(f"[{a.tag}] raw WACV text features: {nr[1]} boards, {nr[0]} without (missing / count mismatch)", flush=True)
         TXT_DIM = a.txtdim = 688
         if a.fake or a.distract: print(f"[{a.tag}] WARNING: fake / distractor texts have no image feature (zeros) -> set --fake 0 --distract 0", flush=True)
         if is_main: print(f"[{a.tag}] text features: {nk} KiCad sides, {nw} WACV boards; sets now " + ", ".join(f"{k} {len(v)}" for k, v in sets.items() if k in ("ktrain", "kval", "kvalsub")), flush=True)
@@ -778,6 +1059,29 @@ if __name__ == "__main__":
                     for o, v in zip(b["parts"], Z[f"{b['id']}__p"]): o["img"] = v.astype(np.float32)
                     for o, v in zip(b["texts"], Z[f"{b['id']}__t"]): o["img"] = v.astype(np.float32)
         if is_main: print(f"[{a.tag}] image features {a.imgfeat}: dim {IMG_DIM}, {len(seen)} boards", flush=True)
+    a.pimgdim = 0
+    if a.pimgfeat or a.pimgfeat_wacv or a.pimgfeat_wacv_raw:   # part image features, before the DataLoader workers fork (kept float16; encode() casts)
+        Zw = np.load(ROOT/a.pimgfeat_wacv) if a.pimgfeat_wacv else None; done = set(); dims = set()
+        Zr2 = np.load(ROOT/a.pimgfeat_wacv_raw) if a.pimgfeat_wacv_raw else None   # raw WACV boards (no "clean" key), eval only
+        pc = dict(boards=0, kicad_sides=0, kicad_len_mismatch=0, wacv_clean_boards=0, wacv_raw_boards=0, parts=0, parts_with_image=0)
+        for bs in sets.values():
+            for b in bs:
+                if id(b) in done: continue
+                done.add(id(b)); pc["boards"] += 1; pc["parts"] += len(b["parts"]); F_ = O_ = None
+                if b.get("source") == "kicad" and a.pimgfeat and (ROOT/a.pimgfeat/f"{b['id']}.npz").exists():
+                    Z = np.load(ROOT/a.pimgfeat/f"{b['id']}.npz"); F_, O_ = Z["feat"], Z["ok"]; key = "kicad_sides"
+                elif "clean" in b and Zw is not None and b["id"] in Zw.files:
+                    F_ = Zw[b["id"]]; O_ = np.ones(len(F_), bool); key = "wacv_clean_boards"
+                elif "clean" not in b and b.get("source") != "kicad" and Zr2 is not None and b["id"] in Zr2.files:
+                    F_ = Zr2[b["id"]]; O_ = np.ones(len(F_), bool); key = "wacv_raw_boards"
+                if F_ is None: continue
+                if len(F_) != len(b["parts"]): pc["kicad_len_mismatch"] += 1; continue
+                pc[key] += 1; dims.add(F_.shape[1])
+                for pp, v, o in zip(b["parts"], F_, O_):
+                    if o: pp["pimg"] = v; pc["parts_with_image"] += 1
+        assert len(dims) == 1, f"--pimgfeat: feature dims {dims} (none found or mixed)"
+        PIMG_DIM = a.pimgdim = dims.pop(); META["pimg"] = pc
+        if is_main: print(f"[{a.tag}] part image features: dim {PIMG_DIM}, {pc}; img_drop {a.img_drop}", flush=True)
     if a.init:
         ck = torch.load(a.init, map_location="cpu"); vocab = Vocab(ck["vocab"])
     else:
@@ -797,7 +1101,9 @@ if __name__ == "__main__":
         dev = torch.device(a.device)
     d, L = SIZES[a.size]
     assert not a.strrel or (a.tokens == "E2" and a.geobias), "--strrel needs --tokens E2 and --geobias"; assert not a.glayers or a.geobias; assert not a.rankrel or a.geobias, "--rankrel needs --geobias"
-    model = LinkFormer(d, L, len(vocab.idx)+2, a.tokens == "E2", a.dropout, a.head, a.geobias, a.strrel, a.glayers, a.local, a.imgdim, a.clshead, a.txtdim, a.clsmode, a.rankrel, a.detdim, a.arhead).to(dev)
+    model = LinkFormer(d, L, len(vocab.idx)+2, a.tokens == "E2", a.dropout, a.head, a.geobias, a.strrel, a.glayers, a.local, a.imgdim, a.clshead, a.txtdim, a.clsmode, a.rankrel, a.detdim, a.arhead, pos=a.pos, nosize=a.nosize, pimgdim=a.pimgdim, clshead_tf=a.clshead_tf, qknorm=a.qknorm).to(dev)
+    model.cls_link = a.cls_link; model.cls_detach_text = a.cls_detach_text
+    model.img_drop = a.img_drop if a.pimgdim else 0.0
     if a.init:
         miss = model.load_state_dict(ck["model"], strict=not (a.imgdim or a.arhead))
         if a.imgdim and is_main: print(f"[{a.tag}] init {a.init}: new parameters {miss.missing_keys}", flush=True)
@@ -811,7 +1117,7 @@ if __name__ == "__main__":
         for n_, p in model.named_parameters(): p.requires_grad = n_.startswith(keep)
     groups = [dict(params=[p for n_, p in model.named_parameters() if not n_.startswith("img.")])]
     if a.imgdim: groups.append(dict(params=list(model.img.parameters()), lr=a.lr*a.img_lr_mult))
-    opt = torch.optim.AdamW(groups, lr=a.lr, weight_decay=a.wd, fused=a.fused_adam and dev.type == "cuda")
+    opt = torch.optim.AdamW(groups, lr=a.lr, weight_decay=a.wd, betas=(0.9, a.beta2), fused=a.fused_adam and dev.type == "cuda")
     def lr_at(s):
         w = min(1.0, (s+1)/a.warmup)
         return w * (0.1 + 0.9*0.5*(1+math.cos(math.pi*min(s, a.steps)/a.steps)) if a.cosine else w)
@@ -824,23 +1130,72 @@ if __name__ == "__main__":
             try: wb = wandb.init(**kw)
             except Exception as ex: print(f"[{tag}] wandb online failed ({repr(ex)[:80]}), logging offline", flush=True); wb = wandb.init(mode="offline", **kw)
         except Exception as ex: print(f"[{tag}] wandb unavailable: {repr(ex)[:80]}", flush=True)
+    if is_main: META.update(wandb=dict(project=a.wandb, id=wb.id) if wb else None, gpu=RM.gpu(dev))
     from contextlib import nullcontext
-    log = []; t0 = time.time(); run = None; runp = None
+    log = []; t0 = time.time(); run = None; runp = None; TM = dict(data=0.0, batch=0.0, eval=0.0, groups=0, tok_real=0, tok_pad=0); tw = time.time()   # --timing
+    PQ = None
+    ZC = {}                                           # --zclip state (GPU tensors)
+    ROLL = []                                         # --roll_every: paths of the kept rolling ckpts
+    GL = None                                         # --gradlog (batched dot head): per-step grad norm + per-board losses, read every 250 steps
+    if a.gradlog and a.batched and a.head == "dot":
+        GL = dict(bl=[], meta=[], steps=[], hist=[], win=[]); model.board_log = True
+        GLF = ROOT/"logs/linkformer"/f"{tag}.spikes.jsonl"; GLF.parent.mkdir(parents=True, exist_ok=True)
+        def gradlog_read():
+            """One host read for the steps since the last call: stats for the 250-step line; spike rows and the 12.5k top-5 to GLF."""
+            st = GL["steps"]; GL["steps"] = []
+            if not st: return ""
+            norms = torch.stack([x[2] for x in st]).float().cpu().numpy(); bls = [x[3].float().cpu().numpy() for x in st]; spikes = 0
+            with open(GLF, "a") as fo:
+                for (s_, lr_, _, _, meta), g_, bl in zip(st, norms, bls):
+                    prev = GL["hist"][-1000:]; med = float(np.median(prev)) if len(prev) >= 100 else None; GL["hist"].append(float(g_))
+                    row = dict(step=s_, norm=round(float(g_), 4), median=med and round(med, 4), lr=lr_,
+                               boards=[dict(id=i_, link=round(float(l_[0]), 4), cls=round(float(l_[1]), 4), parts=n_, texts=m_) for (i_, n_, m_), l_ in zip(meta, bl)])
+                    if med and g_ > a.gradlog_spike*med: spikes += 1; fo.write(json.dumps(dict(kind="spike", **row)) + "\n")
+                    GL["win"].append((float(g_), row)); GL["win"] = sorted(GL["win"], key=lambda r: -r[0])[:5]
+                    if s_ % a.gradlog_window == 0:
+                        for _, r in GL["win"]: fo.write(json.dumps(dict(kind="top5", window_end=s_, **r)) + "\n")
+                        GL["win"] = []
+                GL["hist"] = GL["hist"][-1000:]
+            return (f", grad norm mean {norms.mean():.3f} median {np.median(norms):.3f} max {norms.max():.3f} clipped {100*(norms > 1.0).mean():.1f} % "
+                    f"spikes {spikes}")
+    if a.prefetch and a.batched and a.head == "dot":  # producer thread: next steps' boards -> groups -> padded batches on the GPU (pinned copies)
+        import threading, queue
+        PQ = queue.Queue(maxsize=a.prefetch)
+        def producer():
+            try:
+                while True:
+                    es_ = [next(stream) for _ in range(acc)]
+                    PQ.put([([(e_["id"], e_["n"], e_["m"]) for e_ in g_], dense_batch(g_, dev, targets=True, pin=dev.type == "cuda"))
+                            for g_ in (size_groups(es_, a.size_ratio, a.tok_budget) if a.bps else [es_])])   # (board meta, batch) per group
+            except BaseException as ex: PQ.put(ex)
+        threading.Thread(target=producer, daemon=True).start()
     pa, pb = map(int, a.profile.split(":")) if a.profile else (0, 0)
-    ph = (lambda s: torch.cuda.nvtx.range(s)) if a.profile else (lambda s: nullcontext())
+    ph = (lambda s: torch.cuda.nvtx.range(s)) if a.profile else (lambda s: nullcontext()); NVTX = bool(a.profile)
     for step in range(1, a.steps+1):
+        model.cls_frac = (step - 1) / a.steps                                  # --cls_link mix: gt for the first half
         if a.profile and step in (pa, pb):
             torch.cuda.synchronize()
             if step == pa: torch.cuda.cudart().cudaProfilerStart(); tp = time.time()
             else: torch.cuda.cudart().cudaProfilerStop(); print(f"[{tag}] profile steps {pa}..{pb-1}: {(time.time()-tp)/(pb-pa):.4f} s/step", flush=True); sys.exit(0)
         opt.zero_grad(); tot = 0.0; parts = 0.0
         if a.batched:
-            with ph("data"): es = [next(stream) for _ in range(acc)]
-            groups = size_groups(es, a.size_ratio, a.tok_budget) if a.bps else [es]
+            tq = time.time()
+            with ph("data"): es = PQ.get() if PQ is not None else [next(stream) for _ in range(acc)]   # PQ: a list of ready batches
+            TM["data"] += time.time() - tq
+            if isinstance(es, BaseException): raise es
+            groups = es if PQ is not None else size_groups(es, a.size_ratio, a.tok_budget) if a.bps else [es]
             for gi, g in enumerate(groups):
                 with (net.no_sync() if world > 1 and gi < len(groups)-1 else nullcontext()):
                     with ph("forward"), torch.autocast("cuda", dtype=torch.bfloat16, enabled=a.amp and dev.type == "cuda"):
-                        if a.head == "dot": loss = net(dense_batch(g, dev, targets=True)) / acc      # one padded batch, loss included
+                        if a.head == "dot":                                                       # one padded batch, loss included
+                            tq = time.time()
+                            with ph("batch_h2d"): db = g[1] if PQ is not None else dense_batch(g, dev, targets=True)
+                            gm = g[0] if PQ is not None else [(e_["id"], e_["n"], e_["m"]) for e_ in g]   # (id, parts, texts) of the group
+                            if GL is not None: GL["meta"] += gm
+                            if a.timing: TM["groups"] += 1; TM["tok_real"] += sum(n_ + m_ for _, n_, m_ in gm); TM["tok_pad"] += len(gm) * (-(-max(n_ + m_ for _, n_, m_ in gm) // 16) * 16)
+                            TM["batch"] += time.time() - tq
+                            loss = net(db) / acc
+                            if GL is not None: GL["bl"].append(model._board_loss)
                         else:
                             g = [from_numpy(e) for e in g]; outs = net([to_dev(e, dev) for e in g])
                             loss = sum(loss_lg(o, e["tmask"].to(dev), e["ign"]) for o, e in zip(outs, g)) / acc
@@ -853,20 +1208,50 @@ if __name__ == "__main__":
                     logits = net(to_dev(e, dev))
                 loss = (loss_lg(logits, e["tmask"].to(dev), e["ign"]) if a.head == "lg" else loss_fn(logits.float(), e["tmask"].to(dev))) / acc
                 loss.backward(); tot += loss.item()
-        with ph("optim"): torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0); opt.step(); sched.step()
+        with ph("optim"):
+            if a.zclip and step > a.zclip_warmup:                               # ZClip: clip to EMA mean + z x EMA std, all on the GPU
+                gn = torch.nn.utils.clip_grad_norm_(model.parameters(), float("inf")); thr = ZC["mu"] + a.zclip * ZC["sd"]
+                torch._foreach_mul_([p_.grad for p_ in model.parameters() if p_.grad is not None], torch.clamp(thr / (gn + 1e-6), max=1.0))
+                gu = torch.minimum(gn, thr); ZC["mu"] = a.zclip_alpha * ZC["mu"] + (1 - a.zclip_alpha) * gu
+                ZC["sd"] = torch.sqrt(a.zclip_alpha * ZC["sd"]**2 + (1 - a.zclip_alpha) * (gu - ZC["mu"])**2)
+            else:
+                gn = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                if a.zclip:                                                       # warm-up: statistics of the first steps
+                    ZC.setdefault("buf", []).append(gn.detach().float())
+                    if step == a.zclip_warmup: b_ = torch.stack(ZC.pop("buf")); ZC.update(mu=b_.mean(), sd=b_.std().clamp_min(1e-6))
+            if GL is not None: GL["steps"].append((step, sched.get_last_lr()[0], gn.detach(), torch.cat(GL["bl"]), GL["meta"])); GL["bl"], GL["meta"] = [], []
+            opt.step(); sched.step()
         run = tot if run is None else 0.98*run + 0.02*tot                                             # a GPU tensor when batched
         if torch.is_tensor(parts): runp = parts if runp is None else 0.98*runp + 0.02*parts           # link / class / text-class parts
         if not is_main: continue
-        lp = (lambda: dict(zip(("link", "cls", "tcls"), [round(v, 4) for v in runp.tolist()]))) if runp is not None else (lambda: {})
-        if not wb and step % 250 == 0: print(f"[{tag}] step {step} train_loss {float(run):.4f}" + "".join(f" {k} {v:.4f}" for k, v in lp().items()), flush=True)
+        lp = (lambda: dict(zip(PART_TERMS, [round(v, 4) for v in runp.tolist()]))) if runp is not None else (lambda: {})
+        with ph("log"):
+            if a.timing and step % 250 == 0:
+                dt = time.time() - tw - TM["eval"]; tw = time.time()
+                print(f"[{tag}] timing step {step}: {dt/250:.4f} s/step, data wait {1e3*TM['data']/250:.1f} ms, batch build + h2d {1e3*TM['batch']/250:.1f} ms, "
+                      f"{a.accum*250/dt:.1f} boards/s, peak mem {torch.cuda.max_memory_allocated(dev)/2**30:.1f} GiB, eval {TM['eval']:.1f} s, "
+                      f"{TM['groups']/250:.2f} groups/step, padding {100*(1 - TM['tok_real']/max(TM['tok_pad'], 1)):.1f} %" if dev.type == "cuda" else "", flush=True)
+                TM.update(data=0.0, batch=0.0, eval=0.0, groups=0, tok_real=0, tok_pad=0)
+            if GL is not None and step % 250 == 0: print(f"[{tag}] gradlog step {step}" + gradlog_read(), flush=True)
+            if not wb and step % 250 == 0: print(f"[{tag}] step {step} train_loss {float(run):.4f}" + "".join(f" {k} {v:.4f}" for k, v in lp().items()), flush=True)
         if wb and step % 50 == 0: wb.log(dict(loss=float(run), lr=sched.get_last_lr()[0], steps_per_s=step/(time.time()-t0)), step=step)
         if a.ckpt_every and a.save and step % a.ckpt_every == 0 and step < a.steps:
-            Path(a.save).parent.mkdir(parents=True, exist_ok=True); torch.save(dict(model=model.state_dict(), vocab=vocab.prefixes, args=vars(a), step=step), a.save.replace(".pt", f"_step{step}.pt"))
-        if evs and (step % a.eval_every == 0 or step == a.steps):
-            res = {s: evaluate(model, es, dev)[0] for s, es in evs.items()}
+            with ph("ckpt"):
+                Path(a.save).parent.mkdir(parents=True, exist_ok=True); cp_ = a.save.replace(".pt", f"_step{step}.pt")
+                if disk_ok(cp_, a.min_free_gb, tag): torch.save(dict(model=model.state_dict(), vocab=vocab.prefixes, args=vars(a), step=step, meta=META), cp_)
+        if a.roll_every and a.save and step >= a.roll_from and step % a.roll_every == 0:              # --roll_every: keep the last --roll_keep
+            with ph("ckpt"):
+                rp = a.save.replace(".pt", f"_roll{step}.pt"); Path(rp).parent.mkdir(parents=True, exist_ok=True)
+                if disk_ok(rp, a.min_free_gb, tag): torch.save(dict(model=model.state_dict(), vocab=vocab.prefixes, args=vars(a), step=step, meta=META,
+                                **(dict(opt=opt.state_dict(), sched=sched.state_dict()) if a.roll_optim else {})), rp); ROLL.append(rp)
+                while len(ROLL) > a.roll_keep: os.remove(ROLL.pop(0))
+        if evs and (step % a.eval_every == 0 or step == a.steps or step == a.stop_at):
+            with ph("eval"): tq = time.time(); res = {s: evaluate(model, es, dev)[0] for s, es in evs.items()}; TM["eval"] += time.time() - tq
             log.append(dict(step=step, loss=round(float(run), 4), loss_parts=lp(), **res))
             if wb: wb.log({f"{s}/{m}": r[m] for s, r in res.items() for m in ("acc", "prec", "f1")}, step=step)
-            print(f"[{tag}] step {step} loss {float(run):.3f} " + " ".join(f"{s}: acc {r['acc']:.3f} prec {r['prec']:.3f}" + (f" cls {r['cls_head']:.3f}/{r['cls_rule']:.3f}" if "cls_head" in r else "") for s, r in res.items()) + f" ({time.time()-t0:.0f}s)", flush=True)
+            print(f"[{tag}] step {step} loss {float(run):.3f} " + " ".join(f"{s}: acc {r['acc']:.3f} prec {r['prec']:.3f}" + (f" cls {r['cls_head']:.3f}/{r['cls_rule']:.3f}" + (f" gt-link {r['cls_gt']:.3f}" if "cls_gt" in r else "") if "cls_head" in r else "")
+                    + (f" lossL {r['loss_link']:.4f}" if "loss_link" in r else "") + (f" lossC {r['loss_cls']:.4f}" if "loss_cls" in r else "") for s, r in res.items()) + f" ({time.time()-t0:.0f}s)", flush=True)
+        if a.stop_at and step >= a.stop_at: print(f"[{tag}] --stop_at {a.stop_at}: training stopped", flush=True); break
     if world > 1:
         import torch.distributed as dist
         if not is_main: dist.destroy_process_group(); sys.exit(0)
@@ -875,11 +1260,13 @@ if __name__ == "__main__":
         es = [encode(b, vocab) for b in sets[s] if b["parts"] and b["texts"]]
         for mode in (("hung", "sig") if a.head == "lg" else ("hung",)):
             key = s if mode == "hung" else f"{s}@{mode}"; summ, per = evaluate(model, es, dev, mode); final[key] = dict(summary=summ, per_image=per)
-            print(f"[{tag}] final {key}: acc {summ['acc']:.4f} prec {summ['prec']:.4f} f1 {summ['f1']:.4f}" + (f" cls_head {summ['cls_head']:.4f} cls_rule {summ['cls_rule']:.4f} (n {summ['cls_n']})" if "cls_head" in summ else ""), flush=True)
+            print(f"[{tag}] final {key}: acc {summ['acc']:.4f} prec {summ['prec']:.4f} f1 {summ['f1']:.4f}" + (f" cls_head {summ['cls_head']:.4f} cls_rule {summ['cls_rule']:.4f} (n {summ['cls_n']})" + (f" cls_gt_link {summ['cls_gt']:.4f}" if "cls_gt" in summ else "") if "cls_head" in summ else ""), flush=True)
             if wb: wb.summary.update({f"final/{key}/{m}": summ[m] for m in ("acc", "prec", "f1")})
+    META["end"] = RM.now()
     if a.save:
-        Path(a.save).parent.mkdir(parents=True, exist_ok=True); torch.save(dict(model=model.state_dict(), vocab=vocab.prefixes, args=vars(a)), a.save)
+        Path(a.save).parent.mkdir(parents=True, exist_ok=True)
+        if disk_ok(a.save, a.min_free_gb, tag): torch.save(dict(model=model.state_dict(), vocab=vocab.prefixes, args=vars(a), step=min(a.stop_at or a.steps, a.steps), meta=META), a.save)
     out = ROOT/"results/linkformer"; out.mkdir(parents=True, exist_ok=True)
-    json.dump(dict(args=vars(a), params=npar, log=log, final=final, seconds=round(time.time()-t0), ranks=world), open(out/f"{tag}.json", "w"), indent=1)
+    json.dump(dict(args=vars(a), params=npar, log=log, final=final, seconds=round(time.time()-t0), ranks=world, meta=META), open(out/f"{tag}.json", "w"), indent=1)
     if wb: wb.finish()
     if world > 1: dist.destroy_process_group()
