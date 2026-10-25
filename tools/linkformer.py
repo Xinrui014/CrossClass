@@ -667,7 +667,9 @@ class LinkFormer(nn.Module):
                 nt = (d["tc"] >= 0).sum(1).clamp_min(1); lt_ = (ct.sum(1) / nt).sum(); loss = loss + TCLS_W * lt_
         if ZLOSS: loss = loss + ZLOSS * zl                                       # --zloss
         self._parts = torch.stack([lk, lc_, lt_, lk_lab, lk_none, zl, lse_b]).detach()   # unweighted terms for the log (PART_TERMS)
-        if self.board_log: self._board_loss = torch.stack([pb, cb if cb is not None else torch.zeros_like(pb)], 1).detach()   # --gradlog
+        if self.board_log:                                                       # --gradlog: per-board losses + max |link logit|, max |class logit|, max link lse
+            self._board_loss = torch.stack([pb, cb if cb is not None else torch.zeros_like(pb)], 1).detach()
+            self._maxv = torch.stack([L.masked_fill(~torch.isfinite(L), 0.0).abs().amax(), lc.abs().amax() if cb is not None else L.new_zeros(()), lse.amax()]).detach().float()
         return loss
     def class_through_link(self, A, hp, x):
         """mix: p_i(c) = sum_j a_ij q_j(c) + r_i(c) (a_i,none + sum_j a_ij q_j(not a designator)) -> log p;
@@ -791,7 +793,7 @@ def evaluate(model, encs, dev, mode="hung"):
 
 CFG_SECTIONS = {   # only for reading the written config files; the keys stay flat
     "run": ("tag", "seed", "device", "threads", "workers", "prefetch", "save", "init", "ckpt_every", "overwrite", "wandb", "wandb_group", "profile",
-            "timing", "gradlog", "gradlog_spike", "gradlog_window", "roll_every", "roll_keep", "roll_from", "roll_optim", "stop_at", "min_free_gb"),
+            "timing", "gradlog", "gradlog_spike", "gradlog_window", "roll_every", "roll_keep", "roll_from", "roll_keep_from", "roll_optim", "stop_at", "min_free_gb"),
     "data": ("data", "train", "eval", "final_eval", "mix", "mix_p", "txtfeat", "txtfeat_wacv", "noise", "noise_dir", "imgfeat", "pimgfeat",
              "pimgfeat_wacv", "txtfeat_wacv_raw", "pimgfeat_wacv_raw", "fptype", "detscore"),
     "model": ("size", "tokens", "head", "pos", "nosize", "geobias", "rankrel", "strrel", "glayers", "local", "strtype", "arhead", "clshead",
@@ -855,6 +857,8 @@ if __name__ == "__main__":
     ap.add_argument("--roll_every", type=int, default=0, help="rolling ckpt <save>_roll<step>.pt every this many steps from --roll_from on; only the "
                     "last --roll_keep are kept (older ones deleted); 0 = off")
     ap.add_argument("--roll_keep", type=int, default=3); ap.add_argument("--roll_from", type=int, default=0)
+    ap.add_argument("--roll_keep_from", type=int, default=0, help="--roll_every: rolling ckpts at or after this step are all kept (--roll_keep applies "
+                    "to the earlier ones); 0 = off")
     ap.add_argument("--min_free_gb", type=float, default=0.0, help="skip a ckpt save (with a DISK ALERT line) when its file system has less free space "
                     "than this (GB); 0 = off")
     ap.add_argument("--roll_optim", action="store_true", help="--roll_every: also save the AdamW and scheduler state (for a restart from that step)")
@@ -1140,17 +1144,30 @@ if __name__ == "__main__":
     ROLL = []                                         # --roll_every: paths of the kept rolling ckpts
     GL = None                                         # --gradlog (batched dot head): per-step grad norm + per-board losses, read every 250 steps
     if a.gradlog and a.batched and a.head == "dot":
-        GL = dict(bl=[], meta=[], steps=[], hist=[], win=[]); model.board_log = True
+        GL = dict(bl=[], mx=[], meta=[], steps=[], hist=[], win=[]); model.board_log = True
+        GNAMES = ["trunk_in"] + [f"block{i}" for i in range(len(model.blocks))] + ["link_head", "class_head"]   # pre-clip grad norm groups
+        def gk(n):
+            top = n.split(".")[0]
+            if top in ("wq", "wk", "none", "ms", "mt", "ar"): return GNAMES.index("link_head")
+            if top in ("cin", "enone", "cout", "cblocks", "cnf", "cls", "tcls", "fcls", "cmlp"): return GNAMES.index("class_head")
+            return 1 + int(n.split(".")[1]) if top == "blocks" else 0                       # trunk_in also holds the final LayerNorm nf
+        GPAR = [p_ for _, p_ in model.named_parameters()]; GIDX = torch.tensor([gk(n_) for n_, _ in model.named_parameters()], device=dev)
+        GZERO = torch.zeros((), device=dev)
+        def group_norms():                                                     # on the GPU, no host sync: (len(GNAMES),) pre-clip norms
+            nr = torch.stack(torch._foreach_norm([p_.grad if p_.grad is not None else GZERO for p_ in GPAR])).float()
+            return torch.zeros(len(GNAMES), device=dev).index_add_(0, GIDX, nr * nr).sqrt()
         GLF = ROOT/"logs/linkformer"/f"{tag}.spikes.jsonl"; GLF.parent.mkdir(parents=True, exist_ok=True)
         def gradlog_read():
             """One host read for the steps since the last call: stats for the 250-step line; spike rows and the 12.5k top-5 to GLF."""
             st = GL["steps"]; GL["steps"] = []
             if not st: return ""
             norms = torch.stack([x[2] for x in st]).float().cpu().numpy(); bls = [x[3].float().cpu().numpy() for x in st]; spikes = 0
+            gg = torch.stack([x[5] for x in st]).cpu().numpy(); mv = torch.stack([x[6] for x in st]).cpu().numpy()   # (k, groups), (k, 3)
             with open(GLF, "a") as fo:
-                for (s_, lr_, _, _, meta), g_, bl in zip(st, norms, bls):
+                for (s_, lr_, _, _, meta, _, _), g_, bl, gr, mx_ in zip(st, norms, bls, gg, mv):
                     prev = GL["hist"][-1000:]; med = float(np.median(prev)) if len(prev) >= 100 else None; GL["hist"].append(float(g_))
-                    row = dict(step=s_, norm=round(float(g_), 4), median=med and round(med, 4), lr=lr_,
+                    row = dict(step=s_, norm=round(float(g_), 4), median=med and round(med, 4), lr=lr_, groups={k_: round(float(v_), 4) for k_, v_ in zip(GNAMES, gr)},
+                               max_link_logit=round(float(mx_[0]), 2), max_cls_logit=round(float(mx_[1]), 2), max_link_lse=round(float(mx_[2]), 2),
                                boards=[dict(id=i_, link=round(float(l_[0]), 4), cls=round(float(l_[1]), 4), parts=n_, texts=m_) for (i_, n_, m_), l_ in zip(meta, bl)])
                     if med and g_ > a.gradlog_spike*med: spikes += 1; fo.write(json.dumps(dict(kind="spike", **row)) + "\n")
                     GL["win"].append((float(g_), row)); GL["win"] = sorted(GL["win"], key=lambda r: -r[0])[:5]
@@ -1158,8 +1175,12 @@ if __name__ == "__main__":
                         for _, r in GL["win"]: fo.write(json.dumps(dict(kind="top5", window_end=s_, **r)) + "\n")
                         GL["win"] = []
                 GL["hist"] = GL["hist"][-1000:]
+                fo.write(json.dumps(dict(kind="window", step=st[-1][0], steps=len(st), group_mean={k_: round(float(v_), 4) for k_, v_ in zip(GNAMES, gg.mean(0))},
+                                         group_max={k_: round(float(v_), 4) for k_, v_ in zip(GNAMES, gg.max(0))}, max_link_logit=round(float(mv[:, 0].max()), 2),
+                                         max_cls_logit=round(float(mv[:, 1].max()), 2), max_link_lse=round(float(mv[:, 2].max()), 2))) + "\n")
             return (f", grad norm mean {norms.mean():.3f} median {np.median(norms):.3f} max {norms.max():.3f} clipped {100*(norms > 1.0).mean():.1f} % "
-                    f"spikes {spikes}")
+                    f"spikes {spikes}, max trunk {np.sqrt((gg[:, :-2]**2).sum(1)).max():.3f} (block{int(gg[:, 1:-2].max(0).argmax())}) link {gg[:, -2].max():.3f} class {gg[:, -1].max():.3f}, "
+                    f"max |link logit| {mv[:, 0].max():.1f} |class logit| {mv[:, 1].max():.1f} link lse {mv[:, 2].max():.1f}")
     if a.prefetch and a.batched and a.head == "dot":  # producer thread: next steps' boards -> groups -> padded batches on the GPU (pinned copies)
         import threading, queue
         PQ = queue.Queue(maxsize=a.prefetch)
@@ -1197,7 +1218,7 @@ if __name__ == "__main__":
                             if a.timing: TM["groups"] += 1; TM["tok_real"] += sum(n_ + m_ for _, n_, m_ in gm); TM["tok_pad"] += len(gm) * (-(-max(n_ + m_ for _, n_, m_ in gm) // 16) * 16)
                             TM["batch"] += time.time() - tq
                             loss = net(db) / acc
-                            if GL is not None: GL["bl"].append(model._board_loss)
+                            if GL is not None: GL["bl"].append(model._board_loss); GL["mx"].append(model._maxv)
                         else:
                             g = [from_numpy(e) for e in g]; outs = net([to_dev(e, dev) for e in g])
                             loss = sum(loss_lg(o, e["tmask"].to(dev), e["ign"]) for o, e in zip(outs, g)) / acc
@@ -1211,6 +1232,7 @@ if __name__ == "__main__":
                 loss = (loss_lg(logits, e["tmask"].to(dev), e["ign"]) if a.head == "lg" else loss_fn(logits.float(), e["tmask"].to(dev))) / acc
                 loss.backward(); tot += loss.item()
         with ph("optim"):
+            if GL is not None: gG = group_norms()                                  # pre-clip, per parameter group
             if a.zclip and step > a.zclip_warmup:                               # ZClip: clip to EMA mean + z x EMA std, all on the GPU
                 gn = torch.nn.utils.clip_grad_norm_(model.parameters(), float("inf")); thr = ZC["mu"] + a.zclip * ZC["sd"]
                 torch._foreach_mul_([p_.grad for p_ in model.parameters() if p_.grad is not None], torch.clamp(thr / (gn + 1e-6), max=1.0))
@@ -1221,7 +1243,7 @@ if __name__ == "__main__":
                 if a.zclip:                                                       # warm-up: statistics of the first steps
                     ZC.setdefault("buf", []).append(gn.detach().float())
                     if step == a.zclip_warmup: b_ = torch.stack(ZC.pop("buf")); ZC.update(mu=b_.mean(), sd=b_.std().clamp_min(1e-6))
-            if GL is not None: GL["steps"].append((step, sched.get_last_lr()[0], gn.detach(), torch.cat(GL["bl"]), GL["meta"])); GL["bl"], GL["meta"] = [], []
+            if GL is not None: GL["steps"].append((step, sched.get_last_lr()[0], gn.detach(), torch.cat(GL["bl"]), GL["meta"], gG, torch.stack(GL["mx"]).amax(0))); GL["bl"], GL["mx"], GL["meta"] = [], [], []
             opt.step(); sched.step()
         run = tot if run is None else 0.98*run + 0.02*tot                                             # a GPU tensor when batched
         if torch.is_tensor(parts): runp = parts if runp is None else 0.98*runp + 0.02*parts           # link / class / text-class parts
@@ -1245,7 +1267,7 @@ if __name__ == "__main__":
             with ph("ckpt"):
                 rp = a.save.replace(".pt", f"_roll{step}.pt"); Path(rp).parent.mkdir(parents=True, exist_ok=True)
                 if disk_ok(rp, a.min_free_gb, tag): torch.save(dict(model=model.state_dict(), vocab=vocab.prefixes, args=vars(a), step=step, meta=META,
-                                **(dict(opt=opt.state_dict(), sched=sched.state_dict()) if a.roll_optim else {})), rp); ROLL.append(rp)
+                                **(dict(opt=opt.state_dict(), sched=sched.state_dict()) if a.roll_optim else {})), rp); ROLL.append(rp) if not (a.roll_keep_from and step >= a.roll_keep_from) else None
                 while len(ROLL) > a.roll_keep: os.remove(ROLL.pop(0))
         if evs and (step % a.eval_every == 0 or step == a.steps or step == a.stop_at):
             with ph("eval"): tq = time.time(); res = {s: evaluate(model, es, dev)[0] for s, es in evs.items()}; TM["eval"] += time.time() - tq
