@@ -59,7 +59,7 @@ NUMS = re.compile(r"^(\d{1,4})([A-Z]?)$")             # a designator whose lette
 PFX_CLS = {"R": 0, "RN": 0, "RV": 0, "VR": 0, "RP": 0, "RA": 0, "RM": 0, "TH": 0, "C": 1, "L": 2, "FB": 2,
            "F": 0, "PF": 0, "FU": 0, "NTC": 0, "PTC": 0, "RT": 0, "MOV": 0, "VDR": 0,   # taxonomy_final 2026-10-25: fuse / polyfuse, thermistor, varistor -> R
            "J": 3, "P": 3, "JP": 3, "CN": 3, "CON": 3, "USB": 3, "D": 4, "LED": 4, "LD": 4, "DS": 4, "CR": 4, "RGB": 4,
-           "SW": 5, "S": 5, "BTN": 5, "Q": 6, "T": 2, "TR": 2, "U": 7, "IC": 7, "M": 7, "Y": 8, "X": 8, "XL": 8}   # T / TR: transformer -> L; M: module / motor / MOSFET, kept 7 (open); = kicad_links.PFX
+           "SW": 5, "S": 5, "BTN": 5, "Q": 6, "T": 2, "TR": 2, "U": 7, "IC": 7, "Y": 8, "X": 8, "XL": 8}   # T / TR: transformer -> L; M removed (owner 2026-10-25 15:24: module / motor / MOSFET - no class from the prefix alone); = kicad_links.PFX
 IGNORE_PFX_CLS = {"FL", "FIL", "K", "RL", "PS", "BT", "BAT", "BZ", "LS", "SP", "HS", "AE", "ANT", "MK", "MIC"}   # taxonomy_final: no class (EMI filter, relay, power module, battery, buzzer / speaker, heatsink, antenna, microphone); not in PFX
 def distractor(rng):
     """A non-designator silkscreen string of the kind OCR also returns: a part value, a net / pin name, a bare number, a word."""
