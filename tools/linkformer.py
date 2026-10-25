@@ -1161,6 +1161,7 @@ if __name__ == "__main__":
             try: wb = wandb.init(**kw)
             except Exception as ex: print(f"[{tag}] wandb online failed ({repr(ex)[:80]}), logging offline", flush=True); wb = wandb.init(mode="offline", **kw)
         except Exception as ex: print(f"[{tag}] wandb unavailable: {repr(ex)[:80]}", flush=True)
+    if wb: wb.define_metric("train/step"); wb.define_metric("*", step_metric="train/step")       # same keys + x axis as tools/e2e/wandb_replay.py (main 2026-10-25)
     if is_main: META.update(wandb=dict(project=a.wandb, id=wb.id) if wb else None, gpu=RM.gpu(dev))
     from contextlib import nullcontext
     log = []; t0 = time.time(); run = None; runp = None; TM = dict(data=0.0, batch=0.0, eval=0.0, groups=0, tok_real=0, tok_pad=0); tw = time.time()   # --timing
@@ -1275,15 +1276,22 @@ if __name__ == "__main__":
         if not is_main: continue
         lp = (lambda: dict(zip(PART_TERMS, [round(v, 4) for v in runp.tolist()]))) if runp is not None else (lambda: {})
         with ph("log"):
+            sps = gls = None
             if a.timing and step % 250 == 0:
-                dt = time.time() - tw - TM["eval"]; tw = time.time()
+                dt = time.time() - tw - TM["eval"]; tw = time.time(); sps = dt/250
                 print(f"[{tag}] timing step {step}: {dt/250:.4f} s/step, data wait {1e3*TM['data']/250:.1f} ms, batch build + h2d {1e3*TM['batch']/250:.1f} ms, "
                       f"{a.accum*250/dt:.1f} boards/s, peak mem {torch.cuda.max_memory_allocated(dev)/2**30:.1f} GiB, eval {TM['eval']:.1f} s, "
                       f"{TM['groups']/250:.2f} groups/step, padding {100*(1 - TM['tok_real']/max(TM['tok_pad'], 1)):.1f} %" if dev.type == "cuda" else "", flush=True)
                 TM.update(data=0.0, batch=0.0, eval=0.0, groups=0, tok_real=0, tok_pad=0)
-            if GL is not None and step % 250 == 0: print(f"[{tag}] gradlog step {step}" + gradlog_read(), flush=True)
-            if not wb and step % 250 == 0: print(f"[{tag}] step {step} train_loss {float(run):.4f}" + "".join(f" {k} {v:.4f}" for k, v in lp().items()), flush=True)
-        if wb and step % 50 == 0: wb.log(dict(loss=float(run), lr=sched.get_last_lr()[0], steps_per_s=step/(time.time()-t0)), step=step)
+            if GL is not None and step % 250 == 0: gls = gradlog_read(); print(f"[{tag}] gradlog step {step}" + gls, flush=True)
+            if step % 250 == 0: print(f"[{tag}] step {step} train_loss {float(run):.4f}" + "".join(f" {k} {v:.4f}" for k, v in lp().items()), flush=True)
+            if wb and step % 250 == 0:                                                        # one row per 250 steps: the train line values
+                W = {"train/step": step, "boards": step*(a.bps or a.accum), "train/loss_250": round(float(run), 4), "train/lr": sched.base_lrs[0]*lr_at(step - 1),
+                     **{f"train/loss_{k}": v for k, v in lp().items()}}
+                if sps: W["train/s_per_step"] = round(sps, 4)
+                if gls and (gm := re.search(r"grad norm mean ([0-9.]+) median ([0-9.]+) max ([0-9.]+) clipped ([0-9.]+) % spikes (\d+)", gls)):
+                    W.update({f"train/grad_norm_{k}": float(v) for k, v in zip(("mean", "median", "max", "clipped_pct", "spikes"), gm.groups())})
+                wb.log(W, step=step)
         if a.ckpt_every and a.save and step % a.ckpt_every == 0 and step < a.steps:
             with ph("ckpt"):
                 Path(a.save).parent.mkdir(parents=True, exist_ok=True); cp_ = a.save.replace(".pt", f"_step{step}.pt")
@@ -1297,7 +1305,8 @@ if __name__ == "__main__":
         if evs and (step % a.eval_every == 0 or step == a.steps or step == a.stop_at):
             with ph("eval"): tq = time.time(); res = {s: evaluate(model, es, dev)[0] for s, es in evs.items()}; TM["eval"] += time.time() - tq
             log.append(dict(step=step, loss=round(float(run), 4), loss_parts=lp(), **res))
-            if wb: wb.log({f"{s}/{m}": r[m] for s, r in res.items() for m in ("acc", "prec", "f1")}, step=step)
+            if wb: wb.log({"train/step": step, "boards": step*(a.bps or a.accum), "loss": round(float(run), 4), **{f"{s}/{m}": r[m] for s, r in res.items()
+                           for m in ("acc", "prec", "f1", "cls_head", "cls_rule", "cls_gt", "loss_link", "loss_cls") if m in r}}, step=step)
             print(f"[{tag}] step {step} loss {float(run):.3f} " + " ".join(f"{s}: acc {r['acc']:.3f} prec {r['prec']:.3f}" + (f" cls {r['cls_head']:.3f}/{r['cls_rule']:.3f}" + (f" gt-link {r['cls_gt']:.3f}" if "cls_gt" in r else "") if "cls_head" in r else "")
                     + (f" lossL {r['loss_link']:.4f}" if "loss_link" in r else "") + (f" lossC {r['loss_cls']:.4f}" if "loss_cls" in r else "") for s, r in res.items()) + f" ({time.time()-t0:.0f}s)", flush=True)
         if a.stop_at and step >= a.stop_at: print(f"[{tag}] --stop_at {a.stop_at}: training stopped", flush=True); break
