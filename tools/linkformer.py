@@ -125,6 +125,30 @@ class Vocab:
         if s and NUMS.match(s): return self.idx.get("<NUM>", 1)                # digits only (letters lost)
         return self.idx.get("<TXT>", 1) if s else 1                            # other text / empty
 
+class Store:
+    """Per-side inputs from a folder of <side id>.<ext> files (ext npy / npz / json) or from ONE packed file of the same content
+    (tools/pack_inputs.py; owner 2026-10-25: fast data load on network storage): .npz keyed by side id (a packed npz folder: keys
+    <id>__<array name>) or .json {side id: value}. get(id) = what loading the single file gives (array / dict of arrays / json value), None if
+    missing."""
+    def __init__(self, path, ext):
+        self.p, self.ext, self.Z = Path(path), ext, None
+        if self.p.suffix == ".npz":
+            self.Z = np.load(self.p); self.sub = {}
+            for n in self.Z.files: self.sub.setdefault(n.rsplit("__", 1)[0] if ext == "npz" else n, []).append(n)
+        elif self.p.suffix == ".json": self.Z = json.load(open(self.p))
+    def get(self, k):
+        if self.Z is None:
+            f = self.p/f"{k}.{self.ext}"
+            if not f.exists(): return None
+            return np.load(f) if self.ext == "npy" else dict(np.load(f)) if self.ext == "npz" else json.load(open(f))
+        if isinstance(self.Z, dict): return self.Z.get(k)
+        if k not in self.sub: return None
+        return {n[len(k) + 2:]: self.Z[n] for n in self.sub[k]} if self.ext == "npz" else self.Z[k]
+
+def noise_feat_path(noise_dir):
+    """The noise-box feature input next to --noise_dir: folder <noise_dir>feat, or for a packed <name>.json the packed <name>feat.npz."""
+    return noise_dir[:-5] + "feat.npz" if noise_dir.endswith(".json") else noise_dir.rstrip("/") + "feat"
+
 def attach_pimg(boards, path):
     """Part image features from an npz with one (n parts, D) array per board id, in the boards' parts order (tools/part_roi.py photo);
     boards without a matching array keep no image (the model then uses its no-image vector). Returns the number of boards matched."""
@@ -969,7 +993,7 @@ if __name__ == "__main__":
         META["config"] = dict(file=a.config or None, md5=a.config and RM.md5_file(a.config), resolved=str(cfg_out))
         ins = dict(data=ROOT/"linkdata"/a.data) if a.data else {f"data:{f}": ROOT/"linkdata"/f for f in ("wacv.json", "folds.json", "kicad199.json", "kicad_all.json")}
         ins.update(txtfeat=a.txtfeat and ROOT/a.txtfeat, txtfeat_wacv=a.txtfeat and a.txtfeat_wacv and ROOT/a.txtfeat_wacv,
-                   noise_dir=a.noise and ROOT/a.noise_dir, noise_feat=a.noise and ROOT/(a.noise_dir.rstrip("/")+"feat"), fptype=a.fptype and ROOT/a.fptype,
+                   noise_dir=a.noise and ROOT/a.noise_dir, noise_feat=a.noise and ROOT/noise_feat_path(a.noise_dir), fptype=a.fptype and ROOT/a.fptype,
                    detscore=a.detscore and ROOT/a.detscore, detscore_preds=a.detscore and ROOT/"data/preds_wacv_1280_cls9.json",
                    imgfeat=a.imgfeat and ROOT/a.imgfeat, init=a.init and Path(a.init),
                    pimgfeat=a.pimgfeat and ROOT/a.pimgfeat, pimgfeat_wacv=a.pimgfeat_wacv and ROOT/a.pimgfeat_wacv,
@@ -979,24 +1003,24 @@ if __name__ == "__main__":
     sets = load_sets(a.data); AMP = a.amp
     a.imgdim = 0; a.txtdim = 0
     if a.txtfeat:                                     # PARSeq features: KiCad sides from <dir>/<side id>.npy, WACV-clean from --txtfeat_wacv
-        D = ROOT/a.txtfeat; nk = nw = 0
+        TXS = Store(ROOT/a.txtfeat, "npy"); nk = nw = 0
+        if a.noise: NBS, NFS = Store(ROOT/a.noise_dir, "json"), Store(ROOT/noise_feat_path(a.noise_dir), "npy")
         for name in list(sets):
             keep = []; nc = META.setdefault("board_filter", {})[name] = dict(boards=len(sets[name]), dropped_no_feat=0, dropped_len=0)
             for b in sets[name]:
                 if "clean" in b: keep.append(b); continue
                 if b.get("source") != "kicad": keep.append(b); continue
-                f = D/f"{b['id']}.npy"
-                if not f.exists(): nc["dropped_no_feat"] += 1; continue               # side not rendered / not aligned: left out
-                F_ = np.load(f)
+                F_ = TXS.get(b["id"])
+                if F_ is None: nc["dropped_no_feat"] += 1; continue                  # side not rendered / not aligned: left out
                 if len(F_) != len(b["texts"]): nc["dropped_len"] += 1; continue
                 if "tf" not in b["texts"][0]:
                     for t, v in zip(b["texts"], F_): t["tf"] = v.astype(np.float32)
                     nk += 1
                 if a.noise and "noise" not in b:                                      # noise boxes + features (fp16), sampled in augment()
-                    fb, ff = ROOT/a.noise_dir/f"{b['id']}.json", ROOT/(a.noise_dir.rstrip("/")+"feat")/f"{b['id']}.npy"
+                    jb, nf_ = NBS.get(b["id"]), NFS.get(b["id"])
                     b["noise"] = []
-                    if fb.exists() and ff.exists():
-                        nb_, nf_ = json.load(open(fb))["boxes"], np.load(ff)
+                    if jb is not None and nf_ is not None:
+                        nb_ = jb["boxes"]
                         if len(nb_) == len(nf_): b["noise"] = [dict(box=bx, text="", angle=None, noise=True, tf=v) for bx, v in zip(nb_, nf_)]
                 keep.append(b)
             sets[name] = keep; nc["kept"] = len(keep)
@@ -1023,13 +1047,13 @@ if __name__ == "__main__":
             tr = sets.get(a.train, []); print(f"[{a.tag}] noise boxes: {sum(bool(b.get('noise')) for b in tr)} of {len(tr)} train sides, "
                                                f"{sum(len(b.get('noise', [])) for b in tr)} boxes, {a.noise} per label in augment", flush=True)
     if a.fptype:                                      # class target of KiCad parts from the footprint name (not the designator prefix)
-        nch = nk_ = seen = 0; done = set()
+        nch = nk_ = seen = 0; done = set(); FTS = Store(ROOT/a.fptype, "json")
         for bs in sets.values():
             for b in bs:
                 if b.get("source") != "kicad" or id(b) in done: continue
-                done.add(id(b)); f = ROOT/a.fptype/f"{b['id']}.json"
-                if not f.exists(): continue
-                ft = json.load(open(f))["fptype"]
+                done.add(id(b)); jf = FTS.get(b["id"])
+                if jf is None: continue
+                ft = jf["fptype"]
                 if len(ft) != len(b["parts"]): continue
                 seen += 1
                 for pp, t in zip(b["parts"], ft):
@@ -1069,13 +1093,14 @@ if __name__ == "__main__":
     if a.pimgfeat or a.pimgfeat_wacv or a.pimgfeat_wacv_raw:   # part image features, before the DataLoader workers fork (kept float16; encode() casts)
         Zw = np.load(ROOT/a.pimgfeat_wacv) if a.pimgfeat_wacv else None; done = set(); dims = set()
         Zr2 = np.load(ROOT/a.pimgfeat_wacv_raw) if a.pimgfeat_wacv_raw else None   # raw WACV boards (no "clean" key), eval only
+        PIS = Store(ROOT/a.pimgfeat, "npz") if a.pimgfeat else None
         pc = dict(boards=0, kicad_sides=0, kicad_len_mismatch=0, wacv_clean_boards=0, wacv_raw_boards=0, parts=0, parts_with_image=0)
         for bs in sets.values():
             for b in bs:
                 if id(b) in done: continue
                 done.add(id(b)); pc["boards"] += 1; pc["parts"] += len(b["parts"]); F_ = O_ = None
-                if b.get("source") == "kicad" and a.pimgfeat and (ROOT/a.pimgfeat/f"{b['id']}.npz").exists():
-                    Z = np.load(ROOT/a.pimgfeat/f"{b['id']}.npz"); F_, O_ = Z["feat"], Z["ok"]; key = "kicad_sides"
+                if b.get("source") == "kicad" and PIS is not None and (Zp := PIS.get(b["id"])) is not None:
+                    F_, O_ = Zp["feat"], Zp["ok"]; key = "kicad_sides"
                 elif "clean" in b and Zw is not None and b["id"] in Zw.files:
                     F_ = Zw[b["id"]]; O_ = np.ones(len(F_), bool); key = "wacv_clean_boards"
                 elif "clean" not in b and b.get("source") != "kicad" and Zr2 is not None and b["id"] in Zr2.files:
