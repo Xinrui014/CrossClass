@@ -1177,11 +1177,15 @@ if __name__ == "__main__":
             if top in ("wq", "wk", "none", "ms", "mt", "ar"): return GNAMES.index("link_head")
             if top in ("cin", "enone", "cout", "cblocks", "cnf", "cls", "tcls", "fcls", "cmlp"): return GNAMES.index("class_head")
             return 1 + int(n.split(".")[1]) if top == "blocks" else 0                       # trunk_in also holds the final LayerNorm nf
+        SUBN = {"tfp": "in_txt", "pimp": "in_img", "noimg": "in_noimg", "inp": "in_geo", "pref": "in_str", "dig": "in_str", "nf": "out_norm"}
+        GSUB = ["in_txt", "in_img", "in_noimg", "in_geo", "in_str", "out_norm", "in_other"]   # parts of trunk_in (main 2026-10-25: both bursts start there)
+        def gs(n): return len(GNAMES) + (GSUB.index(SUBN.get(n.split(".")[0], "in_other")) if gk(n) == 0 else len(GSUB))   # last slot: not trunk_in
         GPAR = [p_ for _, p_ in model.named_parameters()]; GIDX = torch.tensor([gk(n_) for n_, _ in model.named_parameters()], device=dev)
+        GSIDX = torch.tensor([gs(n_) for n_, _ in model.named_parameters()], device=dev); NG = len(GNAMES) + len(GSUB) + 1
         GZERO = torch.zeros((), device=dev)
-        def group_norms():                                                     # on the GPU, no host sync: (len(GNAMES),) pre-clip norms
-            nr = torch.stack(torch._foreach_norm([p_.grad if p_.grad is not None else GZERO for p_ in GPAR])).float()
-            return torch.zeros(len(GNAMES), device=dev).index_add_(0, GIDX, nr * nr).sqrt()
+        def group_norms():                                     # on the GPU, no host sync: pre-clip norms of GNAMES, then of the GSUB parts
+            nr = torch.stack(torch._foreach_norm([p_.grad if p_.grad is not None else GZERO for p_ in GPAR])).float(); sq = nr * nr
+            return torch.zeros(NG, device=dev).index_add_(0, GIDX, sq).index_add_(0, GSIDX, sq).sqrt()
         GLF = ROOT/"logs/linkformer"/f"{tag}.spikes.jsonl"; GLF.parent.mkdir(parents=True, exist_ok=True)
         def gradlog_read():
             """One host read for the steps since the last call: stats for the 250-step line; spike rows and the 12.5k top-5 to GLF."""
@@ -1189,10 +1193,12 @@ if __name__ == "__main__":
             if not st: return ""
             norms = torch.stack([x[2] for x in st]).float().cpu().numpy(); bls = [x[3].float().cpu().numpy() for x in st]; spikes = 0
             gg = torch.stack([x[5] for x in st]).cpu().numpy(); mv = torch.stack([x[6] for x in st]).cpu().numpy()   # (k, groups), (k, 3)
+            gp, gg = gg[:, len(GNAMES):len(GNAMES) + len(GSUB)], gg[:, :len(GNAMES)]                                     # trunk_in parts | groups
             with open(GLF, "a") as fo:
-                for (s_, lr_, _, _, meta, _, _), g_, bl, gr, mx_ in zip(st, norms, bls, gg, mv):
+                for (s_, lr_, _, _, meta, _, _), g_, bl, gr, gpr, mx_ in zip(st, norms, bls, gg, gp, mv):
                     prev = GL["hist"][-1000:]; med = float(np.median(prev)) if len(prev) >= 100 else None; GL["hist"].append(float(g_))
                     row = dict(step=s_, norm=round(float(g_), 4), median=med and round(med, 4), lr=lr_, groups={k_: round(float(v_), 4) for k_, v_ in zip(GNAMES, gr)},
+                               trunk_in_parts={k_: round(float(v_), 4) for k_, v_ in zip(GSUB, gpr)},
                                max_link_logit=round(float(mx_[0]), 2), max_cls_logit=round(float(mx_[1]), 2), max_link_lse=round(float(mx_[2]), 2),
                                boards=[dict(id=i_, link=round(float(l_[0]), 4), cls=round(float(l_[1]), 4), parts=n_, texts=m_) for (i_, n_, m_), l_ in zip(meta, bl)])
                     if med and g_ > a.gradlog_spike*med: spikes += 1; fo.write(json.dumps(dict(kind="spike", **row)) + "\n")
@@ -1202,11 +1208,14 @@ if __name__ == "__main__":
                         GL["win"] = []
                 GL["hist"] = GL["hist"][-1000:]
                 fo.write(json.dumps(dict(kind="window", step=st[-1][0], steps=len(st), group_mean={k_: round(float(v_), 4) for k_, v_ in zip(GNAMES, gg.mean(0))},
-                                         group_max={k_: round(float(v_), 4) for k_, v_ in zip(GNAMES, gg.max(0))}, max_link_logit=round(float(mv[:, 0].max()), 2),
+                                         group_max={k_: round(float(v_), 4) for k_, v_ in zip(GNAMES, gg.max(0))},
+                                         trunk_in_parts_mean={k_: round(float(v_), 4) for k_, v_ in zip(GSUB, gp.mean(0))},
+                                         trunk_in_parts_max={k_: round(float(v_), 4) for k_, v_ in zip(GSUB, gp.max(0))}, max_link_logit=round(float(mv[:, 0].max()), 2),
                                          max_cls_logit=round(float(mv[:, 1].max()), 2), max_link_lse=round(float(mv[:, 2].max()), 2))) + "\n")
             return (f", grad norm mean {norms.mean():.3f} median {np.median(norms):.3f} max {norms.max():.3f} clipped {100*(norms > 1.0).mean():.1f} % "
                     f"spikes {spikes}, max trunk {np.sqrt((gg[:, :-2]**2).sum(1)).max():.3f} (block{int(gg[:, 1:-2].max(0).argmax())}) link {gg[:, -2].max():.3f} class {gg[:, -1].max():.3f}, "
-                    f"max |link logit| {mv[:, 0].max():.1f} |class logit| {mv[:, 1].max():.1f} link lse {mv[:, 2].max():.1f}")
+                    f"max |link logit| {mv[:, 0].max():.1f} |class logit| {mv[:, 1].max():.1f} link lse {mv[:, 2].max():.1f}, "
+                    "trunk_in parts max " + " ".join(f"{k_[3:] if k_.startswith('in_') else k_} {v_:.3f}" for k_, v_ in zip(GSUB, gp.max(0))))
     if a.prefetch and a.batched and a.head == "dot":  # producer thread: next steps' boards -> groups -> padded batches on the GPU (pinned copies)
         import threading, queue
         PQ = queue.Queue(maxsize=a.prefetch)
