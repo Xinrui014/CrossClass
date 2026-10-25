@@ -3,18 +3,18 @@
 # runs), regular rose QOS only (no killable QOS, no resume runs). The run is fully defined by a configs/*.yaml file (tools/linkformer.py
 # --config); EXTRA adds or overrides flags (explicit flags win over the config). Logs: logs/linkformer/<tag>.log (+ logs/%x_%j.out);
 # ckpts: the config's save path under ~/xrssd/crossclass (ckpt/). The resolved config is written next to the ckpt by linkformer.py.
-# Submit with a TYPED gres (untyped --gres=gpu:1 is rejected) and RAM / CPUs that fit the GPU type, e.g.
-#   sbatch --job-name=E2TF_detach --gres=gpu:l40:1 --cpus-per-task=8 --mem=48G --time=1-00:00:00 \
+# Cluster rules (github.com/NTUEEECluster/docs, 2026-10-25): GPU jobs set ONLY a typed --gres=gpu:<model>:1 and --time (max 3 days);
+# NEVER --mem / --cpus-per-task / --exclusive: 4 CPUs + a fixed RAM come with each GPU, so the DataLoader uses WORKERS=3 (default) and
+# the prefetch thread. Caches and scratch go to the SSD project dir. Submit e.g.
+#   sbatch --job-name=E2TF_detach --gres=gpu:l40:1 --time=1-00:00:00 \
 #          --export=ALL,CFG=configs/v3_E2TF_img_rope4_nogeo_nosize_detachtext125k_eager.yaml,EXTRA="--wandb crossclass --wandb_group v3_img" \
 #          tools/cluster/linkformer_cfg.sbatch
-#   (pro6000: --mem=32G; a6000: --mem=22G). The same run may be queued on several GPU types with the same --job-name: the sibling guard
+#   The same run may be queued on several GPU types with the same --job-name: the sibling guard
 #   below keeps only one copy.
 #SBATCH --job-name=linkformer_cfg
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:l40:1
-#SBATCH --mem=48G
 #SBATCH --time=1-00:00:00
 #SBATCH --qos=rose
 #SBATCH --output=/home/xinrui004/xrssd/crossclass/logs/%x_%j.out
@@ -31,9 +31,11 @@ done
 source /etc/profile.d/z00-lmod.sh
 module load CUDA/12.8.0 || true
 PY=/projects/_ssd/xrssd/envs/qwen_edit_flash/bin/python
-export CROSSCLASS=/home/xinrui004/xrssd/crossclass TMPDIR=/home/xinrui004/xrssd/.tmp WANDB_DIR=/home/xinrui004/xrssd/crossclass/logs
-cd "$CROSSCLASS"; mkdir -p logs/linkformer logs/wandb ckpt "$TMPDIR"
-: "${CFG:?set CFG=configs/<run>.yaml with --export}"; EXTRA=${EXTRA:-}
+export CROSSCLASS=/home/xinrui004/xrssd/crossclass WANDB_DIR=/home/xinrui004/xrssd/crossclass/logs; K=$CROSSCLASS/.cache
+export TMPDIR=$K/tmp/$SLURM_JOB_ID PIP_CACHE_DIR=$K/pip CONDA_PKGS_DIRS=$K/conda HF_HOME=$K/hf TRITON_CACHE_DIR=$K/triton TORCH_HOME=$K/torch XDG_CACHE_HOME=$K/xdg
+mkdir -p "$TMPDIR" $K/pip $K/conda $K/hf $K/triton $K/torch $K/xdg; trap 'rm -rf "$TMPDIR"' EXIT
+cd "$CROSSCLASS"; mkdir -p logs/linkformer logs/wandb ckpt
+: "${CFG:?set CFG=configs/<run>.yaml with --export}"; EXTRA="--workers ${WORKERS:-3} ${EXTRA:-}"   # 4 CPUs per GPU: 3 workers + main
 nvidia-smi --query-gpu=name,memory.total --format=csv
 echo "code $(git rev-parse --short HEAD) $(md5sum < tools/linkformer.py | cut -c1-8), config $CFG $(md5sum < "$CFG" | cut -c1-8), extra: $EXTRA"
 df -BG --output=avail "$CROSSCLASS" | tail -1 | xargs echo "xrssd free:"
