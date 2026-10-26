@@ -268,8 +268,8 @@ def encode(b, vocab, as_numpy=False):
     return dict(id=b["id"], n=n, m=m, feats=f(feats), pos=f(pos), pref=f(pref, torch.long), dig=f(dig, torch.long), box=f(B), tmask=torch.from_numpy(tmask),
                 tgt=tgt, ign=ign, strs=strs, des=[p["des"] for p in b["parts"]], **{k: f(v, torch.long if v.dtype == np.int64 else torch.float32) for k, v in extra.items()})
 
-ARCH = ("size", "tokens", "head", "geobias", "strrel", "glayers", "local", "imgdim", "clshead", "txtdim", "clsmode", "rankrel", "detdim", "arhead", "pos", "nosize", "pimgdim", "clshead_tf", "qknorm")
-ARCH_LATE = {"pos": "rope", "nosize": False, "pimgdim": 0, "clshead_tf": 2, "qknorm": False}   # added 2026-10-23 after meta ckpts existed (absmlp runs: pos only; rope4 runs: no pimgdim)
+ARCH = ("size", "tokens", "head", "geobias", "strrel", "glayers", "local", "imgdim", "clshead", "txtdim", "clsmode", "rankrel", "detdim", "arhead", "pos", "nosize", "pimgdim", "clshead_tf", "qknorm", "in_norm", "pimg_std", "pimg_std_clamp")
+ARCH_LATE = {"pos": "rope", "nosize": False, "pimgdim": 0, "clshead_tf": 2, "qknorm": False, "in_norm": False, "pimg_std": False, "pimg_std_clamp": 0.0}   # added 2026-10-23 (in_norm 2026-10-25) after meta ckpts existed (absmlp runs: pos only; rope4 runs: no pimgdim)
 OLD_WARNED = set()                                    # old ckpts (no meta) already warned about
 
 def load_model(path, dev):
@@ -283,7 +283,7 @@ def load_model(path, dev):
     elif str(path) not in OLD_WARNED:
         OLD_WARNED.add(str(path)); print(f"WARNING: {path} is an old ckpt (no meta); defaults for missing keys: {miss or 'none missing'}", file=sys.stderr, flush=True)
     d, L = SIZES[A["size"]]
-    m = LinkFormer(d, L, len(vocab.idx)+2, A["tokens"] == "E2", 0.0, A.get("head", "dot"), A.get("geobias", False), A.get("strrel", False), A.get("glayers", False), A.get("local", 0.0), A.get("imgdim", 0), A.get("clshead", False), A.get("txtdim", 0), A.get("clsmode", "parallel"), A.get("rankrel", False), A.get("detdim", 0), A.get("arhead", False), pos=A.get("pos", "rope"), nosize=A.get("nosize", False), pimgdim=A.get("pimgdim", 0), clshead_tf=A.get("clshead_tf", 2), qknorm=A.get("qknorm", False))
+    m = LinkFormer(d, L, len(vocab.idx)+2, A["tokens"] == "E2", 0.0, A.get("head", "dot"), A.get("geobias", False), A.get("strrel", False), A.get("glayers", False), A.get("local", 0.0), A.get("imgdim", 0), A.get("clshead", False), A.get("txtdim", 0), A.get("clsmode", "parallel"), A.get("rankrel", False), A.get("detdim", 0), A.get("arhead", False), pos=A.get("pos", "rope"), nosize=A.get("nosize", False), pimgdim=A.get("pimgdim", 0), clshead_tf=A.get("clshead_tf", 2), qknorm=A.get("qknorm", False), in_norm=A.get("in_norm", False), pimg_std=A.get("pimg_std", False), pimg_std_clamp=A.get("pimg_std_clamp", 0.0))
     m.load_state_dict(ck["model"]); return m.to(dev).eval(), vocab, A
 
 def messy(b, margin=0.5):
@@ -477,7 +477,7 @@ class ARHead(nn.Module):
         out = torch.empty_like(rows); out[order] = rows; return out
 
 class LinkFormer(nn.Module):
-    def __init__(self, d, layers, n_prefix, use_string, dropout=0.0, head="dot", geobias=False, strrel=False, glayers=False, local=0.0, imgdim=0, clshead=False, txtdim=0, clsmode="parallel", rankrel=False, detdim=0, arhead=False, pos="rope", nosize=False, pimgdim=0, clshead_tf=2, qknorm=False):
+    def __init__(self, d, layers, n_prefix, use_string, dropout=0.0, head="dot", geobias=False, strrel=False, glayers=False, local=0.0, imgdim=0, clshead=False, txtdim=0, clsmode="parallel", rankrel=False, detdim=0, arhead=False, pos="rope", nosize=False, pimgdim=0, clshead_tf=2, qknorm=False, in_norm=False, pimg_std=False, pimg_std_clamp=0.0):
         super().__init__(); self.use_string = use_string
         assert pos in ("rope", "abs", "none", "rope4"), f"--pos {pos}"; self.pos = pos; self.nosize = bool(nosize)
         if nosize: self.register_buffer("fmask", torch.tensor([1.0, 0.0, 0.0, 0.0]), persistent=False)   # token geometry = type only
@@ -522,6 +522,10 @@ class LinkFormer(nn.Module):
             self.cin = nn.Linear(2*d + 1, d); self.enone = nn.Parameter(torch.randn(d) * 0.02); self.cout = nn.Linear(d, 9)
             if self.clshead_tf:                                            # K transformer blocks over the board's class tokens
                 self.cblocks = nn.ModuleList([Block(d, heads, 0.1, qknorm) for _ in range(self.clshead_tf)]); self.cnf = nn.LayerNorm(d)
+        self.in_norm = nn.LayerNorm(d) if in_norm else None                # --in_norm (2026-10-25): LayerNorm on the summed input tokens, created last
+        self.pimg_std = bool(pimg_std and pimgdim)                         # --pimg_std (2026-10-26): per-dim standardization of the raw part image feature
+        self.pimg_std_clamp = float(pimg_std_clamp)                        # --pimg_std_clamp: clamp of the standardized values (0 = none)
+        if self.pimg_std: self.register_buffer("pimg_mu", torch.zeros(pimgdim)); self.register_buffer("pimg_sd", torch.ones(pimgdim))   # set by the trainer, saved
     def cls_sel(self, x, box, pos, npart, jt):
         """--clsmode sel: c_i = W_in [h_i ; h_j(i) or e_none ; none_i]; K Blocks over the board's class tokens with the trunk's position
         encoding on the part boxes (K = 0: GELU only) -> LayerNorm -> W_out, 9 logits. x (B, N, D) final trunk states; box, pos (B, N, .);
@@ -542,9 +546,14 @@ class LinkFormer(nn.Module):
         """--pimgfeat: part tokens get (1 - d_i) MLP(f_i) + d_i e_noimg; d_i = 1 without an image (pok 0), else Bernoulli(img_drop) in
         training only; text tokens get nothing. (B, N, d) addend."""
         part = 1 - d["feats"][..., :1]; ok = d["pok"] if "pok" in d else torch.zeros_like(part)
+        if self.pimg_std and "pimg" in d: ok = ok * (d["pimg"].float().norm(dim=-1, keepdim=True) >= 1e-6).to(ok.dtype)   # all-zero feature = no image
         if self.training and self.img_drop > 0: ok = ok * (torch.rand_like(ok) >= self.img_drop).to(ok.dtype)
-        f = self.pimp(d["pimg"]) if "pimg" in d else 0.0
+        f = self.pimp(self.std_pimg(d["pimg"]) if self.pimg_std else d["pimg"]) if "pimg" in d else 0.0
         return part * (ok * f + (1 - ok) * self.noimg)
+    def std_pimg(self, x):
+        """--pimg_std: (x - mu) / (sd + 1e-3) per dim (train-render statistics); --pimg_std_clamp c > 0: clamped to [-c, c]."""
+        z = (x.float() - self.pimg_mu) / (self.pimg_sd + 1e-3)
+        return z.clamp(-self.pimg_std_clamp, self.pimg_std_clamp) if self.pimg_std_clamp > 0 else z
     def tok(self, feats):
         """Token geometry input: (is_text, log w, log h, w >= h); --nosize keeps only is_text (the size enters through rope4 only)."""
         return feats * self.fmask if self.nosize else feats
@@ -569,6 +578,7 @@ class LinkFormer(nn.Module):
         x = self.inp(self.tok(e["feats"]))
         if self.use_string: x = x + self.pref(e["pref"]) + sum(emb(e["dig"][:, k]) for k, emb in enumerate(self.dig))
         if self.pos == "abs": x = x + self.abs_pos(e["box"], torch.ones(x.shape[0], dtype=torch.bool, device=x.device))
+        if self.in_norm is not None: x = self.in_norm(x)
         bias = self.gb(pair_geometry(e["box"], e["feats"][:, 0])).permute(2, 0, 1) if self.geobias else None   # (heads, N, N)
         cs = self.rope_tab(e["box"], e["pos"]) if self.pos == "rope4" else None
         for blk in self.blocks: x = blk(x, e["pos"], self.freqs if self.pos == "rope" else None, bias, cs=cs)
@@ -610,6 +620,7 @@ class LinkFormer(nn.Module):
             dig = torch.stack([pad(e["dig"], 10) for e in es])
             x = x + self.pref(torch.stack([pad(e["pref"]) for e in es])) + sum(emb(dig[..., k]) for k, emb in enumerate(self.dig))
         if self.pos == "abs": x = x + self.abs_pos(torch.stack([pad(e["box"]) for e in es]), valid)
+        if self.in_norm is not None: x = self.in_norm(x)
         am = torch.zeros(B, 1, 1, N, device=x.device).masked_fill(~valid[:, None, None, :], float("-inf"))
         if self.geobias:
             am = am + torch.stack([F.pad(self.gb(pair_geometry(e["box"], e["feats"][:, 0])).permute(2, 0, 1), (0, N-n, 0, N-n)) for e, n in zip(es, Ns)])
@@ -628,6 +639,7 @@ class LinkFormer(nn.Module):
         if self.detdim and "ds" in d: x = x + self.dsp(d["ds"]) * (1 - d["feats"][..., :1])   # part tokens only
         if self.pos == "abs": x = x + self.abs_pos(d["box"], d["valid"])           # absolute position, once at the input
         if self.pimgdim: x = x + self.part_img(d)                                  # part image feature or the no-image vector
+        if self.in_norm is not None: x = self.in_norm(x)                         # --in_norm: one LayerNorm on the summed input tokens
         am = torch.zeros(B, 1, 1, N, device=x.device).masked_fill(~d["valid"][:, None, None, :], float("-inf"))
         if self.local:   # local attention: a real token sees only tokens whose centre is within `local` median part sizes (padded rows: all)
             far = (torch.cdist(d["pos"], d["pos"]) > self.local) & d["valid"][:, :, None]
@@ -818,12 +830,12 @@ def evaluate(model, encs, dev, mode="hung"):
 CFG_SECTIONS = {   # only for reading the written config files; the keys stay flat
     "run": ("tag", "seed", "device", "threads", "workers", "prefetch", "save", "init", "ckpt_every", "overwrite", "wandb", "wandb_group", "profile",
             "timing", "gradlog", "gradlog_spike", "gradlog_window", "roll_every", "roll_keep", "roll_from", "roll_keep_from", "roll_optim", "stop_at", "min_free_gb"),
-    "data": ("data", "train", "eval", "final_eval", "mix", "mix_p", "txtfeat", "txtfeat_wacv", "noise", "noise_dir", "imgfeat", "pimgfeat",
+    "data": ("data", "train", "eval", "final_eval", "mix", "mix_p", "txtfeat", "txtfeat_wacv", "noise", "noise_dir", "imgfeat", "pimgfeat", "pimg_std_file",
              "pimgfeat_wacv", "txtfeat_wacv_raw", "pimgfeat_wacv_raw", "fptype", "detscore"),
     "model": ("size", "tokens", "head", "pos", "nosize", "geobias", "rankrel", "strrel", "glayers", "local", "strtype", "arhead", "clshead",
-              "clsmode", "clshead_tf", "qknorm"),
+              "clsmode", "clshead_tf", "qknorm", "in_norm", "pimg_std", "pimg_std_clamp"),
     "train": ("steps", "lr", "warmup", "cosine", "accum", "bps", "batched", "size_ratio", "tok_budget", "dropout", "wd", "amp", "compile",
-              "fused_adam", "beta2", "zloss", "zclip", "zclip_alpha", "zclip_warmup", "freeze_backbone", "img_lr_mult", "cls_w", "tcls_w", "cls_link", "cls_detach_text", "none_w", "ign_messy"),
+              "fused_adam", "beta2", "stable_adamw", "wd_groups", "zloss", "zclip", "zclip_alpha", "zclip_warmup", "freeze_backbone", "img_lr_mult", "cls_w", "tcls_w", "cls_link", "cls_detach_text", "none_w", "ign_messy"),
     "augment": ("aug", "aug_norot", "label_drop", "fake", "distract", "prefix_drop", "strnoise", "det_drop", "img_drop"),
     "eval": ("eval_every",)}
 
@@ -887,9 +899,16 @@ if __name__ == "__main__":
                     "than this (GB); 0 = off")
     ap.add_argument("--roll_optim", action="store_true", help="--roll_every: also save the AdamW and scheduler state (for a restart from that step)")
     ap.add_argument("--stop_at", type=int, default=0, help="stop training after this step (the lr schedule still runs over --steps); 0 = off")
+    ap.add_argument("--stable_adamw", action="store_true", help="StableAdamW update clipping (arXiv 2304.13013): per tensor, the whole step (update + decoupled decay) x 1 / max(1, RMS_t), RMS_t = sqrt(mean(g_t^2 / v_t)) with the bias-corrected v after the step (2026-10-25)")
+    ap.add_argument("--wd_groups", action="store_true", help="no weight decay on LayerNorm gains / biases, on every bias and on all trunk_in input parameters (inp, tfp, pimp, noimg, pref, dig, in_norm, dsp); --wd on the rest (2026-10-25)")
     ap.add_argument("--beta2", type=float, default=0.999, help="AdamW beta2 (0.999 = the torch default of all runs before 2026-10-23)")
     ap.add_argument("--zloss", type=float, default=0.0, help="weight of the z-loss: mean over parts of logsumexp^2 of the link logits (+ class logits)")
     ap.add_argument("--qknorm", action="store_true", help="LayerNorm on q and k per head in every attention block (before RoPE)")
+    ap.add_argument("--pimg_std", action="store_true", help="standardize the raw part image feature per dim, (x - mu) / (sd + 1e-3), mu / sd of the train renders "
+                    "(--pimg_std_file), stored as model buffers (2026-10-26)")
+    ap.add_argument("--pimg_std_clamp", type=float, default=0.0, help="--pimg_std: clamp the standardized values to [-c, c]; 0 = no clamp")
+    ap.add_argument("--pimg_std_file", default="data/partfeat_render/out_paste_v1_stats_nz.npz", help="--pimg_std: npz with mu, sd, n of the ok non-zero train parts (results/analysis/2026-10-25_c02_diag/code/pimg_zero.py)")
+    ap.add_argument("--in_norm", action="store_true", help="one LayerNorm (gain 1, bias 0 at init) on the summed input tokens, before the first block (2026-10-25)")
     ap.add_argument("--zclip", type=float, default=0.0, help="ZClip: clip the grad norm to mean + this x std of its EMA (alpha --zclip_alpha) "
                     "instead of the fixed clip 1.0; the first --zclip_warmup steps use the fixed clip and collect the statistics; 0 = off")
     ap.add_argument("--zclip_alpha", type=float, default=0.97); ap.add_argument("--zclip_warmup", type=int, default=25)
@@ -1132,9 +1151,12 @@ if __name__ == "__main__":
         dev = torch.device(a.device)
     d, L = SIZES[a.size]
     assert not a.strrel or (a.tokens == "E2" and a.geobias), "--strrel needs --tokens E2 and --geobias"; assert not a.glayers or a.geobias; assert not a.rankrel or a.geobias, "--rankrel needs --geobias"
-    model = LinkFormer(d, L, len(vocab.idx)+2, a.tokens == "E2", a.dropout, a.head, a.geobias, a.strrel, a.glayers, a.local, a.imgdim, a.clshead, a.txtdim, a.clsmode, a.rankrel, a.detdim, a.arhead, pos=a.pos, nosize=a.nosize, pimgdim=a.pimgdim, clshead_tf=a.clshead_tf, qknorm=a.qknorm).to(dev)
+    model = LinkFormer(d, L, len(vocab.idx)+2, a.tokens == "E2", a.dropout, a.head, a.geobias, a.strrel, a.glayers, a.local, a.imgdim, a.clshead, a.txtdim, a.clsmode, a.rankrel, a.detdim, a.arhead, pos=a.pos, nosize=a.nosize, pimgdim=a.pimgdim, clshead_tf=a.clshead_tf, qknorm=a.qknorm, in_norm=a.in_norm, pimg_std=a.pimg_std, pimg_std_clamp=a.pimg_std_clamp).to(dev)
     model.cls_link = a.cls_link; model.cls_detach_text = a.cls_detach_text
     model.img_drop = a.img_drop if a.pimgdim else 0.0
+    if model.pimg_std:                                # --pimg_std: mu / sd of the TRAIN renders (pimg_mean.py), kept unchanged for WACV / 21PCB
+        Zs = np.load(ROOT/a.pimg_std_file); model.pimg_mu.copy_(torch.as_tensor(Zs["mu"])); model.pimg_sd.copy_(torch.as_tensor(Zs["sd"]))
+        if is_main: print(f"[{a.tag}] --pimg_std: mu / sd from {a.pimg_std_file} (n {int(Zs['n'])}, |mu| {float(np.linalg.norm(Zs['mu'])):.2f}, sd median {float(np.median(Zs['sd'])):.3f})", flush=True)
     if a.init:
         miss = model.load_state_dict(ck["model"], strict=not (a.imgdim or a.arhead))
         if a.imgdim and is_main: print(f"[{a.tag}] init {a.init}: new parameters {miss.missing_keys}", flush=True)
@@ -1147,6 +1169,14 @@ if __name__ == "__main__":
         keep = "ar." if a.arhead else "img."; AR_ONLY = bool(a.arhead)
         for n_, p in model.named_parameters(): p.requires_grad = n_.startswith(keep)
     groups = [dict(params=[p for n_, p in model.named_parameters() if not n_.startswith("img.")])]
+    if a.wd_groups:                                   # --wd_groups: decay only on the remaining weights (OLMo 2: no decay on embeddings)
+        LNP = {id(q) for m_ in model.modules() if isinstance(m_, nn.LayerNorm) for q in m_.parameters()}
+        INP = ("inp", "tfp", "pimp", "noimg", "pref", "dig", "in_norm", "dsp")
+        nod = lambda n_, q: id(q) in LNP or n_.endswith(".bias") or n_.split(".")[0] in INP
+        named = [(n_, q) for n_, q in model.named_parameters() if not n_.startswith("img.")]
+        groups = [dict(params=[q for n_, q in named if not nod(n_, q)]), dict(params=[q for n_, q in named if nod(n_, q)], weight_decay=0.0)]
+        if is_main: print(f"[{a.tag}] --wd_groups: decay on {sum(q.numel() for q in groups[0]['params'])/1e6:.2f}M params ({len(groups[0]['params'])} tensors), "
+                          f"none on {sum(q.numel() for q in groups[1]['params'])/1e6:.2f}M ({len(groups[1]['params'])} tensors)", flush=True)
     if a.imgdim: groups.append(dict(params=list(model.img.parameters()), lr=a.lr*a.img_lr_mult))
     opt = torch.optim.AdamW(groups, lr=a.lr, weight_decay=a.wd, betas=(0.9, a.beta2), fused=a.fused_adam and dev.type == "cuda")
     def lr_at(s):
@@ -1177,8 +1207,8 @@ if __name__ == "__main__":
             if top in ("wq", "wk", "none", "ms", "mt", "ar"): return GNAMES.index("link_head")
             if top in ("cin", "enone", "cout", "cblocks", "cnf", "cls", "tcls", "fcls", "cmlp"): return GNAMES.index("class_head")
             return 1 + int(n.split(".")[1]) if top == "blocks" else 0                       # trunk_in also holds the final LayerNorm nf
-        SUBN = {"tfp": "in_txt", "pimp": "in_img", "noimg": "in_noimg", "inp": "in_geo", "pref": "in_str", "dig": "in_str", "nf": "out_norm"}
-        GSUB = ["in_txt", "in_img", "in_noimg", "in_geo", "in_str", "out_norm", "in_other"]   # parts of trunk_in (main 2026-10-25: both bursts start there)
+        SUBN = {"tfp": "in_txt", "pimp": "in_img", "noimg": "in_noimg", "inp": "in_geo", "pref": "in_str", "dig": "in_str", "nf": "out_norm", "in_norm": "in_norm"}
+        GSUB = ["in_txt", "in_img", "in_noimg", "in_geo", "in_str", "out_norm", "in_norm", "in_other"]   # parts of trunk_in (main 2026-10-25: both bursts start there)
         def gs(n): return len(GNAMES) + (GSUB.index(SUBN.get(n.split(".")[0], "in_other")) if gk(n) == 0 else len(GSUB))   # last slot: not trunk_in
         GPAR = [p_ for _, p_ in model.named_parameters()]; GIDX = torch.tensor([gk(n_) for n_, _ in model.named_parameters()], device=dev)
         GSIDX = torch.tensor([gs(n_) for n_, _ in model.named_parameters()], device=dev); NG = len(GNAMES) + len(GSUB) + 1
@@ -1279,7 +1309,16 @@ if __name__ == "__main__":
                     ZC.setdefault("buf", []).append(gn.detach().float())
                     if step == a.zclip_warmup: b_ = torch.stack(ZC.pop("buf")); ZC.update(mu=b_.mean(), sd=b_.std().clamp_min(1e-6))
             if GL is not None: GL["steps"].append((step, sched.get_last_lr()[0], gn.detach(), torch.cat(GL["bl"]), GL["meta"], gG, torch.stack(GL["mx"]).amax(0))); GL["bl"], GL["mx"], GL["meta"] = [], [], []
+            if a.stable_adamw:
+                with torch.no_grad(): SA = [q for q in model.parameters() if q.grad is not None]; SA_old = torch._foreach_mul(SA, 1.0)   # copies
             opt.step(); sched.step()
+            if a.stable_adamw:                                                  # StableAdamW: step x 1 / max(1, RMS_t) per tensor, on the GPU
+                with torch.no_grad():
+                    b2 = opt.param_groups[0]["betas"][1]                        # AdamW gives every parameter with a grad a state in its step
+                    vh = [opt.state[q]["exp_avg_sq"] / (1 - b2 ** float(opt.state[q]["step"])) for q in SA]
+                    rms = torch.stack([(q.grad.float() ** 2 / v_.clamp_min(1e-16)).mean().sqrt() for q, v_ in zip(SA, vh)])
+                    cf = 1.0 / torch.clamp(rms, min=1.0); D_ = torch._foreach_sub(SA, SA_old); torch._foreach_mul_(D_, list(cf.unbind()))
+                    torch._foreach_copy_(SA, torch._foreach_add(SA_old, D_)); del SA_old, D_, vh
         run = tot if run is None else 0.98*run + 0.02*tot                                             # a GPU tensor when batched
         if torch.is_tensor(parts): runp = parts if runp is None else 0.98*runp + 0.02*parts           # link / class / text-class parts
         if not is_main: continue

@@ -2,6 +2,7 @@
 # Config-based LinkFormer training run INSIDE an existing cluster02 allocation (owner 2026-10-25: a hold job with GPUs that the owner
 # submits himself). One run per GPU, started as a job step:
 #   srun --jobid=$JID --overlap --gres=gpu:pro6000:1 bash tools/cluster/run_in_alloc.sh configs/<run>.yaml
+#   (PIN_GPU=1 srun ... --gres=gpu:pro6000:2 ...: the step sees all GPUs and uses GPU 1 only)
 # (run it from ~/xrssd/crossclass on the login node; add e.g. EXTRA="--wandb crossclass --wandb_group v3_diag" WORKERS=4 in front).
 # Same environment, caches, wandb dir and logs as tools/cluster/linkformer_cfg.sbatch: logs/linkformer/<tag>.log, the resolved config
 # next to the ckpt, caches under the SSD project dir. No sibling guard (no queue copies here); instead the step refuses to start when a
@@ -9,6 +10,7 @@
 set -euo pipefail
 CFG=${1:?usage: run_in_alloc.sh configs/<run>.yaml}
 : "${SLURM_JOB_ID:?run as a job step: srun --jobid=<hold job> --overlap --gres=gpu:<model>:1 bash tools/cluster/run_in_alloc.sh <cfg>}"
+[ -n "${PIN_GPU:-}" ] && export CUDA_VISIBLE_DEVICES=$PIN_GPU          # several runs per GPU (2026-10-25): request all GPUs of the job, pin one
 source /etc/profile.d/z00-lmod.sh
 module load CUDA/12.8.0 || true
 PY=/projects/_ssd/xrssd/envs/qwen_edit_flash/bin/python
