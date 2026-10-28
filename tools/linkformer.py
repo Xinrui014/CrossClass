@@ -23,7 +23,7 @@ Results JSON keeps per-image counts so any image subset
 (e.g. the 42 test images) can be scored afterwards (tools/linkformer_report.py). --wandb <project> logs loss, lr, eval and final scores.
 Run identity (2026-10-22, tools/run_meta.py): ckpts and the results JSON carry 'meta' (code md5 + git, argv, host, times, full md5 of
 every input read, kept / dropped boards); ckpts also tag and step. A run is refused at start when results/linkformer/<tag>.json or the
---save ckpt (or its _step ckpts) exists, unless --overwrite.
+--save ckpt (or its _step / _roll ckpts) exists, unless --overwrite.
 Usage: linkformer.py --train dev3 --eval dev3 --size L --tokens E1 --steps 1000 [--device cuda] [--tag name]
   board sets: dev3, test42, all45, fold<k>train, fold<k>test, kicad199, kicadtrain, kicadval, kicad300, kicad1000;
   with --data CrossClass_data_v1: ktrain, kval, kvalsub (~25 % of kval), kdense (train sides with WACV density 2.1-11.2),
@@ -686,7 +686,11 @@ class LinkFormer(nn.Module):
                 La = self.ar.seq_logits(hp[b, order].float(), x[b, n_:nb].float(), bo, ch, protect=to)
                 la = la + (torch.logsumexp(La, 1) - torch.logsumexp(La.masked_fill(~to, float("-inf")), 1)).mean()
             loss = (la if AR_ONLY else loss + la); lt_ = la                     # logged in the 3rd loss slot
-            self._parts = torch.stack([lk, lc_, lt_]).detach(); return loss
+            self._parts = torch.stack([lk, lc_, lt_]).detach()
+            if self.board_log:                                                   # --gradlog: the per-board stats below (no class loss here)
+                self._board_loss = torch.stack([pb, torch.zeros_like(pb)], 1).detach()
+                self._maxv = torch.stack([L.masked_fill(~torch.isfinite(L), 0.0).abs().amax(), L.new_zeros(()), lse.amax()]).detach().float()
+            return loss
         if self.clshead and "pc" in d:                                           # + class loss per part (mean over the board's parts)
             if self.clsmode == "sel":                                            # selected link: gt = first target text (none if the none column
                 tm = d["tm"]; gt = torch.where(tm[..., -1], -1, tm[..., :-1].int().argmax(2))   # is a target); pred = argmax of the link logits; -1 = the none column (not N: --compile keeps N dynamic)
@@ -810,7 +814,7 @@ def evaluate(model, encs, dev, mode="hung"):
             if ch: outs, cls = outs
             for k, (e, o) in enumerate(zip(g, outs)):
                 L = decode(o, mode); per[e["id"]] = count(e, L)
-                if o.dim() == 2 and o.shape[1] == e["m"] + 1:                      # dot head: eval link loss (as loss_fn) and class loss per part
+                if torch.is_tensor(o) and o.dim() == 2 and o.shape[1] == e["m"] + 1:   # dot head (lg: a tuple): eval link loss (as loss_fn) and class loss per part
                     tm_ = e["tmask"].to(o.device).bool(); ok_ = tm_.any(1) & torch.tensor([not (e.get("ign") and e["ign"][i]) for i in range(e["n"])], device=o.device)
                     ll = (torch.logsumexp(o.float(), 1) - torch.logsumexp(o.float().masked_fill(~tm_, float("-inf")), 1))[ok_]
                     per[e["id"]].update(loss_link_sum=float(ll.sum()), loss_link_n=int(ok_.sum()))
@@ -976,7 +980,7 @@ if __name__ == "__main__":
     ap.add_argument("--fused_adam", action="store_true", help="fused AdamW kernel (same update rule)")
     ap.add_argument("--profile", default="", help="'A:B': NVTX ranges per phase and a CUDA profiler range (nsys --capture-range=cudaProfilerApi) "
                     "over steps A..B-1, print s/step, then exit")
-    ap.add_argument("--overwrite", action="store_true", help="run although results/linkformer/<tag>.json, the --save ckpt or its _step ckpts exist")
+    ap.add_argument("--overwrite", action="store_true", help="run although results/linkformer/<tag>.json, the --save ckpt or its _step / _roll ckpts exist")
     ap.add_argument("--pos", default="rope", choices=["rope", "abs", "none", "rope4"], help="position: rope = 2D RoPE in attention (default, all "
                     "runs before 2026-10-23); abs = no RoPE, SuperGlue-style MLP of the normalised box centre added at the input; none = no RoPE, no "
                     "abs; rope4 = 4D corner RoPE (x1, y1, x2, y2; 4 blocks of 16 dims per head, 8 frequencies, wavelengths 0.5-512 median parts)")
@@ -1000,7 +1004,7 @@ if __name__ == "__main__":
     world, rank, local = int(os.environ.get("WORLD_SIZE", 1)), int(os.environ.get("RANK", 0)), int(os.environ.get("LOCAL_RANK", 0)); is_main = rank == 0
     torch.manual_seed(a.seed); np.random.seed(a.seed)
     a.tag = a.tag or f"{a.train}_{a.size}_{a.tokens}"     # the tag is known from the start and saved in the args (owner 2026-10-22)
-    old = [ROOT/"results/linkformer"/f"{a.tag}.json"] + ([Path(a.save)] + sorted(Path(a.save).parent.glob(Path(a.save).stem + "_step*.pt")) if a.save else [])
+    old = [ROOT/"results/linkformer"/f"{a.tag}.json"] + ([Path(a.save)] + sorted(q for k in ("_step", "_roll") for q in Path(a.save).parent.glob(Path(a.save).stem + k + "*.pt")) if a.save else [])
     old = [str(p) for p in old if p.exists()]
     if old and not a.overwrite: sys.exit(f"[{a.tag}] refused at start: {', '.join(old)} exist(s); choose another --tag / --save or pass --overwrite")
     CFG["tag"] = a.tag
@@ -1199,7 +1203,7 @@ if __name__ == "__main__":
     ZC = {}                                           # --zclip state (GPU tensors)
     ROLL = []                                         # --roll_every: paths of the kept rolling ckpts
     GL = None                                         # --gradlog (batched dot head): per-step grad norm + per-board losses, read every 250 steps
-    if a.gradlog and a.batched and a.head == "dot":
+    if a.gradlog and a.batched and a.head == "dot" and is_main:   # main rank only: it alone reads GL (other ranks would keep every step)
         GL = dict(bl=[], mx=[], meta=[], steps=[], hist=[], win=[]); model.board_log = True
         GNAMES = ["trunk_in"] + [f"block{i}" for i in range(len(model.blocks))] + ["link_head", "class_head"]   # pre-clip grad norm groups
         def gk(n):
@@ -1321,6 +1325,7 @@ if __name__ == "__main__":
                     torch._foreach_copy_(SA, torch._foreach_add(SA_old, D_)); del SA_old, D_, vh
         run = tot if run is None else 0.98*run + 0.02*tot                                             # a GPU tensor when batched
         if torch.is_tensor(parts): runp = parts if runp is None else 0.98*runp + 0.02*parts           # link / class / text-class parts
+        if not is_main and a.stop_at and step >= a.stop_at: break               # --stop_at on the other ranks too (the main rank stops below)
         if not is_main: continue
         lp = (lambda: dict(zip(PART_TERMS, [round(v, 4) for v in runp.tolist()]))) if runp is not None else (lambda: {})
         with ph("log"):
@@ -1340,7 +1345,7 @@ if __name__ == "__main__":
                 if gls and (gm := re.search(r"grad norm mean ([0-9.]+) median ([0-9.]+) max ([0-9.]+) clipped ([0-9.]+) % spikes (\d+)", gls)):
                     W.update({f"train/grad_norm_{k}": float(v) for k, v in zip(("mean", "median", "max", "clipped_pct", "spikes"), gm.groups())})
                 wb.log(W, step=step)
-        if a.ckpt_every and a.save and step % a.ckpt_every == 0 and step < a.steps:
+        if a.ckpt_every and a.save and step % a.ckpt_every == 0 and step < min(a.stop_at or a.steps, a.steps):   # the last step: the final save below
             with ph("ckpt"):
                 Path(a.save).parent.mkdir(parents=True, exist_ok=True); cp_ = a.save.replace(".pt", f"_step{step}.pt")
                 if disk_ok(cp_, a.min_free_gb, tag): torch.save(dict(model=model.state_dict(), vocab=vocab.prefixes, args=vars(a), step=step, meta=META), cp_)

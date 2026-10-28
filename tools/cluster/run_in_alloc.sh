@@ -28,6 +28,7 @@ echo "job $SLURM_JOB_ID step ${SLURM_STEP_ID:-?} on $(hostname), GPU ${CUDA_VISI
 nvidia-smi --query-gpu=name,memory.total --format=csv | tee -a "logs/alloc_${TAG}.out"
 echo "code $(git rev-parse --short HEAD) $(md5sum < tools/linkformer.py | cut -c1-8), config $CFG $(md5sum < "$CFG" | cut -c1-8), extra: $EXTRA" | tee -a "logs/alloc_${TAG}.out"
 df -BG --output=avail "$CROSSCLASS" | tail -1 | xargs echo "xrssd free:" | tee -a "logs/alloc_${TAG}.out"
+if [ -s "$LOG" ]; then P=$LOG.prev.$(date -u +%Y%m%dT%H%M%SZ); mv "$LOG" "$P"; echo "old log of $TAG kept as $P" | tee -a "logs/alloc_${TAG}.out"; fi   # never empty a log (review #2)
 # shellcheck disable=SC2086
 $PY tools/linkformer.py --config "$CFG" --device cuda $EXTRA > "$LOG" 2>&1 || echo "linkformer exit code $?" | tee -a "logs/alloc_${TAG}.out"
 grep -h "final\|DISK ALERT\|stop_at" "$LOG" | tee -a "logs/alloc_${TAG}.out" || true

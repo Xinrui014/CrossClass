@@ -26,11 +26,13 @@ nvidia-smi --query-gpu=index,name,memory.total --format=csv
 echo "code $(git rev-parse --short HEAD) linkformer.py $(md5sum < tools/linkformer.py | cut -c1-8); GPU0 $CFG0 $(md5sum < "$CFG0" | cut -c1-8); GPU1 $CFG1 $(md5sum < "$CFG1" | cut -c1-8); extra: $EXTRA"
 run() {   # GPU index, config
   # shellcheck disable=SC2086
-  local tag; tag=$($PY tools/linkformer.py --config "$2" $EXTRA --show_config | awk '$1 == "tag:" {print $2}'); [ -n "$tag" ] || { echo "no tag from $2"; return 1; }
-  echo "$(date -u '+%F %T') UTC: GPU $1 -> $tag"
+  local tag log p rc; tag=$($PY tools/linkformer.py --config "$2" $EXTRA --show_config | awk '$1 == "tag:" {print $2}'); [ -n "$tag" ] || { echo "no tag from $2"; return 1; }
+  echo "$(date -u '+%F %T') UTC: GPU $1 -> $tag"; log=logs/linkformer/$tag.log
+  # never empty a log (review #2; this script has no set -e, so a failed mv returns before the redirect)
+  if [ -s "$log" ]; then p=$log.prev.$(date -u +%Y%m%dT%H%M%SZ); mv "$log" "$p" || { echo "GPU $1 $tag: cannot move the old log $log -> not started"; return 1; }; echo "old log of $tag kept as $p"; fi
   # shellcheck disable=SC2086
-  CUDA_VISIBLE_DEVICES=$1 $PY tools/linkformer.py --config "$2" --device cuda $EXTRA > "logs/linkformer/$tag.log" 2>&1
-  echo "$(date -u '+%F %T') UTC: GPU $1 $tag exit code $?"; grep -h "final\|DISK ALERT\|stop_at" "logs/linkformer/$tag.log" || true
+  CUDA_VISIBLE_DEVICES=$1 $PY tools/linkformer.py --config "$2" --device cuda $EXTRA > "$log" 2>&1; rc=$?   # rc before the next $(date): $? would be date's
+  echo "$(date -u '+%F %T') UTC: GPU $1 $tag exit code $rc"; grep -h "final\|DISK ALERT\|stop_at" "$log" || true
 }
 run 0 "$CFG0" & run 1 "$CFG1" & wait
 while squeue -h -s -j "$SLURM_JOB_ID" -o "%i" | grep -vE "\.(batch|extern)$" | grep -q .; do sleep 60; done   # steps added with srun

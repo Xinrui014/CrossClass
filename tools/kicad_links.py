@@ -26,9 +26,11 @@ EXCLUDE = re.compile(r"^(OLIMEX/|Duet3D/|BehrensG/ARTY_Z7|boobalakrishnan08/Arty
                      r"ISLOWIsmaeli/arduino-mega-design|AlanFord/ArduinoMega6axis|Moddler/CCD-Arduino-Mega|Villabaal/ArduinoMega-Autoclave|"
                      r"gggmmm/pcb-spartan-3|Fabeltranm/SPARTAN6|jonthomasson/SpartanMini|tcfh2003/Virtex-6|viktor-nikolov/MicroZed)", re.I)
 # class ids: 0 resistor, 1 capacitor, 2 inductor, 3 connector, 4 diode, 5 switch, 6 transistor, 7 IC, 8 oscillator, 9 other (v2)
-PFX = {"R": 0, "RN": 0, "RV": 0, "VR": 0, "RP": 0, "RA": 0, "RM": 0, "TH": 0, "C": 1, "L": 2, "FB": 2, "F": 2, "FL": 2, "FIL": 2,
+PFX = {"R": 0, "RN": 0, "RV": 0, "VR": 0, "RP": 0, "RA": 0, "RM": 0, "TH": 0, "C": 1, "L": 2, "FB": 2,
+       "F": 0, "PF": 0, "FU": 0, "NTC": 0, "PTC": 0, "RT": 0, "MOV": 0, "VDR": 0,   # taxonomy_final 2026-10-25: fuse / polyfuse, thermistor, varistor -> R
        "J": 3, "P": 3, "JP": 3, "CN": 3, "CON": 3, "USB": 3, "D": 4, "LED": 4, "LD": 4, "DS": 4, "CR": 4, "RGB": 4,
-       "SW": 5, "S": 5, "K": 5, "BTN": 5, "RL": 5, "Q": 6, "T": 6, "TR": 6, "U": 7, "IC": 7, "M": 7, "Y": 8, "X": 8, "XL": 8}
+       "SW": 5, "S": 5, "BTN": 5, "Q": 6, "T": 2, "TR": 2, "U": 7, "IC": 7, "Y": 8, "X": 8, "XL": 8}   # T / TR: transformer -> L; M removed (owner 2026-10-25 15:24: module / motor / MOSFET - no class from the prefix alone)
+IGNORE_PFX = {"FL", "FIL", "K", "RL", "PS", "BT", "BAT", "BZ", "LS", "SP", "HS", "AE", "ANT", "MK", "MIC"}   # taxonomy_final: no class (EMI filter, relay, power module, battery, buzzer / speaker, heatsink, antenna, microphone); not in PFX
 NONCOMP_PFX = {"TP", "H", "MH", "FID", "NT", "SJ", "GND", "LOGO", "G", "REF", "KIBUZZARD"}
 NONCOMP_NAME = re.compile(r"mounting.?hole|fiducial|test.?point|net.?tie|solder.?jumper|logo|kibuzzard|mouse.?bite", re.I)
 V1_PFX = {"R", "RN", "FB", "L", "C", "LED", "D", "SW", "S", "Q", "IC", "U", "Y", "X", "J", "P"}        # parts in CrossClass_data_v1
